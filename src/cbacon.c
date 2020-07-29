@@ -194,7 +194,7 @@ void wbacon(double *x, double *w, double *center, double *scatter, double *dist,
    x_slice = (double*) Calloc(*ptrn, double); 
    for (int j = 0; j < *ptrp; j++){
       Memcpy(x_slice, x + *ptrn * j, *ptrn); 
-      wquantile(x_slice, w, &dhalf, &center[j], ptrn);
+      wquantile(x_slice, w, ptrn, &dhalf, &center[j]);
    } 
    Free(x_slice); 
 
