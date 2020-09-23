@@ -11,7 +11,6 @@
 #include <Rmath.h>
 #include <R_ext/Lapack.h>
 #include <R_ext/BLAS.h>
-#include "sctmv.h" 
 #include "wquantile.h" 
 
 #ifndef _CBACON_H 

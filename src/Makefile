@@ -7,16 +7,16 @@ DLL_LAPACK	= C:/"Program Files"/R/R-3.5.1/bin/x64/Rlapack.dll
 DLL_R		= C:/"Program Files"/R/R-3.5.1/bin/x64/R.dll
 
 # link (note PowerShell and cmd fail when lf + cr is used by '/') 
-cbacon: cbacon.o sctmv.o wquantile.o 
-	$(CC) -shared -o $@.dll $@.o $(DLL_BLAS) $(DLL_LAPACK) $(DLL_R) sctmv.o wquantile.o
+cbacon: cbacon.o wquantile.o 
+	$(CC) -shared -o $@.dll $@.o $(DLL_BLAS) $(DLL_LAPACK) $(DLL_R) wquantile.o
 
 # compile
 cbacon.o: cbacon.c 
 	$(CC) -Wall -I $(R_C_HEADER) -c $*.c $(CFLAGS) 
 
 # compile
-sctmv.o: sctmv.c 
-	$(CC) -Wall -I $(R_C_HEADER) -c $*.c $(CFLAGS) 
+#sctmv.o: sctmv.c 
+#	$(CC) -Wall -I $(R_C_HEADER) -c $*.c $(CFLAGS) 
 
 # compile
 wquantile.o: wquantile.c 
@@ -25,4 +25,4 @@ wquantile.o: wquantile.c
 # housekeeping (using make clean)
 .PHONY: clean
 clean: 
-	rm cbacon.o sctmv.o wquantile.o 
+	rm cbacon.o wquantile.o 

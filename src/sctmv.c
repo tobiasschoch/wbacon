@@ -19,24 +19,22 @@
 |*    x		  array[n, p]				                     *|
 |*    w		  array[n], weights			                     *|
 |*    center	  on return: array[p]		      	                     *|
-|*    ptrn, ptrp  dimensions						     *|
+|*    n, p	  dimensions						     *|
 \*****************************************************************************/
-void weightedmean(double *x, double *w, double *center, int *ptrn, int *ptrp)
+void weightedmean(double *x, double *w, double *center, int *n, int *p)
 {
-   double sum_w = 0.0;
-   for (int i = 0; i < *ptrp; i++){
+   for (int i = 0; i < *p; i++)
       center[i] = 0.0;
-   }
 
-   for (int i = 0; i < *ptrn; i++){
+   double sum_w = 0.0;
+   for (int i = 0; i < *n; i++) {
       sum_w += w[i]; 
-      for (int j = 0; j < *ptrp; j++){
-	 center[j] += x[*ptrn * j + i] * w[i]; 
+      for (int j = 0; j < *p; j++) {
+	 center[j] += x[*n * j + i] * w[i]; 
       }
    }
-   for (int j = 0; j < *ptrp; j++){
+   for (int j = 0; j < *p; j++)
       center[j] /= sum_w; 
-   }
 }
 
 /*****************************************************************************\
@@ -47,48 +45,48 @@ void weightedmean(double *x, double *w, double *center, int *ptrn, int *ptrp)
 |*    w		  array[n], weights			                     *|
 |*    center	  array[p]		  	      	                     *|
 |*    scatter	  on return: array[p, p]	      	                     *|
-|*    ptrn, ptrp  dimensions						     *|
+|*    n, p	  dimensions						     *|
 |*                                                                           *|
 |*  DEPENDENCIES							     *|
 |*    DGEMM    LAPACK/BLAS                                                   *|
 \*****************************************************************************/
 void weightedscatter(double *x, double *w, double *center, double *scatter, 
-		     int *ptrn, int *ptrp)
+		     int *n, int *p)
 {
    const double done = 1.0, dzero = 0.0;
    double sum_w = 0.0;
    double *x_cpy;
-   x_cpy = (double*) Calloc(*ptrn * *ptrp, double); 
-   Memcpy(x_cpy, x, *ptrn * *ptrp); 
+
+   x_cpy = (double*) Calloc(*n * *p, double); 
+   Memcpy(x_cpy, x, *n * *p); 
 
    // center the data and multiply by sqrt(w) 
-   for (int i = 0; i < *ptrn; i++){
+   for (int i = 0; i < *n; i++) {
       sum_w += w[i];
  
-      for (int j = 0; j < *ptrp; j++){
-	 x_cpy[*ptrn * j + i] -= center[j];
-	 x_cpy[*ptrn * j + i] *= sqrt(w[i]);
+      for (int j = 0; j < *p; j++) {
+	 x_cpy[*n * j + i] -= center[j];
+	 x_cpy[*n * j + i] *= sqrt(w[i]);
       }
    }
 
    // cross product: scatter matrix = t(x_cpy) %*% x_cpy; 
    F77_CALL(dgemm)("T",	// TRANSA
       "N",		// TRANSB
-      ptrp,		// M (number of rows of A)
-      ptrp,		// N (number of columns of B)
-      ptrn,		// K (number of columns of A)
+      p,		// M (number of rows of A)
+      p,		// N (number of columns of B)
+      n,		// K (number of columns of A)
       &done,		// ALPHA
       x_cpy,		// A 
-      ptrn,		// LDA
+      n,		// LDA
       x_cpy,		// B
-      ptrn,		// LDB
+      n,		// LDB
       &dzero,		// BETA
       scatter,		// C (on return: scatter)
-      ptrp);		// LDC
+      p);		// LDC
 
-   for (int i = 0; i < (*ptrp * *ptrp); i++){
+   for (int i = 0; i < (*p * *p); i++)
       scatter[i] /= (sum_w - 1); 
-   }
 
    Free(x_cpy); 
 }
@@ -101,35 +99,35 @@ void weightedscatter(double *x, double *w, double *center, double *scatter,
 |*    center	  array[p]	       		      	                     *|
 |*    scatter	  array[p, p]		     	      	                     *|
 |*    dist	  on return: array[n]	     	      	                     *|
-|*    ptrn, ptrp  dimensions						     *|
+|*    n, p	  dimensions						     *|
 |*                                                                           *|
 |*  DEPENDENCIES							     *|
 |*    DPOTRF   LAPACK/BLAS                                                   *|
 |*    DTRSM    LAPACK/BLAS                                                   *|
 \*****************************************************************************/
 void mahalanobis(double *x, double *center, double *scatter, double *dist, 
-		 int *ptrn, int *ptrp)
+		 int *n, int *p)
 {
    int info;
    double done = 1.0;
    double *x_cpy, *scatter_cpy;
 
    // center the data 
-   x_cpy = (double*) Calloc(*ptrn * *ptrp, double); 
-   Memcpy(x_cpy, x, *ptrn * *ptrp); 
-   for (int i = 0; i < *ptrn; i++){
-      for (int j = 0; j < *ptrp; j++){
-	 x_cpy[*ptrn * j + i] -= center[j];
+   x_cpy = (double*) Calloc(*n * *p, double); 
+   Memcpy(x_cpy, x, *n * *p); 
+   for (int i = 0; i < *n; i++) {
+      for (int j = 0; j < *p; j++) {
+	 x_cpy[*n * j + i] -= center[j];
       }
    }
 
    // Cholesky decomposition of scatter matrix (stored in scatter_cpy) 
-   scatter_cpy = (double*) Calloc(*ptrp * *ptrp, double); 
-   Memcpy(scatter_cpy, scatter, *ptrp * *ptrp); 
+   scatter_cpy = (double*) Calloc(*p * *p, double); 
+   Memcpy(scatter_cpy, scatter, *p * *p); 
    F77_CALL(dpotrf)("L",   // UPLO
-      ptrp,		   // N (dim of A) 
+      p,		   // N (dim of A) 
       scatter_cpy,	   // A (on exit L)
-      ptrp,		   // LDA
+      p,		   // LDA
       &info);		
    if (info != 0) Rprintf("mahalanobis: DPOTRF failed\n");
 
@@ -138,19 +136,20 @@ void mahalanobis(double *x, double *center, double *scatter, double *dist,
       "L",		// UPLO
       "T",		// TRANSA
       "N",		// DIAG
-      ptrn,		// M (number of rows of B)
-      ptrp,		// N (number of columns of B)
+      n,		// M (number of rows of B)
+      p,		// N (number of columns of B)
       &done,		// ALPHA
       scatter_cpy,	// A	
-      ptrp,		// LDA
+      p,		// LDA
       x_cpy,		// B (on return: y)
-      ptrn);		// LDB
+      n);		// LDB
  
    // Euclidean norm of y = squared Mahalanobis distance 
-   for (int i = 0; i < *ptrn; i++){
+   for (int i = 0; i < *n; i++) {
       dist[i] = 0.0;
-      for(int j = 0; j < *ptrp; j++){
-	 dist[i] += _POWER2(x_cpy[*ptrn * j + i]);
+
+      for (int j = 0; j < *p; j++) {
+	 dist[i] += _POWER2(x_cpy[*n * j + i]);
       }
       dist[i] = sqrt(dist[i]);
    }
