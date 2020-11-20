@@ -1,5 +1,5 @@
-setwd("C:/My/bacon_in_c")
-dyn.load("bacon.dll")
+setwd("C:/My/code/cbacon/src")
+dyn.load("cbacon.dll")
 
 # set.seed(1)
 # x <- matrix(c(rnorm(20, 10, 2)), ncol = 2)
@@ -77,10 +77,10 @@ wBACON <- function(x, w = NULL, alpha = 0.95, maxiter = 50, verbose = FALSE){
 #       x$n,")\n"))
 # }
 library(modi)
-#data(bushfire)
-#w <- wBACON(bushfire, rep(1,38), alpha = 0.99, verbose = T)
+data(bushfire)
+w <- wBACON(bushfire, rep(1,38), alpha = 0.99, verbose = T)
 
-library(robustX)
+#library(robustX)
 
 library(cellWise)
 data(philips)

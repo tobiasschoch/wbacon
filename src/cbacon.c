@@ -1,13 +1,35 @@
-/*****************************************************************************\
-|* bacon								     *|
-|* ------------------------------------------------------------------------- *|
-|* PROJECT  sct library							     *|
-|* SUBEJCT  weighted BACON						     *|
-|* AUTHORS  Tobias Schoch (tobias.schoch@fhnw.ch), January 19, 2020	     *|
-|* LICENSE  GPL >= 2							     *|
-|* COMMENT  [none]							     *|
-\*****************************************************************************/
-#include "cbacon.h" 
+/* Implementation of the weighted BACON algorithm of Billor et al. (2000), 
+   respectively, Béguin and Hulliger (2008) 
+
+   Copyright (C) 2020 Tobias Schoch (e-mail: tobias.schoch@gmail.com) 
+
+   This library is free software; you can redistribute it and/or
+   modify it under the terms of the GNU Library General Public
+   License as published by the Free Software Foundation; either
+   version 2 of the License, or (at your option) any later version.
+
+   This library is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   Library General Public License for more details.
+
+   You should have received a copy of the GNU Library General Public
+   License along with this library; if not, a copy is available at
+   https://www.gnu.org/licenses/
+
+   Billor N, Hadi AS, Vellemann PF (2000). BACON: Blocked Adaptative 
+      Computationally efficient Outlier Nominators. Computational Statistics 
+      and Data Analysis 34, pp. 279-298.
+   Béguin C, Hulliger B (2008). The BACON-EEM Algorithm for Multivariate 
+      Outlier Detection in Incomplete Survey Data. Survey Methodology 34, 
+      pp. 91-103.
+*/
+
+#include <R.h>
+#include <Rmath.h>
+#include <R_ext/Lapack.h>
+#include <R_ext/BLAS.h>
+#include "wquantile.h" 
 
 // macros
 #define _RANK_TOLERANCE 1.0e-8
@@ -35,14 +57,12 @@ static inline void mahalanobis(double*, double*, double*, double*, double*,
 \*****************************************************************************/
 static inline double cutoffval(double alpha, int n, int k, int p)
 {
-   double h, chr, cnp, cnpr, cutoff;
-
-   h = ((double)n + (double)p + 1.0) / 2.0;
-   chr = fmax(0.0, (h - (double)k) / (h + (double)k));
-   cnp = 1.0 + ((double)p + 1.0) / ((double)n - (double)p) + 
+   double h = ((double)n + (double)p + 1.0) / 2.0;
+   double chr = fmax(0.0, (h - (double)k) / (h + (double)k));
+   double cnp = 1.0 + ((double)p + 1.0) / ((double)n - (double)p) + 
       2.0 / ((double)n - 1.0 - 3.0 * (double)p);
-   cnpr = cnp + chr;
-   cutoff = cnpr * sqrt(qchisq(alpha / (double)n, p, 0, 0));
+   double cnpr = cnp + chr;
+   double cutoff = cnpr * sqrt(qchisq(alpha / (double)n, p, 0, 0));
 
    return cutoff;
 }
@@ -60,13 +80,12 @@ static inline double cutoffval(double alpha, int n, int k, int p)
 static inline void initialsubset(double *x, double *w, double *dist, 
    int *subset, int *subsetsize, int *n, int *p, int *verbose)
 {
-   int m, info, rank; 
    int *iarray;
    double *dist_sorted, *x_sorted, *w_sorted, *w_sortedcpy, *center, *scatter, 
       *work;
 
    center = (double*) Calloc(*p, double);
-   scatter = (double*) Calloc(*n * *p, double);
+   scatter = (double*) Calloc(*p * *p, double);
    work = (double*) Calloc(*n * *p, double);
 
    // STEP 0: sort Mahalanobis distance from small to large (make copies 
@@ -80,6 +99,7 @@ static inline void initialsubset(double *x, double *w, double *dist,
 
    // generate and populate 'iarray'
    iarray = (int*) Calloc(*n, int);
+
    for (int i = 0; i < *n; i++)
       iarray[i] = i;
 
@@ -94,12 +114,13 @@ static inline void initialsubset(double *x, double *w, double *dist,
 	 x_sorted[i + *n * j] = x[iarray[i] + *n * j]; 
    }
 
-   m = (int)fmin(4.0 * (double)*p, (double)*n * 0.5); // subset size
+   int m = (int)fmin(4.0 * (double)*p, (double)*n * 0.5); // subset size
 
    w_sortedcpy = (double*) Calloc(*n, double);
    Memcpy(w_sortedcpy, w_sorted, *n);
 
    // STEP 1 check if scatter matrix of the first 1:m observations has full rank 
+   int rank;
    while (m < *n) {
       // set weights of observations (m+1):n to zero (note: we use int i = m,
       // because of C's zero indexing
@@ -109,8 +130,9 @@ static inline void initialsubset(double *x, double *w, double *dist,
       weightedscatter(x_sorted, work, w_sortedcpy, center, scatter, n, p); 
       
       // Cholesky decomposition of scatter matrix 
+      int info;
       F77_CALL(dpotrf)("L", p, scatter, p, &info);		
-      if (info != 0) Rprintf("Initial subset: DPOTRF failed\n");
+      if (info != 0) error("Initial subset: DPOTRF failed\n");
 
       // count diagonal elements of Cholesky factor > tol to determine the rank
       // note: rank revealing by Cholesky is cheap, but not numerically stable
@@ -118,10 +140,10 @@ static inline void initialsubset(double *x, double *w, double *dist,
       for (int i = 0; i < *p; i++)
 	 rank += scatter[i * (*p + 1)] > _RANK_TOLERANCE ? 1 : 0;
 
-      if (rank == *p) {
+      if (rank == *p) 
 	 break;
-      } else if (*verbose) 
-	 Rprintf("Scatter matrix is rank defficient: subset is enlarged\n");	 
+      else 
+	 error("Scatter matrix is rank defficient: subset is enlarged\n");	 
 
       m++;	
       Memcpy(w_sortedcpy, w_sorted, *n);
@@ -158,7 +180,6 @@ void wbacon(double *x, double *w, double *center, double *scatter, double *dist,
    int *n, int *p, double *alpha, int *subset, double *cutoff, 
    int *maxiter, int *verbose)
 {
-   int subsetsize, iter = 1;
    int *subset0;
    double *w_cpy, *work; 
 
@@ -174,15 +195,16 @@ void wbacon(double *x, double *w, double *center, double *scatter, double *dist,
    weightedscatter(x, work, w, center, scatter, n, p);	 // covariance 
    mahalanobis(x, work, center, scatter, dist, n, p);	 // Mahalan. dist. 
 
-   Memcpy(w_cpy, w, *n); 
+   Memcpy(w_cpy, w, *n);
+   int subsetsize; 
    initialsubset(x, w_cpy, dist, subset, &subsetsize, n, p, verbose);
 
    // STEP 1: update iteratively
+   int iter = 1;
    for (;;) {
 
       if (*verbose) {
-	 double percentage;
-	 percentage = 100.0 * (double)subsetsize / (double)*n;
+	 double percentage = 100.0 * (double)subsetsize / (double)*n;
 	 Rprintf("Subset %d: n = %d (%.1f%%)\n", iter, subsetsize, percentage);
       }
 
@@ -260,7 +282,6 @@ static inline void weightedmean(double *x, double *w, double *center, int *n,
 static inline void weightedscatter(double *x, double *work, double *w, 
    double *center, double *scatter, int *n, int *p)
 {
-   const double done = 1.0, dzero = 0.0;
    Memcpy(work, x, *n * *p); 
 
    // center the data and multiply by sqrt(w) 
@@ -275,19 +296,9 @@ static inline void weightedscatter(double *x, double *work, double *w,
    }
 
    // cross product: scatter matrix = t(work) %*% work; 
-   F77_CALL(dgemm)("T",	// TRANSA
-      "N",		// TRANSB
-      p,		// M (number of rows of A)
-      p,		// N (number of columns of B)
-      n,		// K (number of columns of A)
-      &done,		// ALPHA
-      work,		// A 
-      n,		// LDA
-      work,		// B
-      n,		// LDB
-      &dzero,		// BETA
-      scatter,		// C (on return: scatter)
-      p);		// LDC
+   const double done = 1.0, dzero = 0.0;
+   F77_CALL(dgemm)("T",	"N", p, p, n, &done, work, n, work, n, &dzero, scatter, 
+      p);	
 
    for (int i = 0; i < (*p * *p); i++)
       scatter[i] /= (sum_w - 1); 
@@ -305,35 +316,22 @@ static inline void weightedscatter(double *x, double *work, double *w,
 static inline void mahalanobis(double *x, double *work, double *center, 
    double *scatter, double *dist, int *n, int *p)
 {
-   int info;
-   double done = 1.0;
-
    Memcpy(work, x, *n * *p);		  // copy of 'x' 
 
-   for (int i = 0; i < *n; i++) {      
-      for (int j = 0; j < *p; j++) {
+   for (int i = 0; i < *n; i++)       
+      for (int j = 0; j < *p; j++) 
 	 work[*n * j + i] -= center[j];	  // center the data
-      }
-   }
 
    Memcpy(dist, scatter, *p * *p); // store 'scatter' temporarily in 'dist'
 
    // Cholesky decomposition of scatter matrix (stored in 'dist') 
+   int info;
    F77_CALL(dpotrf)("L", p, dist, p, &info);
-   if (info != 0) Rprintf("mahalanobis: DPOTRF failed\n");
+   if (info != 0) error("mahalanobis: DPOTRF failed\n");
 
    // Solve for y in A * y = B by forward subsitution (A = Cholesky factor) 
-   F77_CALL(dtrsm)("R",	// SIDE
-      "L",		// UPLO
-      "T",		// TRANSA
-      "N",		// DIAG
-      n,		// M (number of rows of B)
-      p,		// N (number of columns of B)
-      &done,		// ALPHA
-      dist,		// A	
-      p,		// LDA
-      work,		// B (on return)
-      n);		// LDB
+   double done = 1.0;
+   F77_CALL(dtrsm)("R",	"L", "T", "N", n, p, &done, dist, p, work, n);		
  
    for (int i = 0; i < *n; i++) {   // Mahalanobis distance
       dist[i] = 0.0;

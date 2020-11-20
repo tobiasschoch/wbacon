@@ -1,10 +1,10 @@
 # some macros
-CC		= C:/Rtools/mingw_64/bin/gcc.exe
-CFLAGS		= -std=c11 -O0
-R_C_HEADER	= C:/"Program Files"/R/R-3.5.1/include
-DLL_BLAS	= C:/"Program Files"/R/R-3.5.1/bin/x64/Rblas.dll 
-DLL_LAPACK	= C:/"Program Files"/R/R-3.5.1/bin/x64/Rlapack.dll 
-DLL_R		= C:/"Program Files"/R/R-3.5.1/bin/x64/R.dll
+CC		= C:/Rtools/mingw64/bin/gcc.exe
+CFLAGS		= -std=gnu99 -O2
+R_C_HEADER	= C:/"Program Files"/R/R-4.0.2/include
+DLL_BLAS	= C:/"Program Files"/R/R-4.0.2/bin/x64/Rblas.dll 
+DLL_LAPACK	= C:/"Program Files"/R/R-4.0.2/bin/x64/Rlapack.dll 
+DLL_R		= C:/"Program Files"/R/R-4.0.2/bin/x64/R.dll
 
 # link (note PowerShell and cmd fail when lf + cr is used by '/') 
 cbacon: cbacon.o wquantile.o 
@@ -12,15 +12,11 @@ cbacon: cbacon.o wquantile.o
 
 # compile
 cbacon.o: cbacon.c 
-	$(CC) -Wall -I $(R_C_HEADER) -c $*.c $(CFLAGS) 
-
-# compile
-#sctmv.o: sctmv.c 
-#	$(CC) -Wall -I $(R_C_HEADER) -c $*.c $(CFLAGS) 
+	$(CC) -Wall -pedantic -I $(R_C_HEADER) -c $*.c $(CFLAGS) 
 
 # compile
 wquantile.o: wquantile.c 
-	$(CC) -Wall -I $(R_C_HEADER) -c $*.c $(CFLAGS) 
+	$(CC) -Wall -pedantic -I $(R_C_HEADER) -c $*.c $(CFLAGS) 
 
 # housekeeping (using make clean)
 .PHONY: clean
