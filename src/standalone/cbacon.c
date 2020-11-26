@@ -28,7 +28,7 @@
 #include "cbacon.h" 
 
 // macros
-#define R_PACKAGE 1		   // 1: *.dll/*.so for R; 0: standalone binary 
+#define R_PACKAGE 0		   // 1: *.dll/*.so for R; 0: standalone binary 
 #define DEBUG_MODE 0		   // 1: debug mode on; 0: off
 #define _RANK_TOLERANCE 1.0e-8	   // criterion to detect rank deficiency
 #define _POWER2(_x) ((_x) * (_x))
@@ -40,17 +40,13 @@
 #endif
 
 // prototype of local function
-static inline double cutoffval(double, int, int, int) 
-   __attribute__((always_inline));
-static inline void initialsubset(double*, double*, double*, int*, int*, int*, 
-   int*, int*)  __attribute__((always_inline));
-static inline void weightedscatter(double*, double*, double*, double*, double*, 
-   int*, int*) __attribute__((always_inline));
-static inline void weightedmean(double*, double*, double*, int*, int*) 
-   __attribute__((always_inline));
-static inline void mahalanobis(double*, double*, double*, double*, double*, 
-   double*, int*, int*) __attribute__((always_inline));
-static inline double qchisq2(double, double) __attribute__((always_inline));
+double cutoffval(double, int, int, int); 
+void initialsubset(double*, double*, double*, int*, int*, int*, int*, int*);  
+void weightedscatter(double*, double*, double*, double*, double*, int*, int*); 
+void weightedmean(double*, double*, double*, int*, int*); 
+void mahalanobis(double*, double*, double*, double*, double*, double*, int*, 
+   int*); 
+double qchisq2(double, double);  
 
 #if DEBUG_MODE
 void print_cov(double*, int*);
@@ -64,7 +60,7 @@ void print_cov(double*, int*);
 |* Lin, J.-T. (1994). New approximations for the precentage points of the     *|	
 |*    chi-square distribution, Probab. Eng. Inf. Sci. 8, pp. 135-146.	      *|	
 \******************************************************************************/
-static inline double qchisq2(double p, double n) 
+double qchisq2(double p, double n) 
 {
    return _POWER2(-0.655 + 0.975 * sqrt(n + 0.6) + 1.839 * sqrt(-log10(p))) - 3.0;
 }
@@ -75,7 +71,7 @@ static inline double qchisq2(double p, double n)
 |*    k		  size of subset					     *|
 |*    n, p	  dimensions	 					     *|
 \*****************************************************************************/
-static inline double cutoffval(double alpha, int n, int k, int p)
+double cutoffval(double alpha, int n, int k, int p)
 {
    double dn = (double)n, dp = (double)p, dk = (double)k;
    double h = (dn + dp + 1.0) / 2.0;
@@ -94,28 +90,28 @@ static inline double cutoffval(double alpha, int n, int k, int p)
 |*    n, p	  dimensions		  		                     *|
 |*    verbose	  0 = quiet; 1 =  verbose				     *|
 \*****************************************************************************/
-static inline void initialsubset(double *x, double *w, double *dist, 
+void initialsubset(double *x, double *w, double *dist, 
    int *subset, int *subsetsize, int *n, int *p, int *verbose)
 {
    int *iarray;
    double *dist_sorted, *x_sorted, *w_sorted, *w_sortedcpy, *center, *scatter, 
       *work;
 
-   center = (double*) Calloc(*p, double);
-   scatter = (double*) Calloc(*p * *p, double);
-   work = (double*) Calloc(*n * *p, double);
+   center = (double*) calloc(*p, sizeof(double));
+   scatter = (double*) calloc(*p * *p, sizeof(double));
+   work = (double*) calloc(*n * *p, sizeof(double));
 
    // STEP 0: sort Mahalanobis distance from small to large (make copies 
    // because the arrays are sorted in place)
-   dist_sorted = (double*) Calloc(*n, double);
-   x_sorted = (double*) Calloc(*n * *p, double);
-   w_sorted = (double*) Calloc(*n, double);
+   dist_sorted = (double*) calloc(*n, sizeof(double));
+   x_sorted = (double*) calloc(*n * *p, sizeof(double));
+   w_sorted = (double*) calloc(*n, sizeof(double));
    Memcpy(dist_sorted, dist, *n);
    Memcpy(x_sorted, x, *n * *p);
    Memcpy(w_sorted, w, *n);
 
    // generate and populate 'iarray'
-   iarray = (int*) Calloc(*n, int);
+   iarray = (int*) calloc(*n, sizeof(int));
 
    for (int i = 0; i < *n; i++)
       iarray[i] = i;
@@ -133,7 +129,7 @@ static inline void initialsubset(double *x, double *w, double *dist,
 
    int m = (int)fmin(4.0 * (double)*p, (double)*n * 0.5); // subset size
 
-   w_sortedcpy = (double*) Calloc(*n, double);
+   w_sortedcpy = (double*) calloc(*n, sizeof(double));
    Memcpy(w_sortedcpy, w_sorted, *n);
 
    // STEP 1 check if scatter matrix of the first 1:m observations has full rank 
@@ -175,8 +171,12 @@ static inline void initialsubset(double *x, double *w, double *dist,
 
    *subsetsize = m;
 
-   Free(iarray); Free(x_sorted); Free(w_sorted); Free(w_sortedcpy); 
-   Free(center); Free(dist_sorted); Free(scatter); Free(work);
+   free(iarray); free(x_sorted); free(w_sorted); free(w_sortedcpy); 
+   free(center); free(dist_sorted); free(scatter); free(work);
+
+//   Free(iarray); Free(x_sorted); Free(w_sorted); Free(w_sortedcpy); 
+//   Free(center); Free(dist_sorted); Free(scatter); Free(work);
+
 }
 
 /*****************************************************************************\
@@ -200,10 +200,10 @@ void wbacon(double *x, double *w, double *center, double *scatter, double *dist,
    int *subset0;
    double *w_cpy, *work_np, *work_pp; 
 
-   subset0 = (int*) Calloc(*n, int);	     
-   w_cpy = (double*) Calloc(*n, double); 
-   work_np = (double*) Calloc(*n * *p, double); 
-   work_pp = (double*) Calloc(*p * *p, double); 
+   subset0 = (int*) calloc(*n, sizeof(int));	     // (initalized with int zero) 
+   w_cpy = (double*) calloc(*n, sizeof(double)); 
+   work_np = (double*) calloc(*n * *p, sizeof(double)); 
+   work_pp = (double*) calloc(*p * *p, sizeof(double)); 
 
    // STEP 0: establish initial subset 
    double dhalf = 0.5;
@@ -212,7 +212,7 @@ void wbacon(double *x, double *w, double *center, double *scatter, double *dist,
 
    // scatter and Mahalanobis distances
    weightedscatter(x, work_np, w, center, scatter, n, p);   
-   mahalanobis(x, work_np, work_pp, center, scatter, dist, n, p);  
+   mahalanobis(x, work_np, work_pp, center, scatter, dist, n, p);   
 
    Memcpy(w_cpy, w, *n);  // copy w (w_cpy will be set 0 if not in subset)
    int subsetsize; 
@@ -232,13 +232,13 @@ void wbacon(double *x, double *w, double *center, double *scatter, double *dist,
 	       percentage);
       }
 
-      // location, scatter and the Mahalanobis distances
-      weightedmean(x, w_cpy, center, n, p);			  
-      weightedscatter(x, work_np, w_cpy, center, scatter, n, p);  
+      // location, scatter and Mahalanobis distances
+      weightedmean(x, w_cpy, center, n, p);		  
+      weightedscatter(x, work_np, w_cpy, center, scatter, n, p); 
 #if DEBUG_MODE
       print_cov(work_np, p);
 #endif
-      mahalanobis(x, work_np, work_pp, center, scatter, dist, n, p);       
+      mahalanobis(x, work_np, work_pp, center, scatter, dist, n, p); 
 
       // check whether the subsets differ (XOR current with previous subset)
       is_different = 0;
@@ -278,7 +278,7 @@ void wbacon(double *x, double *w, double *center, double *scatter, double *dist,
       if (iter > *maxiter) break;
    }
 
-   Free(subset0); Free(w_cpy); Free(work_np); Free(work_pp); 
+   free(subset0); free(w_cpy); free(work_np); free(work_pp);
 }
 
 /*****************************************************************************\
@@ -288,7 +288,7 @@ void wbacon(double *x, double *w, double *center, double *scatter, double *dist,
 |*    center	  on return: array[p]		      	                     *|
 |*    n, p	  dimensions						     *|
 \*****************************************************************************/
-static inline void weightedmean(double *x, double *w, double *center, int *n, 
+void weightedmean(double *x, double *w, double *center, int *n, 
    int *p)
 {
    for (int i = 0; i < *p; i++)
@@ -318,7 +318,7 @@ static inline void weightedmean(double *x, double *w, double *center, int *n,
 |*    scatter	  on return: array[p, p]	      	                     *|
 |*    n, p	  dimensions						     *|
 \*****************************************************************************/
-static inline void weightedscatter(double *x, double *work, double *w, 
+void weightedscatter(double *x, double *work, double *w, 
    double *center, double *scatter, int *n, int *p)
 {
    Memcpy(work, x, *n * *p); 
@@ -356,8 +356,8 @@ static inline void weightedscatter(double *x, double *work, double *w,
 |*    dist	  on return: array[n]	     	      	                     *|
 |*    n, p	  dimensions						     *|
 \*****************************************************************************/
-inline void mahalanobis(double *x, double *work_np, double *work_pp, 
-   double *center, double *scatter, double *dist, int *n, int *p)
+void mahalanobis(double *x, double *work_np, double *work_pp, double *center, 
+   double *scatter, double *dist, int *n, int *p)
 {
    Memcpy(work_np, x, *n * *p);		     // copy of 'x' 
 

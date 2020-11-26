@@ -1,0 +1,5 @@
+# on linux
+
+valgrind --tool=memcheck --track-origins=yes ./test.out
+
+valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all ./test.out

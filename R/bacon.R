@@ -46,7 +46,7 @@ dyn.load("cbacon.dll")
 #    p = as.integer(p))
 
 
-wBACON <- function(x, w = NULL, alpha = 0.95, maxiter = 50, verbose = FALSE){ 
+WB <- function(x, w = NULL, alpha = 0.95, maxiter = 50, verbose = FALSE){ 
    x <- as.matrix(x)
    n <- nrow(x); p <- ncol(x)
    if (is.null(w)) w <- rep(1, n)
@@ -54,7 +54,7 @@ wBACON <- function(x, w = NULL, alpha = 0.95, maxiter = 50, verbose = FALSE){
    tmp <- .C("wbacon", x = as.double(x), w = as.double(w), 
       center = as.double(numeric(p)), scatter = as.double(numeric(p * p)),
       dist = as.double(numeric(n)), n = as.integer(n), p = as.integer(p),
-      alpha = as.double(0.95), subset = as.integer(numeric(n)), 
+      alpha = as.double(alpha), subset = as.integer(numeric(n)), 
       cutoff = as.double(numeric(1)), maxiter = as.integer(abs(maxiter)),
       verbose = as.integer(verbose))
    tmp$scatter <- matrix(tmp$scatter, ncol = p)

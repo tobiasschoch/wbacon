@@ -1,0 +1,29 @@
+# some macros
+CC		= gcc 
+CFLAGS		= -g -std=gnu99 -O2
+R_C_HEADER	= /usr/share/R/include/
+DLL_BLAS	= /usr/lib/x86_64-linux-gnu/libblas.so
+DLL_LAPACK	= /usr/lib/x86_64-linux-gnu/liblapack.so
+DLL_R		= /usr/lib/R/lib/libR.so
+
+# link (note: -lm for math library)
+cbacon: cbacon.o wquantile.o 
+	$(CC) -shared  -L $(DLL_BLAS) $(DLL_LAPACK) $(DLL_R) -o $@.so $@.o \
+	wquantile.o -lm -lblas -llapack -lR
+
+# compile
+cbacon.o: cbacon.c 
+	$(CC) -Wall --pedantic -I $(R_C_HEADER) -c $*.c $(CFLAGS) 
+
+# compile
+wquantile.o: wquantile.c 
+	$(CC) -Wall --pedantic -I $(R_C_HEADER) -c $*.c $(CFLAGS) 
+
+# compile
+testcases.o: testcases.c 
+	$(CC) -Wall --pedantic -I $(R_C_HEADER) -c $*.c $(CFLAGS) 
+
+# housekeeping (using make clean)
+.PHONY: clean
+clean: 
+	rm cbacon.o wquantile.o 

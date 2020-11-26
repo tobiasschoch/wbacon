@@ -2,7 +2,7 @@
 
 
 bc <- function(x, w = NULL, collect = 4, m = min(collect * p, n * 0.5), alpha = 0.95,
-		    maxsteps = 100){
+		    maxsteps = 100, verbose = TRUE){
    x <- as.matrix(x)
    n <- nrow(x); p <- ncol(x)
    stopifnot(n > p, p > 0,  0 < alpha, alpha < 1)
@@ -26,11 +26,13 @@ bc <- function(x, w = NULL, collect = 4, m = min(collect * p, n * 0.5), alpha = 
    }
    if(rnk < p ) stop("matrix not of full rank\n")
 
-
-
    subset <- 1:n %in% ordered.indices[1:m]
    presubset <- rep(FALSE, n)
    converged <- FALSE; steps <- 1L
+
+   if (verbose)
+      cat("Subset: n =", sum(subset), "\n")
+
    repeat {
       r <- sum(subset)
 	 x_subset <- x[subset, , drop = FALSE]
@@ -59,6 +61,10 @@ bc <- function(x, w = NULL, collect = 4, m = min(collect * p, n * 0.5), alpha = 
 	 limit <- cnpr * sqrt(qchisq(alpha / n, p, lower.tail = FALSE))
 
 	 subset <- dis < limit
+
+	 if (verbose)
+	    cat("Subset: n =", sum(subset), " cutoff:", limit, "\n")
+
 	 steps <- steps + 1L
 	 if (steps > maxsteps)
 	    break
@@ -71,5 +77,14 @@ bc <- function(x, w = NULL, collect = 4, m = min(collect * p, n * 0.5), alpha = 
 } 
 
 
-collect = 4; m = min(collect * p, n * 0.5); alpha = 0.99; maxsteps = 100
 
+
+
+foo <- function(alpha, n, k, p){
+   # cut-off point (chi-squared)
+   h <- (n + p + 1) / 2
+   chr <- max(0, (h - k) / (h + k))
+   cnp <- 1 + (p + 1) / (n - p) + 2 / (n - 1 - 3*p)
+   cnpr <- cnp + chr
+   cnpr * sqrt(qchisq(alpha / n, p, lower.tail = FALSE))
+}
