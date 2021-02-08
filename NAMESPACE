@@ -1,0 +1,15 @@
+export(center)
+export(is_outlier)
+export(wBACON)
+export(wBACON_reg)
+export(distance)
+export(weighted_quantile)
+export(weighted_median)
+
+S3method(print, robmv)
+S3method(summary, robmv)
+S3method(vcov, robmv)
+
+useDynLib(wbacon, wbacon)
+useDynLib(wbacon, wbacon_reg)
+useDynLib(wbacon, wquantile)

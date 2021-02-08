@@ -1,0 +1,20 @@
+Package: wbacon
+Type: Package
+Title: Weighted BACON algorithms
+Version: 0.1
+Author: Tobias Schoch [aut, cre, cph]
+Maintainer: Tobias Schoch <tobias.schoch@fhnw.ch>
+Description: Weighted BACON algorithm for multivariate outlier dectection and robust linear regression
+License: GPL (>= 2)
+URL: https://github.com/tobiasschoch/wbacon
+BugReports: https://github.com/tobiasschoch/wbacon/issues
+Encoding: UTF-8
+LazyData: true
+Depends:
+    R (>= 3.5.0)
+Imports:
+	stats
+Suggests:
+	modi,
+	robustbase,
+	robustX 

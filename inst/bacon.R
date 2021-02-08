@@ -1,5 +1,5 @@
 setwd("C:/My/code/cbacon/src")
-dyn.load("cbacon.dll")
+dyn.load("wbacon.dll")
 
 # set.seed(1)
 # x <- matrix(c(rnorm(20, 10, 2)), ncol = 2)
@@ -56,7 +56,7 @@ WB <- function(x, w = NULL, alpha = 0.95, maxiter = 50, verbose = FALSE){
       dist = as.double(numeric(n)), n = as.integer(n), p = as.integer(p),
       alpha = as.double(alpha), subset = as.integer(numeric(n)), 
       cutoff = as.double(numeric(1)), maxiter = as.integer(abs(maxiter)),
-      verbose = as.integer(verbose))
+      verbose = as.integer(verbose), sucess = as.integer(1))
    tmp$scatter <- matrix(tmp$scatter, ncol = p)
    tmp$verbose <- NULL
    tmp$converged <- ifelse(tmp$maxiter < maxiter, TRUE, FALSE)

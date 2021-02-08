@@ -1,0 +1,261 @@
+\documentclass[a4paper,oneside,11pt,DIV=12]{scrartcl}
+
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+
+\setkomafont{captionlabel}{\sffamily\bfseries\small}
+\setkomafont{caption}{\sffamily}
+
+\usepackage[T1]{fontenc}
+\usepackage{times}
+\renewcommand{\familydefault}{\rmdefault} 
+
+\usepackage{Sweave}
+\setkeys{Gin}{width = 0.8\textwidth}
+
+\usepackage{setspace}
+\usepackage[longnamesfirst]{natbib}
+\usepackage{enumerate}
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=blue,      
+    urlcolor=blue,
+    citecolor=blue
+}
+
+\setlength\parindent{24pt}
+\newcommand{\code}[1]{{\texttt{#1}}}
+
+
+% ==============================================================================
+\begin{document}
+
+\title{\Large Vignette: Weighted BACON algorithms}
+
+\author{{\normalsize Tobias Schoch} \\ 
+\begin{minipage}[t][][t]{\textwidth}
+	\begin{center}
+	\small{University of Applied Sciences Northwestern Switzerland FHNW} \\
+	\small{School of Business, Riggenbachstrasse 16, CH-4600 Olten} \\
+	\small{\texttt{tobias.schoch{@}fhnw.ch}}
+	\end{center}
+\end{minipage}} 
+
+\date{{\small \today}}
+\maketitle
+
+\shortcites{machler_rousseeuw_etal_2020}
+
+%------------------------------------------------------------------------------
+\section{Introduction}\label{ch:introduction}
+\setstretch{1.1}
+
+The package \code{wbacon} implements a weighted variant of the BACON algorithms
+\citep{billor_hadi_etal_2000} for multivariate outlier detection and robust
+linear regression. The extension of the BACON algorithm for outlier detection
+to allow for weighting is due to \citet{beguin_hulliger_2008}. These authors
+also have extended the algorithms in other directions (not implemented in
+\code{wbacon}). 
+
+Additional information on the BACON algorithms and the inplementation can be
+found in the documents:
+\begin{itemize}
+	\item \code{methods.pdf}: A mathematical description of the algorithms and
+		their implementation;
+	\item \code{doc\_c\_functions.pdf}: A documentation of the \code{C} 
+		functions.
+\end{itemize}
+\noindent Both documents are filed in the package folder \code{inst/doc/}.
+
+\subsubsection*{Installation}
+The \code{wbacon} package can be pulled and installed from  
+\href{https://www.github.com/tobiasschoch/cbacon}{www.github.com/tobiasschoch/cbacon}
+using 
+\begin{verbatim}
+   devtools::install_github("tobiasschoch/wbacon")
+\end{verbatim}
+\noindent The package contains \code{C} code to be compiled. Users of Microsoft
+Windows need an installation of the the R tool chain bundle
+\href{https://cran.r-project.org/bin/windows/Rtools/}{\code{rtools40}} to build
+the package. 
+
+\subsubsection*{Loading}
+Once the package has been installed, it can be loaded and attached to the 
+current R session by 
+<<>>=
+library(wbacon)
+@
+
+\subsubsection*{Organization of this document}
+In Section \ref{sec:multivariate}, we illustrate the application of the 
+\code{wbacon} algorithm for multivariate outlier detection in two case studies 
+(\code{bushfire} and \code{philips} data). In Section \ref{sec:regression}, 
+we study the robust regression estimator \code{wbacon\_reg}.
+
+
+%===============================================================================
+\section{Multivariate outlier detection}\label{sec:multivariate}
+
+\subsection{Case: Bushfire data}
+The \code{bushfire} dataset is on satellite remote sensing. These data were used by Campbell (1984)\footnote{Campbell, N.A. (1989). Bushfire Mapping using NOAA AVHRR Data. Technical Report. Commonwealth Scientific and Industrial Research Organisation, North Ryde.} to locate bushfire scars. The data are radiometer readings from polar-orbiting satellites of the National Oceanic and Atmospheric Administration (NOAA) which have been collected continuously since 1981. The measurements are taken on five frequency bands or channels. In the near infrared band, it is possible to distinguish vegetation types from burned surface. At visible wavelengths, the vegetation spectra are similar to burned surface. The spatial resolution is rather low (1.1 km per pixel). 
+
+The \code{bushfire} data contain radiometer readings for 38 pixels and have been studied in \citet{maronna_yohai_1995}, \citet{beguin_hulliger_2002}, \cite{beguin_hulliger_2008}, and \cite{hulliger_schoch_2009a}. The data can be obtained from the \code{R} package \code{modi} \citep{hulliger_sterchi_2020}.\footnote{The data are also distributed with the \code{R} package \code{robustbase} \citep{machler_rousseeuw_etal_2020}.} 
+<<>>=
+data(bushfire, package = "modi")
+@
+\noindent The first 6 readings on the five frequency bands (variables) are
+\setstretch{1.0}
+<<>>=
+head(bushfire)
+@
+\setstretch{1.1}
+\noindent \citet{beguin_hulliger_2008} generated a set of sampling weights. The weights can be attached to the current session by
+<<>>=
+data(bushfire.weights, package = "modi")
+@
+
+\subsubsection*{Outlier detection}
+
+\setstretch{1.0}
+<<>>=
+fit <- wBACON(bushfire, w = bushfire.weights, alpha = 0.99)
+fit
+@
+\setstretch{1.1}
+
+\noindent The \code{summary} method 
+\setstretch{1.0}
+<<>>=
+summary(fit)
+@
+\setstretch{1.1}
+
+\noindent The function \code{is\_outlier()} returns a vector of logicals whether an observation has been flagged as an outlier. 
+<<>>=
+which(is_outlier(fit) == TRUE)
+@
+\noindent The center and covariance (scatter) matrix can be extracted with the auxiliary functions, respectively, \code{center()} and 
+\setstretch{1.0}
+<<>>=
+vcov(fit)
+@
+\setstretch{1.1}
+\noindent The \code{distance()} function extracts the robust Mahalanobis distances. An application of this function, i.e., \code{hist(distance(fit), breaks = 20)}, is shown in Figure \ref{fig:bushfire_hist}.
+
+\begin{figure}[htb]
+\begin{center}
+<<fig = TRUE, echo = FALSE, height = 5, width = 10>>=
+hist(distance(fit), breaks = 10, main = "", cex.lab = 1.3, cex.axis = 1.2)
+abline(v = fit$cutoff, lty = 2)
+box()
+@
+\caption{Histogram of distances from the center (bushfire data)}\label{fig:bushfire_hist}
+\end{center}
+\end{figure}
+
+
+%------------------------------------------------------------------------------
+\clearpage
+\subsection{Case: Philips data}
+
+
+\citet{rousseeuw_van-driessen_1999}
+
+Old television sets had a cathode ray tube with an electron gun. The emitted beam runs through a diaphragm that lets pass only a partial beam to the screen. The diaphragm consists of 9 components. The Philips data set contains $n = 667$ measurements on the $p = 9$ components (variables); see \citet{rousseeuw_van-driessen_1999}.  
+
+the \code{R} package \code{cellWise} of \citet{raymaekers_rousseeuw_2020}
+
+<<>>=
+data(philips, package = "cellWise")
+@
+
+\setstretch{1.0}
+<<>>=
+head(philips)
+@
+\setstretch{1.1}
+
+\subsection*{Outlier detection}
+
+\setstretch{1.0}
+<<>>=
+fit <- wBACON(philips, alpha = 0.99, version = "V1")
+fit
+@
+\setstretch{1.1}
+\noindent The center of the data is estimated to be
+\setstretch{1.0}
+<<>>=
+print(center(fit), digits = 2)
+@
+\setstretch{1.1}
+\noindent and the BACON algorithm detected
+<<>>=
+sum(is_outlier(fit))
+@
+\noindent outliers. The Figure \ref{fig:philips_hist}
+
+
+\begin{figure}[htb]
+\begin{center}
+<<fig = TRUE, echo = FALSE, height = 5, width = 10>>=
+hist(distance(fit), breaks = 40, main = "", cex.lab = 1.3, cex.axis = 1.2)
+abline(v = fit$cutoff, lty = 2)
+box()
+@
+\caption{Histogram of distances from the center (philips data)}\label{fig:philips_hist}
+\end{center}
+\end{figure}
+
+\subsection*{Comparison with MCD}
+\citet{rousseeuw_driessen_1999}
+
+\code{covMcd} implemented in the \code{R} package \code{robustbase} of \citet{machler_rousseeuw_etal_2020}
+
+
+<<>>=
+library(robustbase)
+fit_mcd <- covMcd(philips)
+@
+
+
+\begin{figure}[htb]
+\begin{center}
+<<fig = TRUE, echo = FALSE, height = 5, width = 10>>=
+plot(sqrt(fit_mcd$mah), pch = 19, cex = 0.6, cex.axis = 1.2, cex.lab = 1.3,
+	ylab = "robust distance", xlab = "obs.", type = "n")
+rect(491, 0, 565, 20, col = "grey90", border = NA)
+points(sqrt(fit_mcd$mah), pch = 19, cex = 0.6)
+points(distance(fit), pch = "+", col = 2)
+box()
+legend("topleft", pch = c(19, 3), col = c(1, 2), 
+	legend = c("covMcd", "wBACON"), cex = 1.3, pt.cex = 0.8, bty = "n")
+@
+\caption{Distances from the center (philips data)}\label{fig:philips_dist}
+\end{center}
+\end{figure}
+
+
+
+
+%===============================================================================
+\clearpage
+\section{Robust linear regression}\label{sec:regression}
+
+
+
+
+%===============================================================================
+% References
+\clearpage
+{
+\singlespacing
+\bibliographystyle{ecta}
+\bibliography{master}
+}
+
+
+ 
+\end{document}
