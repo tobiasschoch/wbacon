@@ -585,7 +585,22 @@ The ``hat'' matrix of the LS estimate in (\ref{eq:leastsquares}), i.e., the orth
 	\bm h = (h_1, \ldots, h_n)^T = \mathrm{diag}(\bm H) = \sum_{j = 1}^p (a_{ij}^2).
 \end{equation}
 
-\noindent The distances $t_i$ of \citet[][p. 288]{billor_hadi_etal_2000}, see Eq. (\ref{eq:tis0}), are computed for all $i=1,\ldots,n$ by 
+\noindent For the weighted regression, the weighted ``hat'' matrix is defined as \citep{li_valliant_2009}  
+\begin{equation}
+	\bm h_w = \mathrm{diag}\Big\{\bm X\big( \widetilde{\bm X}\vert_S^T \, \widetilde{\bm X}\vert_S \big)^{-1} \bm X^T \bm W\Big\},
+\end{equation}
+\noindent where $\bm W = \mathrm{diag}(\bm w)$. It can be computed efficiently by 
+\begin{equation}
+	\bm h_w = \bm h_* \circ \bm w,
+\end{equation}
+\noindent where $\bm h_*$ obtains from  (\ref{eq:diaghat}) with $\bm (a_{ij}) \equiv \bm A = \bm X \widetilde{\bm R}_{S1}^{-1}$, where $\widetilde{\bm R}_{S1}$ is the $\bm R_1$ matrix of the ``thin'' QR factorization of $\widetilde{\bm X}\vert_S$.
+
+
+
+
+
+
+The distances $t_i$ of \citet[][p. 288]{billor_hadi_etal_2000}, see Eq. (\ref{eq:tis0}), are computed for all $i=1,\ldots,n$ by 
 \begin{equation}\label{eq:tis}
 	\setstretch{2.5}
 	t_i(\bm \beta_S) = \begin{cases}

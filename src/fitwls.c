@@ -22,68 +22,62 @@
 /******************************************************************************\
 |* Weighted least squares estimate                                            *|
 |*                                                                            *|
-|*  x       vectorized design matrix, array[n * p]                            *|
-|*  work_x  array[n * p], on return: QR factor (dgels)                        *|
-|*  y       response vector, array[n]                                         *|
-|*  work_y  array[n]                                                          *|
-|*  w       weights vector, array[n]                                          *|
-|*  resid   on return: residuals vector, array[n]                             *|
-|*  beta0   on return: coefficient vector, array[p]                           *|
-|*  n, p    array dimensions                                                  *|
-|*  work    work array, array[lwork] used for QR factorization                *|
-|*  lwork   size of array 'work' (if < 0, then 'dgels' determines the optimal *|
-|*          size)                                                             *|
-|*  info    on return: info on fitwls (error if != 0)                         *|
+|*  dat        typedef struct 'regdata'                                       *|
+|*  weight     weight used in weighted regression                             *|
+|*  work_dgels work array, array[lwork] used for QR factorization in dgels    *|
+|*  lwork      size of array 'work_dgels' (if < 0, then 'dgels' determines    *|
+|*             the optimal size and returns it as the functions return value) *|
+|*  beta       on return, beta is overwritten with the reg. coefficients      *|
+|*  resid      on return, resid is overwritten with the residuals             *|
+|* NOTE: if not successfull 1 is returned; otherwise 0                        *|
+|*       dat must contain slots for dat->wx and dat->wy                       *|
 \******************************************************************************/
-void fitwls(double *x, double *work_x, double *y, double *work_y, double *w,
-	double *resid, double *beta0, int *n, int *p, double *work, int *lwork,
-	int *info)
+int fitwls(regdata *dat, double *weight, double *work_dgels, int lwork, 
+	double *beta, double *resid)
 {
-	// define constants for the call of 'dgels'
 	const int int_1 = 1;
-	int info_dgels = 1;
-	*info = 0;
+	int info_dgels = 1, n = dat->n, p = dat->p;
 	
-	// STEP 0: determine the optimal size of array 'work'
-	if (*lwork < 0) {
-		F77_CALL(dgels)("N", n, p, &int_1, x, n, y, n, work, lwork,
-			&info_dgels);
-		*lwork = (int) work[0]; 
+	// STEP 0: determine the optimal size of array 'work' and return 
+	if (lwork < 0) {
+		F77_CALL(dgels)("N", &n, &p, &int_1, dat->x, &n, dat->y, &n, work_dgels, 
+			&lwork, &info_dgels);
+		return (int) work_dgels[0];
+	}
 
 	// STEP 1: compute least squares fit
-	} else {
-		// pre-multiply the design matrix and the response vector by sqrt(w)
-		double tmp;
-		for (int i = 0; i < *n; i++) {
-			tmp = sqrt(w[i]);
-			work_y[i] = y[i] * tmp;
 
-			for (int j = 0; j < *p; j++)
-				work_x[*n * j + i] = x[*n * j + i] * tmp;
-		}
+	// pre-multiply the design matrix and the response vector by sqrt(w)
+	Memcpy(dat->wy, dat->y, n);
+	Memcpy(dat->wx, dat->x, n * p);
+	double tmp;
+	for (int i = 0; i < n; i++) {
+		tmp = sqrt(weight[i]);
+		dat->wy[i] = dat->y[i] * tmp;
 
-		// compute the (weighted) least squares estimate (LAPACK::dgels),
-		// solves minimize |B - A*X| for X (using QR factorization)
-		F77_CALL(dgels)("N", n, p, &int_1, work_x, n, work_y, n, work, lwork,
-			&info_dgels);
-
-		// dgels is not well suited as a rank-revealing procedure; i.e., INFO<0
-		// iff a diagonal element of the R matrix is exactly 0. This is not
-		// helpful; hence, we check the diagonal elements of R separately and 
-		// issue and error flag if any(abs(diag(R))) is close to zero
-		for (int i = 0; i < *p; i++) {
-			if (fabs(work_x[(*n + 1) * i]) < sqrt(DBL_EPSILON)) {
-				*info = 1;
-				return;
-			}
-		}
-
-		Memcpy(beta0, work_y, *p);  // retrieve 'betacoefficients'
-
-		// compute the residuals (BLAS::dgemv): y = alpha*A*x + beta*y
-		const double double_minus1 = -1.0, double_1 = 1.0;
-		Memcpy(resid, y, *n);
-		F77_CALL(dgemv)("N", n, p, &double_minus1, x, n, beta0, &int_1,
-			&double_1, resid,&int_1);
+		for (int j = 0; j < p; j++)
+			dat->wx[n * j + i] = dat->x[n * j + i] * tmp;
 	}
+
+	// weighted least squares estimate (LAPACK::dgels),
+	F77_CALL(dgels)("N", &n, &p, &int_1, dat->wx, &n, dat->wy, &n, work_dgels,
+		&lwork, &info_dgels);
+
+	// dgels is not well suited as a rank-revealing procedure; i.e., INFO<0
+	// iff a diagonal element of the R matrix is exactly 0. This is not
+	// helpful; hence, we check the diagonal elements of R separately and 
+	// issue and error flag if any(abs(diag(R))) is close to zero
+	for (int i = 0; i < p; i++)
+		if (fabs(dat->wx[(n + 1) * i]) < sqrt(DBL_EPSILON))
+			return 1;
+
+	Memcpy(beta, dat->wy, p);		// extract 'beta'
+
+	// residuals
+	const double double_minus1 = -1.0, double_1 = 1.0;
+	Memcpy(resid, dat->y, n);
+	F77_CALL(dgemv)("N", &n, &p, &double_minus1, dat->x, &n, beta, &int_1,
+		&double_1, resid, &int_1);
+
+	return 0; 
 } 

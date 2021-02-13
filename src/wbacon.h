@@ -30,6 +30,4 @@
 // declarations 
 void wbacon(double*, double*, double*, double*, double*, int*, int*, double*, 
 	int*, double*, int*, int*, int*, int*);
-
-void test_hat(double *x, double *L, double *hat, int *n, int *p);
 #endif 

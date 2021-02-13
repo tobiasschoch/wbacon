@@ -28,17 +28,19 @@ wbacon: wbacon.o wbacon_error.o wbacon_reg.o wquantile.o fitwls.o partial_sort.o
 else
 # Linux 
 wbacon: wbacon.o wbacon_reg.o wbacon_error.o wquantile.o fitwls.o partial_sort.o
-	$(CC) -shared -L $(DLL_BLAS) $(DLL_LAPACK) $(DLL_R) -o $@.so $@.o 
-	wbacon_error.o wquantile.o wbacon_reg.o fitwls.o partial_sort.o -lm -lblas -llapack -lR
+	$(CC) -shared -L $(DLL_BLAS) $(DLL_LAPACK) $(DLL_R) -o $@.so $@.o \
+	wbacon_error.o wquantile.o wbacon_reg.o fitwls.o partial_sort.o \
+	-lm -lblas -llapack -lR
 endif
 
 # compile
 wbacon.o: wbacon.c
 	$(CC) -Wall -pedantic -I $(R_C_HEADER) -c $*.c $(CFLAGS) 
 
-# compile
+# compile (with -fpic flag for position independent code, otherwise 
+# 'CBACON_ERROR_STRINGS' is not relocatable)
 wbacon_error.o: wbacon_error.c
-	$(CC) -Wall -pedantic -I $(R_C_HEADER) -c $*.c $(CFLAGS) 
+	$(CC) -fpic -Wall -pedantic -I $(R_C_HEADER) -c $*.c $(CFLAGS) 
 
 # compile
 wbacon_reg.o: wbacon_reg.c

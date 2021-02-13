@@ -10,6 +10,7 @@
 #include <Rmath.h>
 #include <R_ext/Lapack.h>
 #include <R_ext/BLAS.h>
+#include "regdata.h"
 #include "wquantile.h" 
 #include "partial_sort.h"
 #include "fitwls.h" 
@@ -29,6 +30,6 @@
 #endif
 
 // declarations 
-void wbacon_reg(double*, double*, double*, double*, double*, double*, double*, 
-	int*, int*, double*, int*, int*, int*, int*, int*);
+void wbacon_reg(double*, double*, double*, double*, double*, int*, double*,
+	int*, int*, int*, int*, int*, int*, double*);
 #endif 

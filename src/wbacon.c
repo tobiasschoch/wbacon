@@ -1,4 +1,4 @@
-/* Implementation of the weighted BACON algorithm of multivariate outlier
+/* Implementation of the weighted BACON algorithm for multivariate outlier
    detection of Billor et al. (2000), with the extension to allow for weighting
    of Béguin and Hulliger (2008) 
 
@@ -30,15 +30,33 @@
 
 #define _POWER2(_x) ((_x) * (_x))
 
+// data structure
+typedef struct wbdata_struct {
+	int n; 
+	int p;
+	double *x;
+	double *w;
+	double *dist;
+} wbdata;
+
+// structure of working arrays
+typedef struct workarray_struct {
+	int *iarray;
+	double *work_n;
+	double *work_np;
+	double *work_pp;
+	double *work_2n;
+} workarray;
+
 // declarations of local function
-wbacon_error_type initialsubset(double*, double*, double*, int*, int*, int*, 
+wbacon_error_type initialsubset(wbdata*, workarray*, double*, double*, int*,
 	int*, int*);
-wbacon_error_type mahalanobis(double*, double*, double*, double*, double*, 
-	double*, int*, int*);
-wbacon_error_type check_matrix_fullrank(double*, int*, int);
-void weightedmean(double*, double*, double*, int*, int*);
-void weightedscatter(double*, double*, double*, double*, double*, int*, int*);
-void euclidean_norm2(double*, double*, double*, double*, int*, int*);
+wbacon_error_type mahalanobis(wbdata*, double*, double*, double*, double*);
+wbacon_error_type check_matrix_fullrank(double*, int, int);
+void weightedmean(wbdata*, double*);
+void weightedscatter(wbdata*, double*, double*, double*);
+void euclidean_norm2(wbdata*, double*, double*);
+void verbose_message(int, int, int, double);
 static inline double cutoffval(int, int, int) __attribute__((always_inline));
 
 /******************************************************************************\
@@ -83,76 +101,56 @@ static inline double cutoffval(int n, int k, int p)
 
 /******************************************************************************\
 |* initialsubset                                                              *|
-|*  x          array[n, p]                                                    *|
-|*  w          on return: elements not in subset have w = 0, array[n]         *|
-|*  dist       array[n]                                                       *|
+|*  dat        data, typedef struct wbdata                                    *|
+|*  work       work arrays, typedef struct workarray                          *|
+|*  center     array[p]                                                       *|
+|*  scatter    array[p, p]                                                    *|
 |*  subset     on return: initial subset                                      *|
 |*  subsetsize on return: size initial subset                                 *|
-|*  n, p       dimensions                                                     *|
 |*  verbose    0: quiet; 1: verbose                                           *|
 \******************************************************************************/
-wbacon_error_type initialsubset(double *x, double *w, double *dist, int *subset, 
-	int *subsetsize, int *n, int *p, int *verbose)
+wbacon_error_type initialsubset(wbdata *dat, workarray *work, double *center,
+	double *scatter, int *subset, int *subsetsize, int *verbose)
 {
-	int *iarray;
-	double *dist_sorted, *x_sorted, *w_sorted, *w_sortedcpy, *center, *scatter,
-		*work;
+	int n = dat->n, p = dat->p;
 	wbacon_error_type status = WBACON_ERROR_OK;
 
-	center = (double*) Calloc(*p, double);
-	scatter = (double*) Calloc(*p * *p, double);
-	work = (double*) Calloc(*n * *p, double);
+	// store 'w' (it will be modifed)
+	Memcpy(work->work_n, dat->w, n);
 
-	// STEP 0: sort Mahalanobis dist. (iarray is sorted along with it)
-	dist_sorted = (double*) Calloc(*n, double);
-	Memcpy(dist_sorted, dist, *n);
-	iarray = (int*) Calloc(*n, int);
-	psort_array(dist_sorted, iarray, *n, *n);
-
-	// use iarray to sort x (x_sorted) and w (w_sorted)
-	x_sorted = (double*) Calloc(*n * *p, double);
-	w_sorted = (double*) Calloc(*n, double);
-	Memcpy(x_sorted, x, *n * *p);
-	Memcpy(w_sorted, w, *n);
-
-	for (int i = 0; i < *n; i++) {
-		w_sorted[i] = w[iarray[i]];
-		for (int j = 0; j < *p; j++)
-			x_sorted[i + *n * j] = x[iarray[i] + *n * j];
-	}
+	// sort the Mahalanobis distances
+	psort_array(dat->dist, work->iarray, n, n);
 
 	// determine subset size
-	int m = (int)fmin(4.0 * (double)*p, (double)*n * 0.5);
+	int m = (int)fmin(4.0 * (double)p, (double)n * 0.5);
 
-	w_sortedcpy = (double*) Calloc(*n, double);
-	Memcpy(w_sortedcpy, w_sorted, *n);
+//FIXME: take out collect = 4.0 as a parameter
 
-	// STEP 1 check if scatter matrix (with obs. 1:m) has full rank
-	while (m < *n) {
-		// set weights of observations (m+1):n to zero 
-		for (int i = m; i < *n; i++)
-			w_sortedcpy[i] = 0.0;
+	// set weights of observations (m+1):n to zero 
+	for (int i = m; i < n; i++) 
+		dat->w[work->iarray[i]] = 0.0;
 
-		weightedscatter(x_sorted, work, w_sortedcpy, center, scatter, n, p);
+	// set subset = 1 for the first 1:m elements
+	for (int i = 0; i < m; i++)
+		subset[work->iarray[i]] = 1;
+
+	// check if scatter matrix has full rank; if not, enlarge the subset
+	while (m < n) {
+		weightedscatter(dat, work->work_np, center, scatter);
 		status = check_matrix_fullrank(scatter, p, 1);
 		if (status == WBACON_ERROR_OK)		
 			break;
+
+		if (*verbose) 
+			PRINT_OUT("Initial subset: scatter is rank deficient\n");
+
 		m++;
-		Memcpy(w_sortedcpy, w_sorted, *n);
+		int next_obs = work->iarray[m - 1];
+		dat->w[next_obs] = work->work_n[next_obs];
+		subset[next_obs] = 1;
 	}
 
-	// STEP 2: generate initial subset and set w = 0 if not in subset
-	for (int i = 0; i < m; i++)
-		subset[iarray[i]] = 1;
-   
-	for (int i = m; i < *n; i++)	 
-		w[iarray[i]] = 0.0;
-
 	*subsetsize = m;
-
-	Free(iarray); Free(x_sorted); Free(w_sorted); Free(w_sortedcpy);
-	Free(center); Free(dist_sorted); Free(scatter); Free(work);
-
 	return status;
 }
 
@@ -162,29 +160,29 @@ wbacon_error_type initialsubset(double *x, double *w, double *dist, int *subset,
 |*  p       dimension                                                         *|
 |*  decomp  1: chol. decomposition is computed; 0: x is the chol. decomp.     *|
 \******************************************************************************/
-wbacon_error_type check_matrix_fullrank(double *x, int *p, int decom)
+wbacon_error_type check_matrix_fullrank(double *x, int p, int decom)
 {
 	int rank = 0;
 	if (decom) {
 		// check whether some variances are virtually zero
-		for (int i = 0; i < *p; i++)
-			rank += x[i * (*p + 1)] > _RANK_TOLERANCE ? 1 : 0;
-		if (rank != *p)
+		for (int i = 0; i < p; i++)
+			rank += x[i * (p + 1)] > _RANK_TOLERANCE ? 1 : 0;
+		if (rank != p)
 			return WBACON_ERROR_NOT_POSITIVE_DEFINITE;
 
 		// Cholesky decomposition 
 		int info;
-		F77_CALL(dpotrf)("L", p, x, p, &info);
+		F77_CALL(dpotrf)("L", &p, x, &p, &info);
 		if (info != 0) 
 			return WBACON_ERROR_NOT_POSITIVE_DEFINITE;
 	}
 
 	// check whether the diagonal elements of the Cholesky factor are > tol.
 	rank = 0;
-	for (int i = 0; i < *p; i++)
-		rank += x[i * (*p + 1)] > _RANK_TOLERANCE ? 1 : 0;
+	for (int i = 0; i < p; i++)
+		rank += x[i * (p + 1)] > _RANK_TOLERANCE ? 1 : 0;
 
-	if (rank == *p)
+	if (rank == p)
 		return WBACON_ERROR_OK;
 	else 
 		return WBACON_ERROR_RANK_DEFICIENT; 
@@ -210,17 +208,33 @@ void wbacon(double *x, double *w, double *center, double *scatter, double *dist,
 	int *n, int *p, double *alpha, int *subset, double *cutoff,
 	int *maxiter, int *verbose, int *version2, int *success)
 {
-	int *subset0;
-	double chi2;
-	double *w_cpy, *work_np, *work_pp, *work_2n;
-	wbacon_error_type err;
 	*success = 1;
+	wbacon_error_type err;
 
-	subset0 = (int*) Calloc(*n, int);
-	w_cpy = (double*) Calloc(*n, double);
-	work_np = (double*) Calloc(*n * *p, double);
-	work_pp = (double*) Calloc(*p * *p, double);
-	work_2n = (double*) Calloc(2 * *n, double);
+	int *subset0 = (int*) Calloc(*n, int);
+	double *original_w = (double*) Calloc(*n, double);
+	Memcpy(original_w, w, *n);
+
+	// initialize and populate the struct 'wbdata'
+	wbdata dat;							
+	dat.n = *n;
+	dat.p = *p;
+	dat.x = x;
+	dat.w = w;
+	dat.dist = dist;
+
+	// initialize and populate the struct 'workarray' 
+	workarray work;
+	int *iarray = (int*) Calloc(*n, int);
+	double *work_n = (double*) Calloc(*n, double);
+	double *work_np = (double*) Calloc(*n * *p, double);
+	double *work_pp = (double*) Calloc(*p * *p, double);
+	double *work_2n = (double*) Calloc(2 * *n, double);
+	work.iarray = iarray;
+	work.work_n = work_n;
+	work.work_np = work_np;
+	work.work_pp = work_pp;
+	work.work_2n = work_2n;
 
 	// STEP 0: establish initial subset 
 	if (*version2) {
@@ -230,15 +244,10 @@ void wbacon(double *x, double *w, double *center, double *scatter, double *dist,
 			wquantile_noalloc(x + *n * j, w, work_2n, n, &d_half, &center[j]);
 
 		// distance: Euclidean norm
-		euclidean_norm2(x, dist, work_np, center, n, p);
-
+		euclidean_norm2(&dat, work_np, center);
 	} else {
-		// center: weighted mean
-		weightedmean(x, w, center, n, p);
-
-		// scatter and Mahalanobis distances
-		weightedscatter(x, work_np, w, center, scatter, n, p);
-		err = mahalanobis(x, work_np, work_pp, center, scatter, dist, n, p);
+		// Mahalanobis distances
+		err = mahalanobis(&dat, work_np, work_pp, center, scatter);
 		if (err != WBACON_ERROR_OK) {
 			*success = 0;
 			PRINT_OUT("Error: covariance %s\n", wbacon_error(err));
@@ -246,12 +255,11 @@ void wbacon(double *x, double *w, double *center, double *scatter, double *dist,
 		}
 	}
 
-	// copy w (w_cpy will be set 0 if obs. is not in the subset)
-	Memcpy(w_cpy, w, *n);  
-
 	// determine initial subset
 	int subsetsize;
-	err = initialsubset(x, w_cpy, dist, subset, &subsetsize, n, p, verbose);
+	err = initialsubset(&dat, &work, center, scatter, subset, &subsetsize,
+		verbose);
+
 	if (err != WBACON_ERROR_OK) {
 		*success = 0;
 		PRINT_OUT("Error: %s (initial subset)\n", wbacon_error(err));
@@ -259,23 +267,14 @@ void wbacon(double *x, double *w, double *center, double *scatter, double *dist,
 	}
 
 	// STEP 1: update iteratively
-	chi2 = sqrt(qchisq(*alpha / (double)*n , (double)(*p), 0, 0));	
+	double chi2 = sqrt(qchisq(*alpha / (double)*n , (double)(*p), 0, 0));	
 	int iter = 1, is_different;
 	for (;;) {
-		if (*verbose) {
-			double percentage = 100.0 * (double)subsetsize / (double)*n;
-			if (iter > 1)
-				PRINT_OUT("Subset %d: n = %d (%.1f%%); cutoff: %.2f\n", iter, 
-					subsetsize, percentage, *cutoff);
-			else 
-				PRINT_OUT("Subset %d: n = %d (%.1f%%)\n", iter, subsetsize, 
-					percentage);
-		}
+		if (*verbose)
+			verbose_message(subsetsize, *n, iter, *cutoff);
 
 		// location, scatter and the Mahalanobis distances
-		weightedmean(x, w_cpy, center, n, p);
-		weightedscatter(x, work_np, w_cpy, center, scatter, n, p);
-		err = mahalanobis(x, work_np, work_pp, center, scatter, dist, n, p);
+		err = mahalanobis(&dat, work_np, work_pp, center, scatter);
 		if (err != WBACON_ERROR_OK) {
 			*success = 0;
 			PRINT_OUT("Error: covariance %s (iterative updating)\n", 
@@ -301,7 +300,7 @@ void wbacon(double *x, double *w, double *center, double *scatter, double *dist,
 
 		// generate new subset (based on updated Mahalanobis dist.)
 		Memcpy(subset0, subset, *n);
-		Memcpy(w_cpy, w, *n);
+		Memcpy(w, original_w, *n);
 
 		subsetsize = 0;
 		for (int i = 0; i < *n; i++) {
@@ -310,7 +309,7 @@ void wbacon(double *x, double *w, double *center, double *scatter, double *dist,
 				subsetsize += 1;
 			} else {
 				subset[i] = 0;
-				w_cpy[i] = 0.0;	    // weight = 0 (if obs. is not in subset)
+				w[i] = 0.0;			// weight = 0 (if obs. is not in subset)
 			}
 		}
 
@@ -322,124 +321,142 @@ void wbacon(double *x, double *w, double *center, double *scatter, double *dist,
 	}
 
 clean_up:
-	Free(subset0); Free(w_cpy); Free(work_np); Free(work_pp); Free(work_2n);
+	Free(subset0); Free(original_w); Free(work_np); Free(work_pp); 
+	Free(work_2n); Free(work_n); Free(iarray);
 }
 
 /******************************************************************************\
-|* weighted mean (vector values)                                              *|
-|*  x       array[n, p]                                                       *|
-|*  w       array[n], weights                                                 *|
-|*  center  on return: array[p]                                               *|
-|*  n, p    dimensions                                                        *|
+|* prints out messagges in verbose mode                                       *|
+|*  subsetsize   size of the current subset                                   *|
+|*  n            number of observations                                       *|
+|*  inter        current iteration                                            *|
+|*  cutoff       chi-squared quantile/ cutoff value                           *|
 \******************************************************************************/
-void weightedmean(double *x, double *w, double *center, int *n, int *p)
+void verbose_message(int subsetsize, int n, int iter, double cutoff)
 {
-	for (int i = 0; i < *p; i++)
+	double percentage = 100.0 * (double)subsetsize / (double)n;
+	if (iter > 1)
+		PRINT_OUT("Subset %d: n = %d (%.1f%%); cutoff: %.2f\n", iter, 
+			subsetsize, percentage, cutoff);
+	else 
+		PRINT_OUT("Subset %d: n = %d (%.1f%%)\n", iter, subsetsize, percentage);
+}
+
+/******************************************************************************\
+|* weighted mean (vector valued)                                              *|
+|*  dat     data, typedef struct wbdata                                       *|
+|*  center  on return: array[p]                                               *|
+\******************************************************************************/
+void weightedmean(wbdata *dat, double *center)
+{
+	for (int i = 0; i < dat->p; i++)
 		center[i] = 0.0;
 
 	double sum_w = 0.0;
-	for (int i = 0; i < *n; i++) {
-		sum_w += w[i];
-		for (int j = 0; j < *p; j++) 
-			center[j] += x[*n * j + i] * w[i];
+	for (int i = 0; i < dat->n; i++) {
+		sum_w += dat->w[i];
+		for (int j = 0; j < dat->p; j++) 
+			center[j] += dat->x[dat->n * j + i] * dat->w[i];
    	}
 
-	for (int j = 0; j < *p; j++)
+	for (int j = 0; j < dat->p; j++)
 		center[j] /= sum_w;
 }
 
 /******************************************************************************\
 |* weighted covariance/ scatter matrix                                        *|
-|*  x       array[n, p]                                                       *|
+|*  dat     data, typedef struct wbdata                                       *|
 |*  work    array[n, p]                                                       *|
-|*  w       array[n], weights                                                 *|
 |*  center  array[p]                                                          *|
 |*  scatter on return: array[p, p]                                            *|
-|*  n, p    dimensions                                                        *|
 \******************************************************************************/
-void weightedscatter(double *x, double *work, double *w, double *center,
-	double *scatter, int *n, int *p)
+void weightedscatter(wbdata *dat, double *work, double *center, double *scatter)
 {
-	Memcpy(work, x, *n * *p);
+	int n = dat->n, p = dat->p;
+	Memcpy(work, dat->x, n * p);
 
 	// center the data and multiply by sqrt(w)
 	double sum_w = 0.0;
-	for (int i = 0; i < *n; i++) {
-		sum_w += w[i];
-		for (int j = 0; j < *p; j++) {
-			work[*n * j + i] -= center[j];
-			work[*n * j + i] *= sqrt(w[i]);
+	for (int i = 0; i < n; i++) {
+		sum_w += dat->w[i];
+		for (int j = 0; j < p; j++) {
+			work[n * j + i] -= center[j];
+			work[n * j + i] *= sqrt(dat->w[i]);
 		}
 	}
 
 	// cross product: scatter matrix = t(work) %*% work;
 	const double d_one = 1.0, d_zero = 0.0;
-	F77_CALL(dgemm)("T", "N", p, p, n, &d_one, work, n, work, n, &d_zero,
-		scatter, p);
+	F77_CALL(dgemm)("T", "N", &p, &p, &n, &d_one, work, &n, work, &n, &d_zero,
+		scatter, &p);
 
-	for (int i = 0; i < (*p * *p); i++)
-		scatter[i] /= (sum_w - 1);
+	for (int i = 0; i < (p * p); i++)
+		scatter[i] /= (sum_w - 1.0);
 }
 
 /******************************************************************************\
 |* squared Euclidean norm of an array[n, p]                                   *|
-|*  x       array[n, p]                                                       *|
-|*  dist    array[n]                                                          *|
+|*  dat     data, typedef struct wbdata                                       *|
 |*  work    array[n, p]                                                       *|
 |*  center  array[p]                                                          *|
-|*  n, p    dimensions                                                        *|
 \******************************************************************************/
-void euclidean_norm2(double *x, double *dist, double *work, double *center, 
-	int *n, int *p)
+void euclidean_norm2(wbdata *dat, double *work, double *center)
 {
-	Memcpy(work, x, *n * *p);
+	int n = dat->n, p = dat->p;
+	Memcpy(work, dat->x, n * p);
 
-	for (int i = 0; i < *n; i++) {
-		dist[i] = 0.0;
-		for (int j = 0; j < *p; j++) {
-			work[*n * j + i] -= center[j];
-			dist[i] += work[*n * j + i] * work[*n * j + i];
+	for (int i = 0; i < n; i++) {
+		dat->dist[i] = 0.0;
+		for (int j = 0; j < p; j++) {
+			work[n * j + i] -= center[j];
+			dat->dist[i] += _POWER2(work[n * j + i]);
 		}
 	}
 }
 
 /******************************************************************************\
 |* Mahalanobis distances                                                      *|
-|*  x        array[n, p], n obs. on p. variables, whose M. dist. is computed  *|
+|*  dat      data, typedef struct wbdata                                      *|
 |*  work_np  work array[n, p]                                                 *|
 |*  work_pp  work array[p, p]                                                 *|
 |*  center   array[p]                                                         *|
 |*  scatter  array[p, p]                                                      *|
-|*  dist     on return: array[n]                                              *|
-|*  n, p     dimensions                                                       *|
 \******************************************************************************/
-wbacon_error_type mahalanobis(double *x, double *work_np, double *work_pp, 
-	double *center, double *scatter, double *dist, int *n, int *p)
+wbacon_error_type mahalanobis(wbdata *dat, double *work_np, double *work_pp, 
+	double *center, double *scatter)
 {
-	Memcpy(work_np, x, *n * *p);					// copy of 'x' 
+	int n = dat->n, p = dat->p;
 
-	for (int i = 0; i < *n; i++)
-		for (int j = 0; j < *p; j++)
-			work_np[*n * j + i] -= center[j];		// center the data
+	// center and scatter
+	weightedmean(dat, center);
+	weightedscatter(dat, work_np, center, scatter);
+
+	Memcpy(work_np, dat->x, n * p);					// copy of 'x' 
+
+	for (int i = 0; i < n; i++)
+		for (int j = 0; j < p; j++)
+			work_np[n * j + i] -= center[j];		// center the data
 
 	// Cholesky decomposition of scatter matrix
-	Memcpy(work_pp, scatter, *p * *p);
+	Memcpy(work_pp, scatter, p * p);
+
 	int info;
-	F77_CALL(dpotrf)("L", p, work_pp, p, &info);
+	F77_CALL(dpotrf)("L", &p, work_pp, &p, &info);
 	if (info != 0) 
 		return WBACON_ERROR_RANK_DEFICIENT;
 
 	// Solve for y in A * y = B by forward substitution (A = Cholesky factor)
 	const double d_one = 1.0;
-	F77_CALL(dtrsm)("R", "L", "T", "N", n, p, &d_one, work_pp, p, work_np, n);
+	F77_CALL(dtrsm)("R", "L", "T", "N", &n, &p, &d_one, work_pp, &p, work_np,
+		&n);
 
 	// Mahalanobis distances (row sums)
-	for (int i = 0; i < *n; i++) {   
-		dist[i] = 0.0;
-		for (int j = 0; j < *p; j++)
-			dist[i] += _POWER2(work_np[*n * j + i]);
+	for (int i = 0; i < n; i++) {   
+		dat->dist[i] = 0.0;
+		for (int j = 0; j < p; j++)
+			dat->dist[i] += _POWER2(work_np[n * j + i]);
 
-		dist[i] = sqrt(dist[i]);
+		dat->dist[i] = sqrt(dat->dist[i]);
 	}
 
 	return WBACON_ERROR_OK; 

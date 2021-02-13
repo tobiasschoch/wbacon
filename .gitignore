@@ -1,4 +1,5 @@
 *.dll
+*.so
 *.o
 *.aux
 *.lof

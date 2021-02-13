@@ -11,11 +11,11 @@
 #include <Rmath.h>
 #include <R_ext/Lapack.h>
 #include <R_ext/BLAS.h>
+#include "regdata.h"
 
 #ifndef _FITWLS_H 
 #define _FITWLS_H
 
 // prototypes for the functions
-void fitwls(double*, double*, double*, double*, double*, double*, double*, int*,
-	int*, double*, int*, int*);
+int fitwls(regdata*, double*, double*, int, double*, double*);
 #endif 
