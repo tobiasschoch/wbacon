@@ -23,8 +23,6 @@
 */
 
 //FIXME
-// hat matrix -> weighted
-// weighted beta estimates are not correct...
 // regression_scale -> into compute_ti
 
 #include "wbacon_reg.h" 
@@ -53,20 +51,21 @@ typedef struct estimate_struct {
 } estimate;
 
 // declarations of local function
+wbacon_error_type initial_reg(regdata*, workarray*, estimate*, int*, int*,
+	int*);
+wbacon_error_type algorithm_4(regdata*, workarray*, estimate*, int*, int*, int*,
+	int*, int*);
+wbacon_error_type algorithm_5(regdata *dat, workarray *work, estimate *est,
+	int *subset0, int *subset1, double *alpha, int *m, int *maxiter, 
+	int *verbose);
+wbacon_error_type compute_ti(regdata*, workarray*, estimate*, int*, int*,
+	double*);
 wbacon_error_type update_chol_xty(regdata*, workarray*, estimate*, int*, int*,
 	int*);
 wbacon_error_type chol_downdate(double*, double*, int);
 wbacon_error_type hat_matrix(regdata*, workarray*, double*, double*);
-wbacon_error_type initial_reg(regdata*, workarray*, estimate*, int*, int*,
-	int*);
-wbacon_error_type compute_ti(regdata*, workarray*, estimate*, int*, int*,
-	double*);
-wbacon_error_type algorithm_4(regdata*, workarray*, estimate*, int*, int*, int*,
-	int*, int*);
-
-
 double regression_scale(double*, double*, int, int);
-void select_subset(double *x, int *iarray, int *subset, int *m, int *n); 
+void select_subset(double*, int*, int*, int*, int*); 
 void cholesky_reg(double*, double*, double*, double*, int*, int*);
 void chol_update(double*, double*, int);
 
@@ -75,7 +74,7 @@ void chol_update(double*, double*, int);
 \******************************************************************************/
 void wbacon_reg(double *x, double *y, double *w, double *resid, double *beta,
 	int *subset0, double *dist, int *n, int *p, int *m, int *verbose,
-	int *success, int *collect, double *alpha)
+	int *success, int *collect, double *alpha, int *maxiter)
 {
 	wbacon_error_type err;
 	*success = 1;	
@@ -141,11 +140,11 @@ void wbacon_reg(double *x, double *y, double *w, double *resid, double *beta,
 		goto clean_up;
 	}
 
-	// STEP 1 (Algorithm 4)
 	// select the p+1 obs. with the smallest ti's (initial basic subset)
 	*m = *p + 1; 
 	select_subset(est->dist, iarray, subset1, m, n); 
 
+	// STEP 1 (Algorithm 4)
 	err = algorithm_4(dat, work, est, subset0, subset1, m, verbose, collect);
 	if (err != WBACON_ERROR_OK) {
 		PRINT_OUT("Error: %s (Cholesky update, step 1)\n", wbacon_error(err));
@@ -154,6 +153,15 @@ void wbacon_reg(double *x, double *y, double *w, double *resid, double *beta,
 	}
 
 	// STEP 2 (Algorithm 5)
+	err = algorithm_5(dat, work, est, subset0, subset1, alpha, m, maxiter,
+		verbose);
+	if (err != WBACON_ERROR_OK) {
+		PRINT_OUT("Error: %s (step 2)\n", wbacon_error(err));
+		*success = 0;
+	}
+
+	// copy the QR factorization to x (as returned by fitwls -> dgels -> dgeqrf)
+	Memcpy(x, wx, *n * *p);
 
 clean_up:
 	Free(work_pp); Free(work_p); Free(work_np); Free(work_n); Free(weight);
@@ -163,7 +171,90 @@ clean_up:
 }
 
 /******************************************************************************\
-|* algorithm 4       *|
+|* Initial basic subset, adapted for weighting                                *|
+|*  dat      typedef struct regdata                                           *|
+|*  work     typedef struct workarray                                         *|
+|*  est      typedef struct estimate                                          *|
+|*  subset   subset, 1: obs. is in the subset, 0 otherwise, array[n]          *|
+|*  m        number of obs. in subset                                         *|
+|*  verbose  toggle: 1: additional information is printed to the console;     *|
+|*           0: quiet                                                         *|
+|* On return, dat->wx is overwritten with the R matrix of the QR factorization*|
+\******************************************************************************/
+wbacon_error_type initial_reg(regdata *dat, workarray *work, estimate *est,
+	int *subset, int *m, int *verbose)
+{
+	int info, n = dat->n, p = dat->p;
+	wbacon_error_type status = WBACON_ERROR_OK;
+
+	// 3) set weight = w if obs. is in subset (otherwise weight = 0)
+	Memcpy(est->weight, dat->w, n);
+	for (int i = 0; i < n; i++)
+		if (subset[i] == 0)
+			est->weight[i] = 0.0;		
+
+	// 4) compute regression estimate (on return, dat->wx is overwritten by the
+	// R matrix of the QR factorization (R will be used by the caller of 
+	// initial_reg)
+	info = fitwls(dat, est->weight, work->dgels_work, work->lwork, est->beta,
+		est->resid);
+
+	// if the design matrix dat->x on the subset is rank deficient, we enlarge
+	// the subset
+	if (info) {
+		status = WBACON_ERROR_RANK_DEFICIENT;
+		// sort the dist[i]'s in ascending order 
+		psort_array(est->dist, work->iarray, n, n);
+
+		// add obs. to the subset until x has full rank
+		while (*m < n) {
+			(*m)++;
+			// select obs. with smallest dist (among those obs. not in the
+			// subset); and set its weight to the original weight (i.e., not 0)
+			int at = work->iarray[*m - 1];
+			subset[at] = 1;
+			est->weight[at] = dat->w[at];
+ 
+			// re-do regression and check rank
+			info = fitwls(dat, est->weight, work->dgels_work, work->lwork,
+				est->beta, est->resid);
+			if (info == 0) {
+				status = WBACON_ERROR_OK;
+				break;
+			}
+		}
+	}
+	if (*verbose)
+		PRINT_OUT("Step 0: initial subset, m = %d\n", *m);
+
+	// extract R matrix (as a lower triangular matrix: L) from dat->wx 
+	for (int i = 0; i < p; i++) 
+		for (int j = i; j < p; j++) 
+			est->L[j + i * p] = dat->wx[i + j * n];	
+
+	// compute xty (weighted)	
+	for (int i = 0; i < p; i++)
+		for (int j = 0; j < n; j++) 
+			if (subset[j])
+				est->xty[i] += dat->w[j] * dat->x[j + i * n] * dat->y[j];	
+
+	// compute the regression scale (weighted)
+	est->sigma = regression_scale(est->resid, est->weight, n, p); 
+
+	return status;
+}
+
+/******************************************************************************\
+|* Algorithm 4 of Billor et al. (2000), adapted for weighting                 *|
+|*  dat      typedef struct regdata                                           *|
+|*  work     typedef struct workarray                                         *|
+|*  est      typedef struct estimate                                          *|
+|*  subset0  subset, 1: obs. is in the subset, 0 otherwise, array[n]          *|
+|*  subset1  subset, 1: obs. is in the subset, 0 otherwise, array[n]          *|
+|*  m        number of obs. in subset1                                        *|
+|*  verbose  toggle: 1: additional information is printed to the console;     *|
+|*           0: quiet                                                         *|
+|*  collect  defines size of initial subset: m = collect * p                  *|
 \******************************************************************************/
 wbacon_error_type algorithm_4(regdata *dat, workarray *work, estimate *est, 
 	int *subset0, int *subset1, int *m, int *verbose, int *collect)
@@ -172,7 +263,7 @@ wbacon_error_type algorithm_4(regdata *dat, workarray *work, estimate *est,
 	wbacon_error_type err;
 
 	if (*verbose)
-		PRINT_OUT("Step 1:\n");
+		PRINT_OUT("Step 1 (Algorithm 4):\n");
 
 	// STEP 1 (Algorithm 4)
 	while (*m <= p * *collect) {
@@ -230,6 +321,79 @@ wbacon_error_type algorithm_4(regdata *dat, workarray *work, estimate *est,
 }
 
 /******************************************************************************\
+|* Algorithm 5 of Billor et al. (2000), adapted for weighting                 *|
+\******************************************************************************/
+wbacon_error_type algorithm_5(regdata *dat, workarray *work, estimate *est,
+	int *subset0, int *subset1, double *alpha, int *m, int *maxiter, 
+	int *verbose)
+{
+	int n = dat->n, p = dat->p, iter = 1, info, i;
+	double cutoff;
+	wbacon_error_type err;
+
+	if (*verbose)
+		PRINT_OUT("Step 2 (Algorithm 5):\n");
+
+	Memcpy(subset0, subset1, n);
+	while (iter <= *maxiter) {
+
+		// weighted least squares (on return, dat->wx is overwritten by the 
+		// QR factorization)
+		info = fitwls(dat, est->weight, work->dgels_work, work->lwork, 
+			est->beta, est->resid);
+		if (info)
+			return WBACON_ERROR_RANK_DEFICIENT;
+
+		// extract L
+		for (int i = 0; i < p; i++) 
+			for (int j = i; j < p; j++) 
+				est->L[j + i * p] = dat->wx[i + j * n];	
+
+		// compute regression scale (sigma)
+		est->sigma = regression_scale(est->resid, est->weight, n, p); 
+
+		// compute t[i]'s (est->dist)
+		err = compute_ti(dat, work, est, subset0, m, est->dist); 
+		if (err != WBACON_ERROR_OK)
+			return err;
+
+		// t-distr. cutoff value (quantile)
+		cutoff = qt(*alpha / (double)(2 * (*m + 1)), *m - p, 0, 0);
+
+		// generate new subset that includes all obs. with t[i] < cutoff
+		Memcpy(est->weight, dat->w, n);		
+		*m = 0;
+		for (int i = 0; i < n; i++) {
+			if (est->dist[i] < cutoff) {
+				subset1[i] = 1;
+				(*m)++;
+			} else {
+				subset1[i] = 0;
+				est->weight[i] = 0.0;		// weight = 0 if not in subset
+			}
+		}
+
+		// check whether the subsets differ
+		for (i = 0; i < n; i++)				
+			if (subset0[i] ^ subset1[i]) 
+				break;
+		// if the subsets are identical, we return 
+		if (i == n) {					
+			*maxiter = iter;
+			return WBACON_ERROR_OK;
+		}
+
+		if (*verbose)
+			PRINT_OUT("  m = %d\n", *m);
+	
+		Memcpy(subset0, subset1, n);
+		iter++;
+	}
+
+	return WBACON_ERROR_CONVERGENCE_FAILURE;
+}
+
+/******************************************************************************\
 |* select the smallest m observations of array a[n] into the subset           *|
 |*  a       array[n]                                                          *| 
 |*  index   work array[n]                                                     *|
@@ -250,180 +414,16 @@ void select_subset(double *a, int *iarray, int *subset, int *m, int *n)
 }
 
 /******************************************************************************\
-|* Initial basic subset for BACON regression estimator                        *|
-|* On return, dat->wx is overwritten with the R matrix of the QR factorization      *|
-\******************************************************************************/
-wbacon_error_type initial_reg(regdata *dat, workarray *work, estimate *est,
-	int *subset, int *m, int *verbose)
-{
-	int info, n = dat->n, p = dat->p;
-	wbacon_error_type status = WBACON_ERROR_OK;
-
-	// 3) set weight = w if obs. is in subset (otherwise weight = 0)
-	Memcpy(est->weight, dat->w, n);
-	for (int i = 0; i < n; i++)
-		if (subset[i] == 0)
-			est->weight[i] = 0.0;		
-
-	// 4) compute regression estimate (on return, dat->wx is overwritten by the
-	// R matrix of the QR factorization (R will be used by the caller of 
-	// initial_reg)
-	info = fitwls(dat, est->weight, work->dgels_work, work->lwork, est->beta,
-		est->resid);
-
-	// if the design matrix dat->x on the subset is rank deficient, we enlarge
-	// the subset
-	if (info) {
-		status = WBACON_ERROR_RANK_DEFICIENT;
-		// sort the dist[i]'s in ascending order 
-		psort_array(est->dist, work->iarray, n, n);
-
-		// add obs. to the subset until x has full rank
-		while (*m < n) {
-			(*m)++;
-			// select obs. with smallest dist (among those obs. not in the
-			// subset); and set its weight to the original weight (i.e., not 0)
-			int at = work->iarray[*m - 1];
-			subset[at] = 1;
-			est->weight[at] = dat->w[at];
- 
-			// re-do regression and check rank
-			info = fitwls(dat, est->weight, work->dgels_work, work->lwork,
-				est->beta, est->resid);
-			if (info == 0) {
-				status = WBACON_ERROR_OK;
-
-				if (*verbose)
-					PRINT_OUT("Step 0: initial subset m = %d\n", *m);
-				break;
-			}
-		}
-	}
-	// extract R matrix (as a lower triangular matrix: L) from dat->wx 
-	for (int i = 0; i < p; i++) 
-		for (int j = i; j < p; j++) 
-			est->L[j + i * p] = dat->wx[i + j * n];	
-
-	// compute xty (weighted)	
-	for (int i = 0; i < p; i++)
-		for (int j = 0; j < n; j++) 
-			if (subset[j])
-				est->xty[i] += dat->w[j] * dat->x[j + i * n] * dat->y[j];	
-
-	// compute the regression scale (weighted)
-	est->sigma = regression_scale(est->resid, est->weight, n, p); 
-
-	return status;
-}
-
-/******************************************************************************\
-|*      *|
-\******************************************************************************/
-double regression_scale(double *resid, double *w, int n, int p)
-{
-	double sigma = 0.0, total_w = 0.0;
-	for (int i = 0; i < n; i++) {
-		total_w += w[i];
-		sigma += w[i] * _POWER2(resid[i]);
-	}
-	sigma /= total_w - p;
-	return sqrt(sigma);
-}
-
-/******************************************************************************\
-|* select the smallest m observations of array a[n] into the subset           *|
-|*  a       array[n]                                                          *| 
-\******************************************************************************/
-/* void final_reg(regdata *dat, workarray *work, int *subset0, int *subset1,  */
-/* 	int *success, int *maxiter, int *lwork, int m) */
-/* { */
-/* 	int n = dat->n, iter = 1, is_different, info; */
-/*  */
-/*  */
-/*  */
-/* 	int i;	 */
-/* 	while (iter <= *maxiter) { */
-/* 		for (i = 0; i < n; i++)				// check whether the subsets differ */
-/* 			if (subset0[i] ^ subset1[i])  */
-/* 				break; */
-/*  */
-/* 		if (i == n - 1) {					// subsets are identical  */
-/* 			*maxiter = i; */
-/* 			*success = 1; */
-/* 			return; */
-/* 		} */
-/*  */
-/* 		cutoff = //FIXME;					// t-distr. cutoff value (quantile) */
-/*  */
-/* 		Memcpy(work->work_n, dat->w, n);	// generate new subset */
-/* 		for (int i = 0; i < n; i++) { */
-/* 			if (est->dist[i] < cutoff) { */
-/* 				subset1[i] = 1; */
-/* 			} else { */
-/* 				subset1[i] = 0; */
-/* 				work->work_n[i] = 0.0;		// weight = 0 if not in subset */
-/* 			} */
-/* 		} */
-/*  */
-/* 		// weighted least squares and t[i]'s  */
-/* 		//FIXME: fitwls(dat, work->work_n, work->dgels_work, &lwork, &info, 0); */
-/* 		FIXME compute_ti(dat, work, L, subset, m, tis); */
-/*  */
-/*  */
-/* 		iter++; */
-/* 	} */
-/* } */
-
-
-/******************************************************************************\
-|*       *|
-\******************************************************************************/
-/* wbacon_error_type reg_subset(regdata *dat, workarray *work, double *weights, */
-/* 	double *L, int *m, double *alpha, int* subset) */
-/* { */
-/* 	int n = dat->n, p = dat->p; */
-/*  */
-/* 	// weighted least squares */
-/* 	int info = FIXME: fitwls(dat, weights, work->dgels_work, work->lwork, 0); */
-/* 	if (info == 1) */
-/* 		return WBACON_ERROR_RANK_DEFICIENT; */
-/*  */
-/* 	// extract R matrix (as a lower triangular matrix: L) from dat->wx  */
-/* 	for (int i = 0; i < p; i++)  */
-/* 		for (int j = i; j < p; j++)  */
-/* 			L[j + i * p] = dat->wx[i + j * n];	 */
-/*  */
-/* 	// compute t[i]'s (est->dist) */
-/* 	FIXME compute_ti(dat, work, L, subset, m, est->dist); */
-/*  */
-/* 	// select all obs. with dist < cutoff into the subset */
-/* 	double cutoff = qt(*alpha / (double)(2 * (*m + 1)), *m - p, 0, 0); */
-/* 	Memcpy(weights, dat->w, n); */
-/* 	for (int i = 0; i < n; i++) { */
-/* 		if (est->dist[i] < cutoff) */
-/* 			subset[i] = 1; */
-/* 		else { */
-/* 			subset[i] = 0; */
-/* 			weights[i] = 0.0; */
-/* 		} */
-/* 	} */
-/* 	return WBACON_ERROR_OK; */
-/* } */
-
-
-/******************************************************************************\
 |* Update the cholesky factor and the 'xty' matrix to account for the changes *|
 |* between subset0 and subset1                                                *|
-|*  x        design matrix, array[n, p]                                       *|
-|*  y        response variable, array[n]                                      *|
-|*  xty      xty matrix, on return: updated, array[p]                         *|
-|*  L        Cholesky factor (low. triang.), on return: updated, array[p, p]  *|
-|*  work_pp  work array[p, p]                                                 *|
-|*  work_p   work array[p]                                                    *|
-|*  work2_p  (second) work array[p]                                           *|
-|*  subset0  subset with elements {0, 1}, array[n]                            *|
-|*  subset1  subset with elements {0, 1}, array[n]                            *|
-|*  n, p     dimensions                                                       *|
+|*  dat      typedef struct regdata                                           *|
+|*  work     typedef struct workarray                                         *|
+|*  est      typedef struct estimate                                          *|
+|*  subset0  subset, 1: obs. is in the subset, 0 otherwise, array[n]          *|
+|*  subset1  subset, 1: obs. is in the subset, 0 otherwise, array[n]          *|
+|*  m        number of obs. in subset1                                        *|
+|*  verbose  toggle: 1: additional information is printed to the console;     *|
+|*           0: quiet                                                         *|
 \******************************************************************************/
 wbacon_error_type update_chol_xty(regdata *dat, workarray *work, estimate *est, 
 	int *subset0, int *subset1, int *verbose)
@@ -543,9 +543,12 @@ wbacon_error_type chol_downdate(double *L, double *u, int p)
 
 /******************************************************************************\
 |* Distance measure t[i] of Billor et al. (2000, Eq. 6)                       *|
+|*  dat      typedef struct regdata                                           *|
+|*  work     typedef struct workarray                                         *|
+|*  est      typedef struct estimate                                          *|
+|*  subset   subset, 1: obs. is in the subset, 0 otherwise, array[n]          *|
+|*  m        number of obs. in subset                                         *|
 |*  tis      on entry: work array[n]; on return: t[i]'s                       *|
-|*  subset   indicator whether element is in subset or nor, array[n]          *|
-|*  m	     size of subset                                                   *|
 \******************************************************************************/
 wbacon_error_type compute_ti(regdata *dat, workarray *work, estimate *est, 
 	int *subset, int *m, double* tis)
@@ -566,6 +569,20 @@ wbacon_error_type compute_ti(regdata *dat, workarray *work, estimate *est,
 	}
 	return WBACON_ERROR_OK;
 } 
+
+/******************************************************************************\
+|*      *|
+\******************************************************************************/
+double regression_scale(double *resid, double *w, int n, int p)
+{
+	double sigma = 0.0, total_w = 0.0;
+	for (int i = 0; i < n; i++) {
+		total_w += w[i];
+		sigma += w[i] * _POWER2(resid[i]);
+	}
+	sigma /= total_w - p;
+	return sqrt(sigma);
+}
 
 /******************************************************************************\
 |* Least squares estimate (Cholesky factorization)                            *|
@@ -590,8 +607,11 @@ void cholesky_reg(double *L, double *x, double *xty, double *beta, int *n,
 }
 
 /******************************************************************************\
-|* Diagonal elements of the hat matrix                                        *|
+|* Diagonal elements of the 'hat' matrix                                      *|
+|*  dat      typedef struct regdata                                           *|
+|*  work     typedef struct workarray                                         *|
 |*  L        Cholesky factor (lower triangular), array[p, p]                  *|
+|*  hat      diagonal elements of the 'hat' matrix                            *|
 \******************************************************************************/
 wbacon_error_type hat_matrix(regdata *dat, workarray *work, double *L, 
 	double *hat)
@@ -616,7 +636,7 @@ wbacon_error_type hat_matrix(regdata *dat, workarray *work, double *L,
 		tmp = 0.0;
 		for (int j = 0; j < p; j++)
 			tmp += _POWER2(work->work_np[i + j * n]);
-		hat[i] = tmp;
+		hat[i] = tmp * dat->w[i];
 	}
 	return WBACON_ERROR_OK;
 }

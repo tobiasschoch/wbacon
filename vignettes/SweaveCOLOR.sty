@@ -1,5 +1,12 @@
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesPackage{Sweave}{}
+\ProvidesPackage{SweaveCOLOR}{}
+
+% TS, Feburary 12, 2013. I added color
+\RequirePackage{color}
+\definecolor{myred}{rgb}{0.7058824, 0, 0}
+\def\INPUTcolor{myred}
+\def\OUTPUTcolor{blue}
+
 
 \RequirePackage{ifthen}
 \newboolean{Sweave@gin}
@@ -30,8 +37,8 @@
 \ifthenelse{\boolean{Sweave@inconsolata}}{%
  \IfFileExists{zi4.sty}{\usepackage[noupquote]{zi4}}{\usepackage{inconsolata}}}{}
 
-\DefineVerbatimEnvironment{Sinput}{Verbatim}{fontshape=sl}
-\DefineVerbatimEnvironment{Soutput}{Verbatim}{}
+\DefineVerbatimEnvironment{Sinput}{Verbatim}{fontshape=sl, formatcom=\color{\INPUTcolor}}
+\DefineVerbatimEnvironment{Soutput}{Verbatim}{formatcom=\color{\OUTPUTcolor}}
 \DefineVerbatimEnvironment{Scode}{Verbatim}{fontshape=sl}
 
 \ifdefined\Schunk%

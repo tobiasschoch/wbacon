@@ -29,8 +29,11 @@
 |*             the optimal size and returns it as the functions return value) *|
 |*  beta       on return, beta is overwritten with the reg. coefficients      *|
 |*  resid      on return, resid is overwritten with the residuals             *|
-|* NOTE: if not successfull 1 is returned; otherwise 0                        *|
-|*       dat must contain slots for dat->wx and dat->wy                       *|
+|* NOTE:                                                                      *|
+|*  if not successfull 1 is returned; otherwise 0                             *|
+|*  dat must contain slots for dat->wx and dat->wy                            *|
+|*  on return, dat->wx is overwritten by the QR factorization as returned by  *|
+|*  LAPACK: dgeqrf                                                            *|
 \******************************************************************************/
 int fitwls(regdata *dat, double *weight, double *work_dgels, int lwork, 
 	double *beta, double *resid)

@@ -1,22 +1,18 @@
-wBACON <- function(x, w = NULL, alpha = 0.95, version = "V2", intercept = FALSE,
+wBACON <- function(x, w = NULL, alpha = 0.95, version = c("V2", "V1"),
 	na.rm = FALSE, maxiter = 50, verbose = FALSE) 
 { 
 	n <- nrow(x); p <- ncol(x)
-	stopifnot(n > p, p > 1,  0 < alpha, alpha < 1)
+	stopifnot(n > p, p > 1,  0 < alpha, alpha < 1, maxiter > 0)
 
-	if (version == "V2")
+	if (version[1] == "V2")
 		vers <- 1
-	else if (version == "V1")
+	else if (version[1] == "V1")
 		vers <- 0
 	else
 		stop(paste0("Argument '", version, "' is not defined\n"))	
 
 	if (!is.matrix(x))
 		x <- as.matrix(x)
-
-	# determine the regression intecept by the variable with zero variance
-	if (intercept) 
-		x <- x[, - which(apply(x, 2, var) == 0)]
 
 	if (is.null(w)) 
 		w <- rep(1, n)
@@ -81,8 +77,12 @@ summary.robmv <- function(object, ...)
 		cat("Initialized by method:", ifelse(object$version == 1, "V2", "V1"),
 			"\n")
 		cat(paste0("Converged in ", object$maxiter, " iterations (alpha = ",
-			object$alpha, ")\n\n"))
-		cat("Robust estimate of location:\n")
+			object$alpha, ")\n"))
+		n <- length(object$subset)
+		n_outlier <- sum(object$subset)
+		cat(paste0("\nNumber of detected outliers: ", n_outlier, " (",
+			round(100 * n_outlier / n, 2), "%)\n"))
+		cat("\nRobust estimate of location:\n")
 		print(object$center, digits = digits)
 		cat("\nRobust estimate of covariance:\n")
 		print(object$cov, digits = digits)
@@ -114,7 +114,4 @@ center <- function(object)
 	object$center
 }
 
-is_outlier <- function(x)
-{
-	x$subset == 0
-} 
+

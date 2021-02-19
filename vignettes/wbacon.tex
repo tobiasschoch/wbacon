@@ -89,9 +89,11 @@ pulled and installed from
 \href{https://www.github.com/tobiasschoch/cbacon}{www.github.com/tobiasschoch/wbacon}
 using 
 
-<<eval=FALSE>>=
-devtools::install_github("tobiasschoch/wbacon")
-@
+\begin{Schunk}
+\begin{Sinput}
+> devtools::install_github("tobiasschoch/wbacon")
+\end{Sinput}
+\end{Schunk}
 
 \noindent The package contains \code{C} code to be compiled. Users of Microsoft
 Windows need an installation of the the R tool chain bundle
@@ -100,9 +102,11 @@ the package.
 
 Once the package has been installed, it can be loaded and attached to the 
 current R session by 
-<<>>=
-library(wbacon)
-@
+\begin{Schunk}
+\begin{Sinput}
+> library(wbacon)
+\end{Sinput}
+\end{Schunk}
 
 
 %===============================================================================
@@ -118,27 +122,49 @@ The \code{bushfire} dataset is on satellite remote sensing. These data were used
 
 \subsubsection*{Data preparation}
 The \code{bushfire} data contain radiometer readings for 38 pixels and have been studied in \citet{maronna_yohai_1995}, \citet{beguin_hulliger_2002}, \cite{beguin_hulliger_2008}, and \cite{hulliger_schoch_2009a}. The data can be obtained from the \code{R} package \code{modi} \citep{hulliger_sterchi_2020}.\footnote{The data are also distributed with the \code{R} package \code{robustbase} \citep{machler_rousseeuw_etal_2020}.} 
-<<>>=
-data(bushfire, package = "modi")
-@
+\begin{Schunk}
+\begin{Sinput}
+> data(bushfire, package = "modi")
+\end{Sinput}
+\end{Schunk}
 \noindent The first 6 readings on the five frequency bands (variables) are
 \setstretch{1.0}
-<<>>=
-head(bushfire)
-@
+\begin{Schunk}
+\begin{Sinput}
+> head(bushfire)
+\end{Sinput}
+\begin{Soutput}
+   X1  X2  X3  X4  X5
+1 111 145 188 190 260
+2 113 147 187 190 259
+3 113 150 195 192 259
+4 110 147 211 195 262
+5 101 136 240 200 266
+6  93 125 262 203 271
+\end{Soutput}
+\end{Schunk}
 \setstretch{1.1}
 \noindent \citet{beguin_hulliger_2008} generated a set of sampling weights. The weights can be attached to the current session by
-<<>>=
-data(bushfire.weights, package = "modi")
-@
+\begin{Schunk}
+\begin{Sinput}
+> data(bushfire.weights, package = "modi")
+\end{Sinput}
+\end{Schunk}
 
 \subsubsection*{Outlier detection}
 
 \setstretch{1.0}
-<<>>=
-fit <- wBACON(bushfire, w = bushfire.weights, alpha = 0.95)
-fit
-@
+\begin{Schunk}
+\begin{Sinput}
+> fit <- wBACON(bushfire, w = bushfire.weights, alpha = 0.95)
+> fit
+\end{Sinput}
+\begin{Soutput}
+Weighted BACON: Robust location, covariance, and distances
+Initialized by method: V2 
+Converged in 3 iterations (alpha = 0.95)
+\end{Soutput}
+\end{Schunk}
 \setstretch{1.1}
 
 %FIXME:
@@ -154,39 +180,73 @@ From the above output, we see that the algorithm converged in three iterations. 
 
 In the next step, we want to study the result in more detail. In particular, we are interested in the estimated center and scatter (or covariance) matrix. To this end, we can call the \code{summary()} method on the object \code{fit}. 
 \setstretch{1.0}
-<<>>=
-summary(fit)
-@
+\begin{Schunk}
+\begin{Sinput}
+> summary(fit)
+\end{Sinput}
+\begin{Soutput}
+Weighted BACON: Robust location, covariance, and distances
+Initialized by method: V2 
+Converged in 3 iterations (alpha = 0.95)
+
+Number of detected outliers: 24 (63.16%)
+
+Robust estimate of location:
+   X1    X2    X3    X4    X5 
+108.0 148.9 274.8 218.2 279.4 
+
+Robust estimate of covariance:
+        X1     X2      X3     X4     X5
+X1   391.3  303.5 -1410.5 -284.5 -240.1
+X2   303.5  262.4  -935.3 -166.5 -147.6
+X3 -1410.5 -935.3  7343.3 1765.2 1413.1
+X4  -284.5 -166.5  1765.2  467.7  365.0
+X5  -240.1 -147.6  1413.1  365.0  287.7
+
+Distances (cutoff: 4.559):
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  1.348   1.958   2.744   7.827  12.979  23.128 
+\end{Soutput}
+\end{Schunk}
 \setstretch{1.1}
 
 \noindent The method detected 24 outliers. The method \code{is\_outlier()} returns a vector of logicals whether an observation has been flagged as an outlier. 
-<<>>=
-which(is_outlier(fit))
-@
+\begin{Schunk}
+\begin{Sinput}
+> which(is_outlier(fit))
+\end{Sinput}
+\begin{Soutput}
+ [1]  7  8  9 10 11 12 31 32 33 34 35 36 37 38
+\end{Soutput}
+\end{Schunk}
 
 \noindent The center and covariance (scatter) matrix can be extracted with the auxiliary functions, respectively, \code{center()} and \code{cov()}.
-<<>>=
-center(fit)
-@
+\begin{Schunk}
+\begin{Sinput}
+> center(fit)
+\end{Sinput}
+\begin{Soutput}
+      X1       X2       X3       X4       X5 
+108.0156 148.8594 274.8438 218.2500 279.4219 
+\end{Soutput}
+\end{Schunk}
 
 \noindent The robust Mahalanobis distances, whose summary statistic is printed by the \code{summary()} method, can be extracted with the \code{distance()} method. 
 An application of this function is the following code snipped 
 
 \setstretch{1.0}
-<<eval=FALSE>>=
-hist(distance(fit), breaks = 20)
-abline(v = fit$cutoff, lty = 2)
-@
+\begin{Schunk}
+\begin{Sinput}
+> hist(distance(fit), breaks = 20)
+> abline(v = fit$cutoff, lty = 2)
+\end{Sinput}
+\end{Schunk}
 \setstretch{1.1}
 \noindent the resulting graph is shown in Figure \ref{fig:bushfire_hist}. The vertical dotted line shows the cutoff threshold that has been used by \code{wbacon()} for outlier detection/ nomination. 
 
 \begin{figure}[htb]
 \begin{center}
-<<fig = TRUE, echo = FALSE, height = 5, width = 10>>=
-hist(distance(fit), breaks = 10, main = "", cex.lab = 1.3, cex.axis = 1.2)
-abline(v = fit$cutoff, lty = 2)
-box()
-@
+\includegraphics{wbacon-011}
 \caption{Histogram of distances from the center (bushfire data)}\label{fig:bushfire_hist}
 \end{center}
 \end{figure}
@@ -201,31 +261,60 @@ Old television sets had a cathode ray tube with an electron gun. The emitted bea
 \subsubsection*{Data preparation}
 The \code{philips} data can be loaded from the \code{R} package \code{cellWise} \citep{raymaekers_rousseeuw_2020}. These data do not have sampling weights. 
 \setstretch{1.0}
-<<>>=
-data(philips, package = "cellWise")
-head(philips)
-@
+\begin{Schunk}
+\begin{Sinput}
+> data(philips, package = "cellWise")
+> head(philips)
+\end{Sinput}
+\begin{Soutput}
+        X1     X2    X3    X4    X5    X6     X7     X8     X9
+[1,] 0.153 -0.259 0.140 0.514 2.242 0.443 -0.021 -0.035 -0.065
+[2,] 0.119 -0.309 0.132 0.518 2.269 0.458 -0.018 -0.035 -0.053
+[3,] 0.173 -0.296 0.138 0.516 2.266 0.461 -0.023 -0.026 -0.052
+[4,] 0.135 -0.306 0.139 0.522 2.288 0.464 -0.015 -0.031 -0.051
+[5,] 0.143 -0.278 0.139 0.519 2.284 0.465 -0.016 -0.018 -0.054
+[6,] 0.140 -0.284 0.159 0.531 2.287 0.465 -0.004 -0.024 -0.052
+\end{Soutput}
+\end{Schunk}
 \setstretch{1.1}
 
 
 \subsection*{Outlier detection}
 We compute the BACON algorithm but this time with the initialization method \code{version = "V1"}.  
 \setstretch{1.0}
-<<>>=
-fit <- wBACON(philips, alpha = 0.99, version = "V1")
-fit
-@
+\begin{Schunk}
+\begin{Sinput}
+> fit <- wBACON(philips, alpha = 0.99, version = "V1")
+> fit
+\end{Sinput}
+\begin{Soutput}
+Weighted BACON: Robust location, covariance, and distances
+Initialized by method: V1 
+Converged in 9 iterations (alpha = 0.99)
+\end{Soutput}
+\end{Schunk}
 \setstretch{1.1}
 \noindent The center of the data is estimated to be
 \setstretch{1.0}
-<<>>=
-print(center(fit), digits = 2)
-@
+\begin{Schunk}
+\begin{Sinput}
+> print(center(fit), digits = 2)
+\end{Sinput}
+\begin{Soutput}
+    X1     X2     X3     X4     X5     X6     X7     X8     X9 
+-0.041 -0.316 -0.051  0.438  2.122  0.434 -0.104 -0.067 -0.089 
+\end{Soutput}
+\end{Schunk}
 \setstretch{1.1}
 \noindent and the BACON algorithm detected
-<<>>=
-sum(is_outlier(fit))
-@
+\begin{Schunk}
+\begin{Sinput}
+> sum(is_outlier(fit))
+\end{Sinput}
+\begin{Soutput}
+[1] 132
+\end{Soutput}
+\end{Schunk}
 \noindent outliers.
  
 \subsection*{Comparison with MCD}
@@ -234,24 +323,17 @@ sum(is_outlier(fit))
 \code{covMcd} implemented in the \code{R} package \code{robustbase} of \citet{machler_rousseeuw_etal_2020}
 
 
-<<>>=
-library(robustbase)
-fit_mcd <- covMcd(philips)
-@
+\begin{Schunk}
+\begin{Sinput}
+> library(robustbase)
+> fit_mcd <- covMcd(philips)
+\end{Sinput}
+\end{Schunk}
 
 
 \begin{figure}[htb]
 \begin{center}
-<<fig = TRUE, echo = FALSE, height = 5, width = 10>>=
-plot(sqrt(fit_mcd$mah), pch = 19, cex = 0.6, cex.axis = 1.2, cex.lab = 1.3,
-	ylab = "robust distance", xlab = "obs.", type = "n")
-rect(491, 0, 565, 20, col = "grey90", border = NA)
-points(sqrt(fit_mcd$mah), pch = 19, cex = 0.6)
-points(distance(fit), pch = "+", col = 2)
-box()
-legend("topleft", pch = c(19, 3), col = c(1, 2), 
-	legend = c("covMcd", "wBACON"), cex = 1.3, pt.cex = 0.8, bty = "n")
-@
+\includegraphics{wbacon-017}
 \caption{Distances from the center (philips data)}\label{fig:philips_dist}
 \end{center}
 \end{figure}
@@ -263,33 +345,103 @@ legend("topleft", pch = c(19, 3), col = c(1, 2),
 \clearpage
 \section{Robust linear regression}\label{sec:regression}
 
-<<>>=
-data(iris, package = "datasets")
-@
+\begin{Schunk}
+\begin{Sinput}
+> data(iris, package = "datasets")
+\end{Sinput}
+\end{Schunk}
 
 
 \setstretch{1.0}
-<<>>=
-reg <- wBACON_reg(Sepal.Length ~ Sepal.Width + Petal.Length + Petal.Width,
-       data = iris)
-@
+\begin{Schunk}
+\begin{Sinput}
+> reg <- wBACON_reg(Sepal.Length ~ Sepal.Width + Petal.Length + Petal.Width,
++        data = iris)
+\end{Sinput}
+\begin{Soutput}
+Step 0: initial subset, m = 98
+Step 1 (Algorithm 4):
+  m = 5 (0 up- and 93 downdates)
+  m = 6 (4 up- and 3 downdates)
+  m = 7 (3 up- and 2 downdates)
+  m = 8 (2 up- and 1 downdates)
+  m = 9 (1 up- and 0 downdates)
+  m = 10 (1 up- and 0 downdates)
+  m = 11 (1 up- and 0 downdates)
+  m = 12 (1 up- and 0 downdates)
+  m = 13 (1 up- and 0 downdates)
+  m = 14 (1 up- and 0 downdates)
+  m = 15 (1 up- and 0 downdates)
+  m = 16 (1 up- and 0 downdates)
+Step 2 (Algorithm 5):
+  m = 144
+  m = 148
+  m = 149
+\end{Soutput}
+\end{Schunk}
 \setstretch{1.1}
 
-\noindent and the \code{summary()} method
+\noindent and the summary method
+
 \setstretch{1.0}
-<<>>=
-summary(reg)
-@
+\begin{Schunk}
+\begin{Sinput}
+> summary(reg)
+\end{Sinput}
+\begin{Soutput}
+Call:
+wBACON_reg(formula = Sepal.Length ~ Sepal.Width + Petal.Length + 
+    Petal.Width, data = iris)
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-0.81889 -0.22557  0.01763  0.20347  0.71073 
+
+Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept)   1.88038    0.24535   7.664 2.37e-12 ***
+Sepal.Width   0.64524    0.06519   9.897  < 2e-16 ***
+Petal.Length  0.71056    0.05546  12.813  < 2e-16 ***
+Petal.Width  -0.57184    0.12483  -4.581 9.89e-06 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 0.3075 on 145 degrees of freedom
+Multiple R-squared:  0.861,	Adjusted R-squared:  0.8582 
+F-statistic: 299.5 on 3 and 145 DF,  p-value: < 2.2e-16
+\end{Soutput}
+\end{Schunk}
 \setstretch{1.1}
-\noindent And \code{coef()}, \code{vcov()}, and \code{predict()} 
 
-
-\noindent Comparison with \code{lm()}
 \setstretch{1.0}
-<<>>=
-summary(lm(Sepal.Length ~ Sepal.Width + Petal.Length + Petal.Width,
-        data = iris[!is_outlier(reg), ]))
-@
+\begin{Schunk}
+\begin{Sinput}
+> summary(lm(Sepal.Length ~ Sepal.Width + Petal.Length + Petal.Width,
++         data = iris[!is_outlier(reg), ]))
+\end{Sinput}
+\begin{Soutput}
+Call:
+lm(formula = Sepal.Length ~ Sepal.Width + Petal.Length + Petal.Width, 
+    data = iris[!is_outlier(reg), ])
+
+Residuals:
+     Min       1Q   Median       3Q      Max 
+-0.81889 -0.22557  0.01763  0.20347  0.71073 
+
+Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept)   1.88038    0.24535   7.664 2.37e-12 ***
+Sepal.Width   0.64524    0.06519   9.897  < 2e-16 ***
+Petal.Length  0.71056    0.05546  12.813  < 2e-16 ***
+Petal.Width  -0.57184    0.12483  -4.581 9.89e-06 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 0.3075 on 145 degrees of freedom
+Multiple R-squared:  0.861,	Adjusted R-squared:  0.8582 
+F-statistic: 299.5 on 3 and 145 DF,  p-value: < 2.2e-16
+\end{Soutput}
+\end{Schunk}
 \setstretch{1.1}
 
 

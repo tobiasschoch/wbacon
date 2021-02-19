@@ -1,135 +1,137 @@
+library(robsurvey)
 setwd("C:/My/code/cbacon/src")
-dyn.load("cbacon.dll")
+dyn.load("wbacon.dll")
+#dyn.unload("wbacon.dll")
 
-library(robustbase)
+data(iris)
+at <- c(27, 139, 96, 55, 128, 116, 90, 13, 36, 23, 34, 91, 147, 50, 17)
+#at <- 1:150
+x <- as.matrix(iris[at, 1:3])
+n <- nrow(x)
+x <- cbind(x, rep(1, n)) 
+y <- iris[at, 4]
+p <- ncol(x)
+
+#set.seed(1)
+#w <- abs(rnorm(n))
+
+w <- rep(1, n)
+
+bc <- wBACON(x, w, intercept = TRUE)
+dist <- bc$dist
+subset0 <- bc$subset
+m <- sum(subset0)
+
+#-----------------------
+#subset0 <- x[, 3] == 1.4
+#m <- sum(subset0)
+
+#-------------------------------------------------------------------------------
 library(robustX)
+setwd("C:/My/code/cbacon/src")
+dyn.load("wbacon.dll")
+data(iris)
+x <- as.matrix(iris[, 1:3])
+y <- iris[,4]
+w <- rep(1,150)
 
-test_wBACON <- function(x, w = NULL, alpha = 0.95, intercept = FALSE, 
-   na.rm = FALSE, maxiter = 50, verbose = FALSE) 
-{ 
-   if (!is.matrix(x))
-      x <- as.matrix(x)
+set.seed(1)
+w <- w + abs(rnorm(length(y), 3, 2))
 
-   if (intercept) {
-      x <- x[, - which(apply(x, 2, var) == 0)]
-   }
+tmp <- mvBACON(x)
+source("C:/My/code/cbacon/inst/baconreg.R")
 
-   n <- nrow(x); p <- ncol(x)
+#a <- robustX:::.lmBACON(x, y, init.dis = tmp$dis)
+b <- wlmBACON(x, y, w, tmp, alg5 = FALSE)
+z <- foo(x, y, w, tmp)
 
-   if (is.null(w)) w <- rep(1, n)
 
-   stopifnot(n > p, p > 1,  0.1 <= alpha, alpha < 1, n == length(w))
 
-   # NA treatment
-   cc <- stats::complete.cases(x, w) 
-   if (sum(cc) != n) {
-      if (na.rm) { 
-	 x <- x[cc, ]
-	 w <- w[cc] 
-      } else 
-	 stop("Data must not contain missing values; see argument 'na.rm'\n", 
-	    call. = FALSE)
-   } 
-   n <- nrow(x)
+foo <- function(x, y, w, bc, intercept = TRUE, alpha = 0.95, collect = 4,
+	verbose = TRUE)
+{
+	n <- length(y)
+	if (intercept)
+		x <- cbind(rep(1, n), x)
+	p <- ncol(x)
+	m <- sum(bc$subset)
+	collect <- min(collect, floor(n / p))
+	tmp <- .C("wbacon_reg", x = as.double(x), y = as.double(y), w = as.double(w),
+		resid = as.double(numeric(n)), beta = as.double(numeric(p)), 
+		subset = as.integer(bc$subset), dist = as.double(bc$dis), n = as.integer(n), 
+		p = as.integer(p), m = as.integer(m), sucess = as.integer(1), 
+		verbose = as.integer(verbose), collect = as.integer(collect), 
+		alpha = as.double(alpha), maxiter = as.integer(50))
+	tmp
+}
 
-   # check if any element is not finite 
-   chk <- sum(is.finite(c(x, w))) != (1 + p) * n 
-   if (chk) 
-      stop("Some observations are not finite\n", call. = FALSE)
+lm.fit(x[tmp$subset == 1, ], y[tmp$subset == 1])$coefficients
+
+
+lm.wfit(x[subset0 == 1, ], y[subset0 == 1], w[subset0 == 1])$coefficients
+
+
+w <- 1:15
+wx <- sqrt(w[1:10]) * x[1:10, ]
+L <- t(chol(crossprod(wx)))
+chol_update(L, x[11,])
+
+
+t(chol(crossprod(x[1:11,])))
+
+
+L <- t(chol(crossprod(x)))
+xty <- crossprod(x, y)
+beta <- lm.fit(x,y)$coefficients
+
+x <- cbind(x, rep(1, 150), rep(2, 150))
+
+at <- 1:11
+L <- t(chol(crossprod(x[at, ])))
+xty <- crossprod(x[at, ], y[at])
+subset0 <- rep(0, n); subset0[at] <- 1
+m <- sum(subset0)
+subset1 <- rep(0, n); subset1[c(at, 12)] <- 1
+
+
+dist <- rep(1, n)
+
+
+
+# tmp <- .C("hat_matrix", L = as.double(L), x = as.double(x), hat = as.double(numeric(n)),
+#    work_pp = as.double(numeric(p*p)), work_np = as.double(numeric(n*p)),
+#    n = as.integer(n), p = as.integer(p))
+#
+# tmp <- .C("update_chol_xty", x = as.double(x), y = as.double(y), 
+#    xty = as.double(xty), L = as.double(L), subset0 = as.integer(subset0), 
+#    subset1 = as.integer(subset1), work_p = as.double(numeric(p)),
+#    n = as.integer(n), p = as.integer(p))
+#
+# tmp <- .C("full_rank_subset", L = as.double(L), x = as.double(x), dist = as.double(dist), 
+#    subset = as.integer(subset0), iarray = as.integer(numeric(n)), 
+#    work = as.double(numeric(p)), n = as.integer(n), p = as.integer(p), 
+#    m = as.integer(m))
+#
+
+
+Algorithm 4
+   + check if x has full rank
+      -> add obs. with smallest dist (from Alg 3) until x has full rank
+   + solve for b in Xb=y
+   + compute t[i]
+   + select m <- (p+1) obs. with smallest t[i] 
+   while(m < n)
+      + check if x has full rank
+	 -> add obs. with smallest t[i] until x has full rank (update m)
+      + solve for b in Xb = y
+      + compute t[i]
+      + select m + 1 obs. with smallest t[i]
    
-   # compute weighted BACON algorithm
-   tmp <- .C("wbacon", x = as.double(x), w = as.double(w), 
-      center = as.double(numeric(p)), scatter = as.double(numeric(p * p)),
-      dist = as.double(numeric(n)), n = as.integer(n), p = as.integer(p),
-      alpha = as.double(alpha), subset = as.integer(rep(0, n)), 
-      cutoff = as.double(numeric(1)), maxiter = as.integer(abs(maxiter)),
-      verbose = as.integer(verbose))
-
-   tmp$scatter <- matrix(tmp$scatter, ncol = p)
-   tmp$verbose <- NULL
-   tmp$converged <- ifelse(tmp$maxiter < maxiter, TRUE, FALSE)
-   tmp$call <- match.call()
-   names(tmp$center) <- colnames(x)
-   colnames(tmp$scatter) <- colnames(x)
-   rownames(tmp$scatter) <- colnames(x)
-   tmp
-}
-
-# compare our implementation with the one of Ueli Oetliker (robustX)
-compare <- function(data, name){
-   acc <- sqrt(.Machine$double.eps)
-   set_of_alphas <- c(seq(0.1, 0.9, 0.1), 0.95, 0.99, 
-      0.999, 0.9999)
-   res <- NULL 
-
-   if (!is.matrix(data))
-      data <- as.matrix(data)
-
-   for (i in 1:length(set_of_alphas)) {
-      oetliker <- BACON(data, alpha = set_of_alphas[i], verbose = FALSE,
-	 init.sel = "dUniMedian") 
-      my <- test_wBACON(data, alpha = set_of_alphas[i])
-      deviations <- NULL
-
-      dev_location <- max(abs(oetliker$center - my$center))
-      dev_scatter <- max(abs(oetliker$cov - my$scatter))
-      dev_distance <- max(abs(oetliker$dis - my$dist))
-      dev_subset <- sum(oetliker$subset - my$subset)
-
-      at <- matrix(rep(0, 4), ncol = 4)
-      rownames(at) <- paste(set_of_alphas[i])
-
-      if (dev_location > acc)
-	 at[1] <- dev_location
-      if (dev_scatter > acc)
-	 at[2] <- dev_scatter
-      if (dev_distance> acc)
-	 at[3] <- dev_distance
-      if (dev_subset> acc)
-	 at[4] <- dev_subset
- 
-      if (any(at > 0))
-	 res <- rbind(res, at)   	 
-   }
-
-   if (!is.null(res))
-      colnames(res) <- c("center", "scatter", "distance", "subset")
-
-   res
-}
-
-#===============================================================================
-data(hbk)
-d_hbk <- data.matrix(hbk[, 1:3])
-compare(d_hbk, "hbk")
-
-#===============================================================================
-data(bushfire)
-compare(bushfire, "bushfire")
-
-#===============================================================================
-data(aircraft)
-d_aircraft <- data.matrix(aircraft[, 1:4])
-compare(d_aircraft, "aircraft")
-
-#===============================================================================
-data(education)
-d_education<- data.matrix(education[, 2:4])
-compare(d_education, "education")
-
-#===============================================================================
-data(heart)
-d_heart <- data.matrix(heart[, 1:2])
-compare(d_heart, "heart")
-
-#===============================================================================
-data(milk)
-compare(milk, "milk")
-
-#===============================================================================
-data(pulpfiber)
-d_pulp <- as.matrix(pulpfiber)
-compare(d_pulp, "pulpfiber")
+Implementation
+   dgels
+      -> if error (i.e. not full rank): add obs. until full rank
+   L <- chol(crossprod(x))
+   check rank
 
 
 

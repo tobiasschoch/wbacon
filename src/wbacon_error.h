@@ -9,6 +9,7 @@ typedef enum wbacon_error_enum {
 	WBACON_ERROR_RANK_DEFICIENT,
 	WBACON_ERROR_NOT_POSITIVE_DEFINITE,
 	WBACON_ERROR_TRIANG_MAT_SINGULAR,
+	WBACON_ERROR_CONVERGENCE_FAILURE,
 	WBACON_ERROR_COUNT,					// [not an actual error type]
 } wbacon_error_type;
 

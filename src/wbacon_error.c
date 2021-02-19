@@ -5,7 +5,8 @@ const char* const CBACON_ERROR_STRINGS[] = {
 	"no errors",
 	"matrix is rank deficient",
 	"matrix is not positive definite",
-	"triangular matrix is singular"
+	"triangular matrix is singular",
+	"failure of convergence"
 };
 
 // obtain a human readable error message
