@@ -1,9 +1,14 @@
-\documentclass[a4paper,oneside,10pt,DIV=12]{scrreprt}
+\documentclass[a4paper,oneside,10pt,DIV=12]{scrartcl}
 
 \usepackage{enumerate}
 \usepackage[T1]{fontenc}
 \usepackage{inputenc}
 \usepackage{times}
+
+\usepackage{setspace}
+\setstretch{1.1}
+
+\setlength\parindent{24pt}
 
 \usepackage[hyper,lm]{Rd2}
 
@@ -11,20 +16,14 @@
 \hypersetup{
     colorlinks=true,
     linkcolor=blue,
-    filecolor=blue,      
+    filecolor=blue,
     urlcolor=blue,
     citecolor=blue
 }
 
-%FIXME:
-%
-% fitwls -> arguments
-% add more details to the 'internals' of the functions
-%
-
-%
 % ==============================================================================
-\begin{document}
+% Macros for the description of function arguments
+% ==============================================================================
 \def\VERBOSE{
 	\item[\code{verbose}] toggle, \code{[int]}, \code{1}: verbose (i.e., the
 	function prints detailed information to the console), \code{0}: quiet.}
@@ -66,7 +65,7 @@
 \def\EST{
 	\item[\code{est}] estimates, typedef struct
 		\code{\LinkA{estimate}{estimate}}.
-}			
+}
 \def\SUBSETSIZEm{
 	\item[\code{m}] size of the subset, \code{[int]}.
 }
@@ -74,54 +73,65 @@
 	\item[\code{collect}] size of the initial basic subset, \code{[int]}.
 }
 \def\MAXITER#1{
-	\item[\code{maxiter}] maximum number of iterations, \code{[int]#1} 
+	\item[\code{maxiter}] maximum number of iterations, \code{[int]#1}
 }
 \def\IARRAY#1#2{
-	\item[\code{iarray}] #1, \code{int array[#2].} 
+	\item[\code{iarray}] #1, \code{int array[#2].}
 }
 
- 
-\title{\Large Documentation of the \texttt{C} functions}
-\subtitle{Weighted BACON algorithms} 
+% ==============================================================================
+% Document
+% ==============================================================================
+\begin{document}
 
-\author{{\normalsize Tobias Schoch} \\ 
+\title{\Large Documentation of the \texttt{C} functions}
+\subtitle{Weighted BACON algorithms}
+
+\author{{\normalsize Tobias Schoch} \\
 \begin{minipage}[t][][t]{\textwidth}
 	\begin{center}
 	\small{University of Applied Sciences Northwestern Switzerland FHNW} \\
 	\small{School of Business, Riggenbachstrasse 16, CH-4600 Olten} \\
 	\small{\texttt{tobias.schoch{@}fhnw.ch}}
 	\end{center}
-\end{minipage}} 
+\end{minipage}}
 
-\date{{\small \today, version 0.3}}
+\date{{\small \today, version 0.2}}
 \maketitle
 
+\vspace{1em}
+\hrule
+\vspace{-0.5em}
+\setcounter{tocdepth}{1}
 \tableofcontents
+\vspace{0.5em}
+\hrule
+\vspace{1em}
 
 %===============================================================================
-\chapter{Introduction}
+\section{Introduction}
 In this report, we document the \code{C} functions underlying the \code{wbacon}
 \code{R} package. Only the following methods are exported:
 \begin{itemize}
-	\item \code{\LinkA{wbacon}{wbacon}} (BACON algorithm for multivariate 
+	\item \code{\LinkA{wbacon}{wbacon}} (BACON algorithm for multivariate
 		outlier detection)
 	\item \code{\LinkA{wbacon\_reg}{wbaconreg}} (BACON algorithm for robust
 		linear regression)
-	\item \code{\LinkA{wquantile}{wquantile}} (weighted quantile) 
+	\item \code{\LinkA{wquantile}{wquantile}} (weighted quantile)
 \end{itemize}
 
 \noindent All other functions are not exported, hence, they are not callable
 from \code{R}. The methodological details of the functions are discussed in the
-document ``methods.pdf'' (see package folder \code{/inst/doc}).
+document ``methods.pdf'' (see package folder \code{inst/doc}).
 
-For ease of referencing, we use the following abbreviations. 
+For ease of referencing, we use the following abbreviations.
 \begin{description}
 	\item[\small{LAPACK}:] Anderson, E., Z. Bai, C. Bischof, L. S. Blackford,
 J. Demmel, J. Dongarra, J. D. Croz, A. Greenhaum, S. Hammerling, A. McKenney,
 and D. Sorensen (1999). \textit{LAPACK Users’ Guide}, 3rd ed., Philadelphia:
 Society for Industrial and Applied Mathematics (SIAM).
 	\item[\small{BLAS}:] Blackford, L. S., A. Petitet, R. Pozo, K. Remington,
-R. C. Whaley, J. Demmel, J. Dongarra, I. Duff, S. Hammerling, G. Henry, 
+R. C. Whaley, J. Demmel, J. Dongarra, I. Duff, S. Hammerling, G. Henry,
 M. Heroux, L. Kaufman, and A. Lumsdaine (2002). An updated set of basic linear
 algebra subprograms (BLAS), \textit{ACM Transactions on Mathematical Software},
 28, 135--151.
@@ -130,14 +140,16 @@ algebra subprograms (BLAS), \textit{ACM Transactions on Mathematical Software},
 
 
 %===============================================================================
-\chapter{Exported functions}
+\section{Exported functions}
+
 
 %---------------------------------------
-\HeaderA{wbacon}{Weighted BACON algorithm for multivariate outlier detection}{wbacon}
+\HeaderA{wbacon}{Weighted BACON algorithm for multivariate outlier detection}%
+	{wbacon}
 \begin{Description}
 The function implements a weighted variant of Algorithm 3 of Billor et al.
 (2000). It calls a weighted variant of Algorithm 2 of Billor et al. (2000) to
-initialize the subset (see \code{\LinkA{initialsubset}{initialsubset}}). 
+initialize the subset (see \code{\LinkA{initialsubset}{initialsubset}}).
 \end{Description}
 \begin{Usage}
 \begin{verbatim}
@@ -154,17 +166,17 @@ void wbacon(double *x, double *w, double *center, double *scatter, double *dist,
 		\SCATTER
 		\DIST
 		\item[\code{n, p}] dimensions, \code{[int]}.
-		\item[\code{alpha}] tuning constant, \code{[double]}, it defines the 
+		\item[\code{alpha}] tuning constant, \code{[double]}, it defines the
 			$1-\alpha$ quantile of the chi-squared distribution.
 		\SUBSET{}
 		\item[\code{cutoff}] cutoff threshold, \code{[double]}, i.e. $1-\alpha$
 			quantile of the chi-squared distribution.
-		\MAXITER{, default \code{maxiter = 50}.}
+		\MAXITER{.}
 		\VERBOSE
 		\item[\code{version2}] toggle, \code{[int]}, defines the method to
-			construct the initial subset: \code{1}: ``version 2'' of Billor et
-			al. (2000) is used (default), \code{0}: ``version 1'' is used.
-		\item[\code{success}] indicator, \code{[int]}, \code{1}: algorithm 
+			construct the initial subset: \code{1}: ``Version 2'' of Billor et
+			al. (2000) is used; \code{0}: ``Version 1'' is used.
+		\item[\code{success}] indicator, \code{[int]}, \code{1}: algorithm
 			converged, \code{0}: failure of convergence.
 	\end{ldescription}
 \end{Arguments}
@@ -173,55 +185,56 @@ The \code{subset} is implemented as an \code{int array[n]}. Elements in the
 subset are coded \code{1}; otherwise \code{0}. The function makes a copy,
 \code{w\_cpy}, of the array \code{w} with sampling weights. This copy is used
 in the computations (e.g., \code{weightedmean}) and is modified such that
-\code{w\_cpy[i] = 0.0} if \code{subset[i] == 0}.  
+\code{w\_cpy[i] = 0.0} if \code{subset[i] == 0}.
 
 See \code{methods.pdf} for more details.
 \end{Details}
 \begin{Dependencies}
 	\begin{description}
 		\item[internal:]
-		\code{\LinkA{wquantile\_noalloc}{wquantilenoalloc}}, 
-		\code{\LinkA{euclidean\_norm2}{euclideannorm2}}, 
-		\code{\LinkA{weightedmean}{weightedmean}}, 
-		\code{\LinkA{weightedscatter}{weightedscatter}}, 
-		\code{\LinkA{mahalanobis}{mahalanobis}}, 
-		\code{\LinkA{initialsubset}{initialsubset}}, 
+		\code{\LinkA{wquantile\_noalloc}{wquantilenoalloc}},
+		\code{\LinkA{euclidean\_norm2}{euclideannorm2}},
+		\code{\LinkA{weightedmean}{weightedmean}},
+		\code{\LinkA{weightedscatter}{weightedscatter}},
+		\code{\LinkA{mahalanobis}{mahalanobis}},
+		\code{\LinkA{initialsubset}{initialsubset}},
 		\code{\LinkA{cutoffval}{cutoffval}}, and
-		\code{\LinkA{wbacon\_error}{wbaconerror}}. 
+		\code{\LinkA{wbacon\_error}{wbaconerror}}.
 		%
 		\item[external:]
-		\code{Rmath.h::\LinkA{qchisq}{qchisq}}.  
+		\code{Rmath.h::\LinkA{qchisq}{qchisq}}.
 	\end{description}
 \end{Dependencies}
 \begin{Value}
 On return, the following slots are overwritten:
 	\begin{ldescription}
-		\item[\code{center}] estimated center.
-		\item[\code{scatter}] estimated scatter matrix.
-		\item[\code{dist}] distances from the center.
-		\item[\code{subset0}] subset of outlier-free observations.
+		\item[\code{center}] estimated center
+		\item[\code{scatter}] estimated scatter matrix
+		\item[\code{dist}] Mahalanobis distance
+		\item[\code{subset0}] subset of outlier-free observations
 		\item[\code{cutoff}] $1-\alpha$ quantile of the chi-squared
-			distribution.
-		\item[\code{maxiter}] number of iteration required.
-		\item[\code{success}] convergence or failure of convergence. 
+			distribution
+		\item[\code{maxiter}] number of iteration required
+		\item[\code{success}] convergence or failure of convergence
 	\end{ldescription}
 \end{Value}
 
 \begin{References}
-Billor N., Hadi A.S., Vellemann P.F. (2000). BACON: Blocked Adaptive 
+Billor N., Hadi A.S., Vellemann P.F. (2000). BACON: Blocked Adaptive
 Computationally efficient Outlier Nominators. \textit{Computational Statistics
 and Data Analysis} 34, pp. 279-298.
 
-B{\'e}guin C., Hulliger B. (2008). The BACON-EEM Algorithm for Multivariate 
-Outlier Detection in Incomplete Survey Data. \textit{Survey Methodology} 34, 
-pp. 91-103. 
+B{\'e}guin C., Hulliger B. (2008). The BACON-EEM Algorithm for Multivariate
+Outlier Detection in Incomplete Survey Data. \textit{Survey Methodology} 34,
+pp. 91-103.
 \end{References}
 
 %---------------------------------------
-\HeaderA{wbacon\_reg}{Weighted BACON algorithm for robust linear regression}{wbaconreg}
+\HeaderA{wbacon\_reg}{Weighted BACON algorithm for robust linear regression}%
+	{wbaconreg}
 \begin{Description}
-The function implements a weighted variant of the Algorithms 4 and 5 of 
-Billor et al.  (2000).  
+The function implements a weighted variant of the Algorithms 4 and 5 of
+Billor et al.  (2000).
 \end{Description}
 \begin{Usage}
 \begin{verbatim}
@@ -241,7 +254,7 @@ void wbacon_reg(double *x, double *y, double *w, double *resid, double *beta,
 		\item[\code{n, p}] dimensions, \code{[int]}.
 		\item[\code{m}] size of subset, \code{[int]}.
 		\VERBOSE
-		\item[\code{success}] \code{0}: successful termination; \code{1}: error,
+		\item[\code{success}] \code{1}: successful termination; \code{0}: error,
 			did not converge, \code{[int]}.
 		\COLLECT
 		\item[\code{alpha}] cutoff threshold, \code{[double]}, i.e.
@@ -254,34 +267,36 @@ The regression is computed in two steps. First, we call the weighted BACON
 algorithm for multivariate outlier detection (Algorithm 3, see
 \code{\LinkA{wbacon}{wbacon}}) on the design matrix \code{x} (Note: the
 regression intercept, if there is one, must be dropped). As a result, we obtain
-\code{subset} and \code{m}, which are then used as an input to 
-\code{wbacon\_reg}. 
+\code{subset} and \code{m}, which are then used as an input to
+\code{wbacon\_reg}.
 
 The function \code{wbacon\_reg} calls \code{\LinkA{initial\_reg}{initialreg}}
-to initialize the regression. Then, it calls 
-\code{\LinkA{algorithm\_4}{algorithm4}} and 
+to initialize the regression. Then, it calls
+\code{\LinkA{algorithm\_4}{algorithm4}} and
 \code{\LinkA{algorithm\_5}{algorithm5}}.
 
 See \code{methods.pdf} for more details.
 \end{Details}
 \begin{Dependencies}
 	\code{\LinkA{initial\_reg}{initialreg}},
-	\code{\LinkA{algorithm\_4}{algorithm4}}, and 
+	\code{\LinkA{algorithm\_4}{algorithm4}}, and
 	\code{\LinkA{algorithm\_5}{algorithm5}}.
 \end{Dependencies}
 \begin{Value}
 On return, the following slots are overwritten:
 	\begin{ldescription}
-		\item[\code{beta}] regression coefficients.
-		\item[\code{resid}] residuals. 
-		\item[\code{dist}] distances/ tis.
-		\item[\code{subset0}] subset of outlier-free observations.
-		\item[\code{maxiter}] number of iteration required.
-		\item[\code{success}] convergence or failure of convergence. 
+		\item[\code{beta}] regression coefficients
+		\item[\code{resid}] residuals
+		\item[\code{dist}] distances/ tis
+		\item[\code{subset0}] subset of outlier-free observations
+		\item[\code{maxiter}] number of iteration required
+		\item[\code{success}] convergence or failure of convergence
+		\item[\code{x}] is overwritten with the QR factorization as returned
+			by \code{LAPACK: dgels}, respectively, \code{LAPACK: dgeqrf}
 	\end{ldescription}
 \end{Value}
 \begin{References}
-Billor N., Hadi A.S., Vellemann P.F. (2000). BACON: Blocked Adaptive 
+Billor N., Hadi A.S., Vellemann P.F. (2000). BACON: Blocked Adaptive
 Computationally efficient Outlier Nominators. \textit{Computational Statistics
 and Data Analysis} 34, pp. 279-298.
 \end{References}
@@ -293,7 +308,7 @@ Weighted quantile.
 \end{Description}
 \begin{Usage}
 \begin{verbatim}
-void wquantile(double *array, double *weights, int *n, double *prob, 
+void wquantile(double *array, double *weights, int *n, double *prob,
     double *result)
 \end{verbatim}
 \end{Usage}
@@ -301,64 +316,66 @@ void wquantile(double *array, double *weights, int *n, double *prob,
 	\begin{ldescription}
 		\DATA{array}{data}{n}
 		\WEIGHTS{weights}
-		\item[\code{n}] dimension, \code{int}. 
-		\item[\code{prob}] probability, \code{double}, such that 
-			$0 \leq$\code{prob}$\leq 1$. 
-		\item[\code{result}] quantile, \code{double}. 
+		\item[\code{n}] dimension, \code{int}.
+		\item[\code{prob}] probability that defines the quantile,
+			\code{double}, such that $0 \leq$\code{prob}$\leq 1$.
+		\item[\code{result}] quantile, \code{double}.
 	\end{ldescription}
 \end{Arguments}
 \begin{Details}
 	\begin{itemize}
-	\item The functions build on a weighted version of the quickselect 
-		algorithm with the Bentley and McIlroy (1993) 3-way partitioning scheme. 
+	\item The function is based on a weighted version of the Select (FIND,
+		quickselect) algorithm of C.A.R. Hoare with the Bentley and McIlroy
+		(1993) 3-way partitioning scheme.
 		For very small arrays, we use insertion sort.
-	\item For equal weighting, i.e. when all elements in weights are equal, 
-		wquantile computes quantiles of type 2 in Hyndman and Fan (1996).
-	\item (Weighted) quicksort is efficient for large arrays. Though, its 
-		overhead can be severe for small arrays; hence, we use insertion sort 
-		for small arrays; cf. Bentley and McIlroy (1993). The size threshold 
-		below which insertion sort is used can be specified by setting the 
-		macro \code{\_n\_quickselect} at compile time; see Chapter
-		\ref{ch:wquantile}. 
+	\item For equal weighting, i.e. when all elements in \code{weights} are
+		equal, wquantile computes quantiles of type 2 in Hyndman and Fan
+		(1996).
+	\item (Weighted) Select (and Quicksort) is efficient for large arrays. But
+		its overhead can be severe for small arrays; hence, we use insertion
+		sort for small arrays; cf. Bentley and McIlroy (1993). The size
+		threshold below which insertion sort is used can be specified by
+		setting the macro \code{\_n\_quickselect} at compile time; see Sect.
+		\ref{ch:wquantile}.
 	\end{itemize}
 
 See \code{methods.pdf} for more details.
 \end{Details}
 \begin{Dependency}
-	\code{\LinkA{wquantile\_noalloc}{wquantilenoalloc}}.	
+\code{\LinkA{wquantile\_noalloc}{wquantilenoalloc}}.
 \end{Dependency}
 \begin{Value}
 On return, \code{result} is overwritten with the weighted quantile.
 \end{Value}
 \begin{References}\relax
-Bentley, J.L. and D.M. McIlroy (1993). Engineering a Sort Function, 
+Bentley, J.L. and D.M. McIlroy (1993). Engineering a Sort Function,
 	\textit{Software - Practice and Experience} 23, pp. 1249-1265.
-Hyndman, R.J. and Y. Fan (1996). Sample Quantiles in Statistical Packages, 
-	\textit{The American Statistician 50}, pp. 361-365. 
+Hyndman, R.J. and Y. Fan (1996). Sample Quantiles in Statistical Packages,
+	\textit{The American Statistician 50}, pp. 361-365.
 \end{References}
 
 
 
 %===============================================================================
-\chapter{Error handling [\texttt{wbacon\_error.c}]}
+\section{Error handling [\texttt{wbacon\_error.c}]}
 Error handling refers to the functions that operate on matrices, and which may
-fail (e.g. rank deficiency). These functions return a value of typedef enum 
-\code{\LinkA{wbacon\_error\_type}{wbaconerrortype}}. The function 
-\code{\LinkA{wbacon\_error}{wbaconerror}} can be called to return human 
-readable error messages.
+fail (e.g., because of rank deficiency). These functions return a value of
+typedef enum \code{\LinkA{wbacon\_error\_type}{wbaconerrortype}}. The function
+\code{\LinkA{wbacon\_error}{wbaconerror}} can be called to return a human
+readable error message.
 
 %---------------------------------------
 \HeaderA{wbacon\_error\_type}{Error type \code{[typedef enum]}}{wbaconerrortype}
 \begin{ldescription}
-	\item[\code{WBACON\_ERROR\_OK}] no error. 
-	\item[\code{WBACON\_ERROR\_RANK\_DEFICIENT}] matrix is rank deficient. 
-	\item[\code{WBACON\_ERROR\_NOT\_POSITIVE\_DEFINITE}] matrix is not positive 
+	\item[\code{WBACON\_ERROR\_OK}] no error.
+	\item[\code{WBACON\_ERROR\_RANK\_DEFICIENT}] matrix is rank deficient.
+	\item[\code{WBACON\_ERROR\_NOT\_POSITIVE\_DEFINITE}] matrix is not positive
 		definite.
-	\item[\code{WBACON\_ERROR\_TRIANG\_MAT\_SINGULAR}] triangular matrix is 
+	\item[\code{WBACON\_ERROR\_TRIANG\_MAT\_SINGULAR}] triangular matrix is
 		singular.
 	\item[\code{WBACON\_ERROR\_CONVERGENCE\_FAILURE}] the algorithm did not
 		converge
-	\item[\code{[WBACON\_ERROR\_COUNT]}] error count. This is not an actual 
+	\item[\code{[WBACON\_ERROR\_COUNT]}] error count. This is not an actual
 		error; it is used for internal purposes.
 \end{ldescription}
 
@@ -366,7 +383,7 @@ readable error messages.
 \HeaderA{wbacon\_error}{Human readable error string}{wbaconerror}
 %
 \begin{Description}
-Returns a human readable error string. 
+Returns a human readable error string.
 \end{Description}
 \begin{Usage}
 \begin{verbatim}
@@ -375,8 +392,8 @@ Returns a human readable error string.
 \end{Usage}
 \begin{Arguments}
 	\begin{ldescription}
-		\item[\code{err}] error of typedef enum 
-			\code{[\LinkA{wbacon\_error\_type}{wbaconerrortype}]}. 
+		\item[\code{err}] error of typedef enum
+			\code{[\LinkA{wbacon\_error\_type}{wbaconerrortype}]}.
 	\end{ldescription}
 \end{Arguments}
 \begin{Value}
@@ -384,24 +401,25 @@ Returns a string with a human readable error message.
 \end{Value}
 
 %===============================================================================
-\chapter{wBACON [\texttt{wbacon.c}]}
-To offer functions with a clean interface, most of the functions use the typedef
-struct \code{\LinkA{wbdata}{wbdata}} and \code{\LinkA{workarray}{workarray}}. 
+\section{wBACON [\texttt{wbacon.c}]}
+To offer functions with a clean interface, most of the functions use the
+typedef struct \code{\LinkA{wbdata}{wbdata}} and
+\code{\LinkA{workarray}{workarray}}.
 
 %---------------------------------------
 \HeaderA{wbdata}{Data \code{[typedef struct]}}{wbdata}
 \begin{ldescription}
-	\item[\code{n}] dimension. 
-	\item[\code{p}] dimension. 
-	\item[\code{x}] pointer to data, \code{double array[n, p]}. 
-	\item[\code{w}] pointer to weight, \code{double array[n]}. 
-	\item[\code{dist}] pointer to distance, \code{double array[n]}. 
+	\item[\code{n}] dimension.
+	\item[\code{p}] dimension.
+	\item[\code{x}] pointer to data, \code{double array[n, p]}.
+	\item[\code{w}] pointer to weight, \code{double array[n]}.
+	\item[\code{dist}] pointer to distance, \code{double array[n]}.
 \end{ldescription}
 
 %---------------------------------------
 \HeaderA{workarray}{Work arrays \code{[typedef struct]}}{workarray}
 \begin{ldescription}
-	\IARRAY{pointer to}{n}
+	\IARRAY{pointer to work array}{n}
 	\WORKARRAY{\_n}{pointer to work array}{n}
 	\WORKARRAY{\_np}{pointer to work array}{n, p}
 	\WORKARRAY{\_pp}{pointer to work array}{pp}
@@ -418,7 +436,7 @@ struct \code{\LinkA{wbdata}{wbdata}} and \code{\LinkA{workarray}{workarray}}.
 \HeaderB{initialsubset}{Internal function}{initialsubset}
 \begin{Description}
 Computes the initial subset. This is a weighted variant of Algorithm 2 of Billor
-et al. (2000). 
+et al. (2000).
 \end{Description}
 \begin{Usage}
 \begin{verbatim}
@@ -438,14 +456,18 @@ wbacon_error_type initialsubset(wbdata *dat, workarray *work, double *center,
 	\end{ldescription}
 \end{Arguments}
 \begin{Value}
-\begin{description}
+The function returns a \code{\LinkA{wbacon\_error\_type}{wbaconerrortype}}:
+the return value is either \code{WBACON\_ERROR\_OK} (i.e., no error) or the
+error handed over by
+\code{\LinkA{check\_matrix\_fullrank}{checkmatrixfullrank}}.
+
 On return, the following slots are overwritten:
-	\item[\code{\LinkA{wbacon\_error\_type}{wbaconerrortype}}.]
-	\item[\code{dat->w}] elements in the initial subset have $w_i=1$, else $w_i=0$.
-	\item[\code{subset}.]
-	\item[\code{subsetsize}.]
-\end{description}
-The function returns an \code{\LinkA{wbacon\_error\_type}{wbaconerrortype}}.
+\begin{ldescription}
+	\item[\code{dat->w}] elements in the initial subset have $w_i=1$,
+		else $w_i=0$
+	\item[\code{subset}] subset
+	\item[\code{subsetsize}] size of the subset
+\end{ldescription}
 \end{Value}
 
 
@@ -457,7 +479,7 @@ the details.
 \end{Description}
 \begin{Usage}
 \begin{verbatim}
-wbacon_error_type mahalanobis(wbdata *dat, double *work_np, double *work_pp, 
+wbacon_error_type mahalanobis(wbdata *dat, double *work_np, double *work_pp,
     double *center, double *scatter)
 \end{verbatim}
 \end{Usage}
@@ -474,18 +496,21 @@ wbacon_error_type mahalanobis(wbdata *dat, double *work_np, double *work_pp,
 	\begin{description}
 		\item[internal:] \code{\LinkA{weightedmean}{weightedmean}} and
 			\code{\LinkA{weightedscatter}{weightedscatter}}.
-		\item[external:] \code{LAPACK::dtrsm} and \code{LAPACK::dpotrf}. 
-	\end{description}	
+		\item[external:] \code{LAPACK:dtrsm} and \code{LAPACK:dpotrf}.
+	\end{description}
 \end{Dependencies}
 \begin{Value}
-On return, \code{dat->dist} is overwritten with the Mahalanobis distance. The
-function returns an \code{\LinkA{wbacon\_error\_type}{wbaconerrortype}}.
+The function returns a \code{\LinkA{wbacon\_error\_type}{wbaconerrortype}}:
+the return value is either \code{WBACON\_ERROR\_OK} (i.e., no error) or
+\code{WBACON\_ERROR\_RANK\_DEFICIENT}.
+
+On return, \code{dat->dist} is overwritten with the Mahalanobis distance.
 \end{Value}
 
 %---------------------------------------
 \HeaderB{weightedmean}{Internal function}{weightedmean}
 \begin{Description}
-Computes the (component-wise weighted mean).
+Computes the (component-wise) weighted mean.
 \end{Description}
 \begin{Usage}
 \begin{verbatim}
@@ -499,7 +524,7 @@ void weightedmean(wbdata *dat, double *center)
 	\end{ldescription}
 \end{Arguments}
 \begin{Value}
-On return, \code{center} is overwritten with the computed center.
+On return, \code{center} is overwritten with the weighted mean.
 \end{Value}
 
 %---------------------------------------
@@ -509,7 +534,8 @@ Computes the weighted scatter matrix.
 \end{Description}
 \begin{Usage}
 \begin{verbatim}
-void weightedscatter(wbdata *dat, double *work, double *center, double *scatter)
+void weightedscatter(wbdata *dat, double *work, double *center,
+    double *scatter)
 \end{verbatim}
 \end{Usage}
 \begin{Arguments}
@@ -521,17 +547,17 @@ void weightedscatter(wbdata *dat, double *work, double *center, double *scatter)
 	\end{ldescription}
 \end{Arguments}
 \begin{Dependency}
-\code{BLAS::dgemm}.
+\code{BLAS:dgemm}.
 \end{Dependency}
 \begin{Value}
-On return, \code{scatter} is overwritten with the computed scatter matrix.
+On return, \code{scatter} is overwritten with the weighted scatter matrix.
 \end{Value}
 
 %---------------------------------------
 \HeaderB{euclidean\_norm2}{Internal function}{euclideannorm2}
 \begin{Description}
-Computes the squared Euclidean norm $\Vert x_i - c \Vert_2^2$, where $c$ denotes
-the center. 
+Computes the squared Euclidean norm $\Vert x_i - c \Vert_2^2$, where $c$
+denotes the center.
 \end{Description}
 \begin{Usage}
 \begin{verbatim}
@@ -552,8 +578,7 @@ On return, \code{dat->dist} is overwritten with the Euclidean norm.
 %---------------------------------------
 \HeaderB{check\_matrix\_fullrank}{Internal function}{checkmatrixfullrank}
 \begin{Description}
-Checks whether array/ matrix has full rank; see \code{methods.pdf} for the
-details.
+Check whether the array/ matrix \code{x} has full rank.
 \end{Description}
 \begin{Usage}
 \begin{verbatim}
@@ -564,17 +589,24 @@ wbacon_error_type check_matrix_fullrank(double *x, int *p, int decom)
 	\begin{ldescription}
 		\DATA{x}{data}{p, p}
 		\item[\code{p}] dimension, \code{[int]}.
-		\item[\code{decom}] toggle, \code{[int]}; \code{1}: the Cholesky 
+		\item[\code{decom}] toggle, \code{[int]}; \code{1}: the Cholesky
 			decomposition of \code{x} is computed, \code{0}: the array/ matrix
-			\code{x} is taken as is.
+			\code{x} is taken as is (and is supposed to be a Cholesky factor).
 	\end{ldescription}
 \end{Arguments}
+\begin{Details}
+See \code{methods.pdf} for the details.
+\end{Details}
 \begin{Dependency}
-	\code{LAPACK::dpotrf}.
+	\code{LAPACK:dpotrf}.
 \end{Dependency}
 \begin{Value}
-\code{\LinkA{wbacon\_error\_type}{wbaconerrortype}}
-The function returns an \code{\LinkA{wbacon\_error\_type}{wbaconerrortype}}.
+The function returns a instance of \code{\LinkA{wbacon\_error\_type}{wbaconerrortype}}:
+\begin{itemize}
+	\item \code{WBACON\_ERROR\_OK} (i.e., no error),
+	\item \code{WBACON\_ERROR\_NOT\_POSITIVE\_DEFINITE} or
+	\item \code{WBACON\_ERROR\_RANK\_DEFICIENT}.
+\end{itemize}
 \end{Value}
 
 %---------------------------------------
@@ -601,59 +633,60 @@ Returns the correction factor.
 
 
 %===============================================================================
-\chapter{wBACON\_reg [\texttt{wbacon\_reg.c}]}
-To offer functions with a clean interface, most of the functions use the typedef
-structs \code{\LinkA{regdata}{regdata}} (see \code{regdata.h}),
-\code{\LinkA{estimate}{estimate}}, and \code{\LinkA{workarray}{workarray}}. 
+\section{wBACON\_reg [\texttt{wbacon\_reg.c}]}
+To offer functions with a clean interface, most of the functions use the
+typedef structs \code{\LinkA{regdata}{regdata}} (see \code{regdata.h}),
+\code{\LinkA{estimate}{estimate}}, and \code{\LinkA{workarray}{workarray}}.
 
 %---------------------------------------
 \HeaderA{wbdata}{Data \code{[typedef struct]}}{regdata}
 \begin{ldescription}
-	\item[\code{n}] dimension. 
-	\item[\code{p}] dimension. 
-	\item[\code{x}] pointer to the design matrix, \code{double array[n, p]}. 
+	\item[\code{n}] dimension.
+	\item[\code{p}] dimension.
+	\item[\code{x}] pointer to the design matrix, \code{double array[n, p]}.
 	\item[\code{wx}] pointer to a copy of the design matrix,
-		\code{double array[n, p]}. 
-	\item[\code{y}] pointer to the response, \code{double array[n]}. 
-	\item[\code{wy}] pointer to a copy of the response, \code{double array[n]}. 
-	\item[\code{w}] pointer to the sampling weights, \code{double array[n]}. 
+		\code{double array[n, p]}.
+	\item[\code{y}] pointer to the response, \code{double array[n]}.
+	\item[\code{wy}] pointer to a copy of the response, \code{double array[n]}.
+	\item[\code{w}] pointer to the sampling weights, \code{double array[n]}.
 \end{ldescription}
 
 \noindent \textbf{\sffamily Note.} All slots of the instances of the typedef
-struct \code{regdata} are considered immutable, with one expection: \code{wx}
+struct \code{regdata} are considered immutable, with one exception: \code{wx}
 and \code{wy} will be modified.
 
 %---------------------------------------
 \HeaderA{estimate}{Estimates \code{[typedef struct]}}{estimate}
 \begin{ldescription}
-	\item[\code{sigma}]	pointer to the regression scale, \code{double}.
-	\item[\code{weight}] pointer to the weights, \code{double array[n]}. 
-	\item[\code{resid}]	pointer to the residuals, \code{double array[n]}.
-	\item[\code{beta}] pointer to the regression coefficient, \code{double array[p]}.
+	\item[\code{sigma}] regression scale, \code{double}.
+	\item[\code{weight}] pointer to the weights, \code{double array[n]}.
+	\item[\code{resid}] pointer to the residuals, \code{double array[n]}.
+	\item[\code{beta}] pointer to the regression coefficient,
+		\code{double array[p]}.
 	\item[\code{dist}] pointer to the distances, \code{double array[n]}.
-	\item[\code{L}]	pointer to the Cholesky factor, \code{double array[p, p]}.
+	\item[\code{L}] pointer to the Cholesky factor, \code{double array[p, p]}.
 	\item[\code{xty}] pointer to $X^Ty$, \code{double array[p]}.
 \end{ldescription}
 \noindent \textbf{\sffamily Note.} The slots of the typedef struct
-\code{estimate} reflect the data and parameters of the model fit at the 
-current stage. 
-
+\code{estimate} reflect the data and parameters of the model fit at the
+current stage. The instance \code{est} of \code{estimate} is updated
+iteratively.
 
 %---------------------------------------
 \HeaderA{workarray}{Work arrays \code{[typedef struct]}}{workarray2}
 \begin{ldescription}
 	\item[\code{lwork}] determines the size of the array \code{dgles\_work},
-		\code{int}; 
+		\code{[int]};
 	\IARRAY{pointer to work array}{n}
 	\WORKARRAY{\_n}{pointer to work array}{n}
 	\WORKARRAY{\_np}{pointer to work array}{np}
 	\WORKARRAY{\_pp}{pointer to work array}{pp}
 	\item[\code{degels\_work}] pointer to \code{double array[lwork]}; this
-		array is required by LAPACK:dgels. 
+		array is required by \code{LAPACK:dgels}.
 \end{ldescription}
-
-
-
+\noindent \textbf{\sffamily Note.} The slots of the typedef struct
+\code{workarray} are not (and should not be) used to reference data over
+different function calls.
 
 %---------------------------------------
 \vspace{2em}
@@ -663,7 +696,7 @@ current stage.
 %---------------------------------------
 \HeaderB{initial\_reg}{Internal function}{initialreg}
 \begin{Description}
-Initializes the regression estimates.
+Initializes the least squares estimate.
 \end{Description}
 \begin{Usage}
 \begin{verbatim}
@@ -673,7 +706,7 @@ wbacon_error_type initial_reg(regdata *dat, workarray *work, estimate *est,
 \end{Usage}
 \begin{Arguments}
 	\begin{ldescription}
-		\REGDATA	
+		\REGDATA
 		\WORKreg
 		\EST
 		\SUBSET{}
@@ -685,38 +718,41 @@ wbacon_error_type initial_reg(regdata *dat, workarray *work, estimate *est,
 See \code{methods.pdf} for more details.
 \end{Details}
 \begin{Dependencies}
-	\code{\LinkA{fitwls}{fitwls}}, 
+	\code{\LinkA{fitwls}{fitwls}},
 	\code{\LinkA{psort\_array}{psortarray}}, and
-	\code{\LinkA{compute\_ti}{computeti}}. 
+	\code{\LinkA{compute\_ti}{computeti}}.
 \end{Dependencies}
 \begin{Value}
+The function returns a \code{\LinkA{wbacon\_error\_type}{wbaconerrortype}}:
+the return value is either \code{WBACON\_ERROR\_OK} (i.e., no error) or
+\code{WBACON\_ERROR\_RANK\_DEFICIENT}.
+
 On return, the following slots are overwritten:
 \begin{ldescription}
-	\item[\code{est->sigma}] regression scale.
-	\item[\code{est->resid}] residuals.
-	\item[\code{est->beta}] regression coefficients.
-	\item[\code{est->dist}] distances/ $t_i$'s.
-	\item[\code{subset}] initial subset. 
-	\item[\code{m}] size of \code{subset1}.
+	\item[\code{est->sigma}] regression scale
+	\item[\code{est->resid}] residuals
+	\item[\code{est->beta}] regression coefficients
+	\item[\code{est->dist}] distances/ $t_i$'s
+	\item[\code{subset}] initial subset
+	\item[\code{m}] size of \code{subset1}
 \end{ldescription}
-The function returns an \code{\LinkA{wbacon\_error\_type}{wbaconerrortype}}.
 \end{Value}
 
 
 %---------------------------------------
 \HeaderB{algorithm\_4}{Internal function}{algorithm4}
 \begin{Description}
-Computes Algorithm 4.
+Computes a weighted variant of Algorithm 4 of Billor et al. (2000).
 \end{Description}
 \begin{Usage}
 \begin{verbatim}
-wbacon_error_type algorithm_4(regdata *dat, workarray *work, estimate *est, 
+wbacon_error_type algorithm_4(regdata *dat, workarray *work, estimate *est,
     int *subset0, int *subset1, int *m, int *verbose, int *collect)
 \end{verbatim}
 \end{Usage}
 \begin{Arguments}
 	\begin{ldescription}
-		\REGDATA	
+		\REGDATA
 		\WORKreg
 		\EST
 		\SUBSET{0}
@@ -732,42 +768,48 @@ See \code{methods.pdf} for more details.
 \begin{Dependencies}
 	\begin{description}
 		\item[internal:]
-		\code{\LinkA{update\_chol\_xty}{updatecholxty}}, 
+		\code{\LinkA{update\_chol\_xty}{updatecholxty}},
 		\code{\LinkA{cholesky\_reg}{choleskyreg}},
 		\code{\LinkA{compute\_ti}{computeti}}, and
 		\code{\LinkA{select\_subset}{selectsubset}}.
 		\item[external:]
-		\code{BLAS::dgemv}.
+		\code{BLAS:dgemv}.
 	\end{description}
 \end{Dependencies}
 \begin{Value}
+The function returns a \code{\LinkA{wbacon\_error\_type}{wbaconerrortype}}
+either \code{WBACON\_ERROR\_OK} (i.e., no error) or the error handed over by
+\begin{itemize}
+	\item  \code{\LinkA{update\_chol\_xty}{updatecholxty}} or
+	\item \code{\LinkA{compute\_ti}{computeti}}.
+\end{itemize}
+
 On return, the following slots are overwritten:
 \begin{ldescription}
-	\item[\code{est->sigma}] regression scale.
-	\item[\code{est->resid}] residuals.
-	\item[\code{est->beta}] regression coefficients.
-	\item[\code{est->dist}] distances/ $t_i$'s.
-	\item[\code{subset1}] final subset of Algorithm 4. 
-	\item[\code{m}] size of \code{subset1}.
+	\item[\code{est->sigma}] regression scale
+	\item[\code{est->resid}] residuals
+	\item[\code{est->beta}] regression coefficients
+	\item[\code{est->dist}] distances/ $t_i$'s
+	\item[\code{subset1}] final subset of Algorithm 4
+	\item[\code{m}] size of \code{subset1}
 \end{ldescription}
-The function returns an \code{\LinkA{wbacon\_error\_type}{wbaconerrortype}}.
 \end{Value}
 
 %---------------------------------------
 \HeaderB{algorithm\_5}{Internal function}{algorithm5}
 \begin{Description}
-Computes Algorithm 5.
+Computes a weighted variant of Algorithm 5 of Billor et al. (2000).
 \end{Description}
 \begin{Usage}
 \begin{verbatim}
 wbacon_error_type algorithm_5(regdata *dat, workarray *work, estimate *est,
-    int *subset0, int *subset1, double *alpha, int *m, int *maxiter, 
+    int *subset0, int *subset1, double *alpha, int *m, int *maxiter,
     int *verbose)
 \end{verbatim}
 \end{Usage}
 \begin{Arguments}
 	\begin{ldescription}
-		\REGDATA	
+		\REGDATA
 		\WORKreg
 		\EST
 		\SUBSET{0}
@@ -775,7 +817,7 @@ wbacon_error_type algorithm_5(regdata *dat, workarray *work, estimate *est,
 		\item[\code{alpha}] defines the $1-\alpha$ quantile of the Student
 			$t$-distribution.
 		\SUBSETSIZEm
-		\MAXITER{.} 
+		\MAXITER{.}
 		\VERBOSE
 	\end{ldescription}
 \end{Arguments}
@@ -786,38 +828,47 @@ See \code{methods.pdf} for more details.
 	\begin{description}
 		\item[internal:]
 		\code{\LinkA{fitwls}{fitwls}} and
-		\code{\LinkA{compute\_ti}{computeti}}. 
+		\code{\LinkA{compute\_ti}{computeti}}.
 		\item[external:]
 		\code{Rmath.h::\LinkA{qt}{qt}}.
 	\end{description}
 \end{Dependencies}
 \begin{Value}
+The function returns a \code{\LinkA{wbacon\_error\_type}{wbaconerrortype}}:
+the return value is either the error handed over by
+\code{\LinkA{compute\_ti}{computeti}} or
+\begin{itemize}
+	\item \code{WBACON\_ERROR\_OK} (i.e., no error) or
+	\item \code{WBACON\_ERROR\_CONVERGENCE\_FAILURE} if it does not converge
+		in \code{maxiter} iterations.
+\end{itemize}
+
 On return, the following slots are overwritten:
 \begin{ldescription}
-	\item[\code{est->sigma}] regression scale.
-	\item[\code{est->resid}] residuals.
-	\item[\code{est->beta}] regression coefficients.
-	\item[\code{est->dist}] distances/ $t_i$'s.
-	\item[\code{subset1}] final subset of outlier-free data.
-	\item[\code{m}] size of \code{subset1}.
-	\item[\code{maxiter}] number of iterations required.
+	\item[\code{est->sigma}] regression scale
+	\item[\code{est->resid}] residuals
+	\item[\code{est->beta}] regression coefficients
+	\item[\code{est->dist}] distances/ $t_i$'s
+	\item[\code{subset1}] final subset of outlier-free data
+	\item[\code{m}] size of \code{subset1}
+	\item[\code{maxiter}] number of iterations required
 \end{ldescription}
-The function returns an \code{\LinkA{wbacon\_error\_type}{wbaconerrortype}}.
 \end{Value}
 
 %---------------------------------------
 \HeaderB{select\_subset}{Internal function}{selectsubset}
 \begin{Description}
-Selects the smallest \code{1..m} observations (w.r.t. \code{a}) into the subset.
+Selects the smallest \code{1..m} observations in \code{x} into the
+\code{subset}.
 \end{Description}
 \begin{Usage}
 \begin{verbatim}
-void select_subset(double *a, int *iarray, int *subset, int *m, int *n) 
+void select_subset(double *c, int *iarray, int *subset, int *m, int *n)
 \end{verbatim}
 \end{Usage}
 \begin{Arguments}
 	\begin{ldescription}
-		\DATA{a}{data}{n}	
+		\DATA{x}{data}{n}
 		\IARRAY{work array}{n}
 		\SUBSET{}
 		\SUBSETSIZEm
@@ -825,8 +876,8 @@ void select_subset(double *a, int *iarray, int *subset, int *m, int *n)
 \end{Arguments}
 \begin{Details}
 The function calls \code{\LinkA{psort\_array}{psortarray}} to (partially) sort
-the elements of \code{a} in ascending order. Then, the smallest $m$ observations
-are selected into \code{subset}.
+the elements of \code{x} in ascending order. Then, the smallest $m$
+observations are selected into \code{subset}.
 \end{Details}
 \begin{Value}
 On return, \code{subset} is overwritten with the generated subset.
@@ -835,11 +886,11 @@ On return, \code{subset} is overwritten with the generated subset.
 %---------------------------------------
 \HeaderB{compute\_ti}{Internal function}{computeti}
 \begin{Description}
-Compute the $t_i$'s (\code{tis}). 
+Compute the $t_i$'s (\code{tis}) of Billor et al. (2000, p. 288).
 \end{Description}
 \begin{Usage}
 \begin{verbatim}
-wbacon_error_type compute_ti(regdata *dat, workarray *work, estimate *est, 
+wbacon_error_type compute_ti(regdata *dat, workarray *work, estimate *est,
     int *subset, int *m, double* tis)
 \end{verbatim}
 \end{Usage}
@@ -850,28 +901,34 @@ wbacon_error_type compute_ti(regdata *dat, workarray *work, estimate *est,
 		\EST
 		\SUBSET{}
 		\SUBSETSIZEm
-		\item[\code{tis}] \code{double array[n]}.	
+		\item[\code{tis}] \code{double array[n]}.
 	\end{ldescription}
 \end{Arguments}
 \begin{Details}
-The function calls \code{\LinkA{hat\_matrix}{hatmatrix}} to compute the diagonal
-elements of the ``hat'' matrix and computes the regression scale. Then,
-it computes the $t_i$'s.
+The function calls \code{\LinkA{hat\_matrix}{hatmatrix}} to compute the
+diagonal elements of the ``hat'' matrix and computes the regression scale.
+Then, it computes the $t_i$'s.
 \end{Details}
+\begin{Dependency}
+\code{\LinkA{hat\_matrix}{hatmatrix}}.
+\end{Dependency}
 \begin{Value}
-On return, \code{tis} is overwritten with the computed $t_i$'s. The function
-returns an \code{\LinkA{wbacon\_error\_type}{wbaconerrortype}}.
+The function returns a \code{\LinkA{wbacon\_error\_type}{wbaconerrortype}}:
+the return value is either \code{WBACON\_ERROR\_OK} (i.e., no error) or the
+error handed over by \code{\LinkA{hat\_matrix}{hatmatrix}}.
+
+On return, \code{tis} is overwritten with the computed $t_i$'s.
 \end{Value}
 
 %---------------------------------------
 \HeaderB{cholesky\_reg}{Internal function}{choleskyreg}
 \begin{Description}
-Compute the regression coefficient using the Cholesky factor $L$ and the matrix
-$X^Ty.$
+Compute the least squares estimate using the Cholesky factor $L$ and the
+matrix $X^Ty.$
 \end{Description}
 \begin{Usage}
 \begin{verbatim}
-void cholesky_reg(double *L, double *x, double *xty, double *beta, int *n, 
+void cholesky_reg(double *L, double *x, double *xty, double *beta, int *n,
     int *p)
 \end{verbatim}
 \end{Usage}
@@ -886,7 +943,7 @@ void cholesky_reg(double *L, double *x, double *xty, double *beta, int *n,
 	\end{ldescription}
 \end{Arguments}
 \begin{Value}
-On return, \code{beta} is overwritten with the updated coefficients.
+On return, \code{beta} is overwritten with the updated least squares estimate.
 \end{Value}
 
 %---------------------------------------
@@ -896,7 +953,7 @@ Computes the diagonal elements of the extended ``hat'' matrix.
 \end{Description}
 \begin{Usage}
 \begin{verbatim}
-wbacon_error_type hat_matrix(regdata *dat, workarray *work, double *L, 
+wbacon_error_type hat_matrix(regdata *dat, workarray *work, double *L,
     double *hat)
 \end{verbatim}
 \end{Usage}
@@ -908,10 +965,19 @@ wbacon_error_type hat_matrix(regdata *dat, workarray *work, double *L,
 	\item[\code{hat}] hat matrx, \code{double array[n]}.
 	\end{ldescription}
 \end{Arguments}
+\begin{Details}
+The diagonal elements of the ``hat'' matrix are computed for the observations
+in the subset. For the elements not in the subset, an ``extended hat'' matrix
+is computed.
+\end{Details}
 \begin{Value}
-On return, \code{hat} is overwritten with the diagonal elements of the ``hat''
-matrix. The function returns an 
-\code{\LinkA{wbacon\_error\_type}{wbaconerrortype}}.
+The function returns a \code{\LinkA{wbacon\_error\_type}{wbaconerrortype}}:
+the return value is either \code{WBACON\_ERROR\_OK} (i.e., no error) or
+\code{WBACON\_ERROR\_TRIANG\_MAT\_SINGULAR} when the triangular matrix is
+singular.
+
+On return, \code{hat} is overwritten with the diagonal elements of the
+``hat'' matrix.
 \end{Value}
 
 
@@ -920,11 +986,10 @@ matrix. The function returns an
 \begin{Description}
 The function up- and downdates the Cholesky factor $L$ and the matrix product
 by comparing the two sets \code{subset0} and \code{subset1}.
-$X^Ty$. 
 \end{Description}
 \begin{Usage}
 \begin{verbatim}
-wbacon_error_type update_chol_xty(regdata *dat, workarray *work, estimate *est, 
+wbacon_error_type update_chol_xty(regdata *dat, workarray *work, estimate *est,
     int *subset0, int *subset1, int *verbose)
 \end{verbatim}
 \end{Usage}
@@ -935,7 +1000,7 @@ wbacon_error_type update_chol_xty(regdata *dat, workarray *work, estimate *est,
 		\EST
 		\SUBSET{0}
 		\SUBSET{1}
-		\SUBSETSIZEm
+		\item[\code{m}] size of the \code{subset1}, \code{[int]}.
 		\VERBOSE
 	\end{ldescription}
 \end{Arguments}
@@ -943,13 +1008,15 @@ wbacon_error_type update_chol_xty(regdata *dat, workarray *work, estimate *est,
 The function \code{update\_chol\_xty} compares the sets \code{subset0} and
 \code{subset1}. For all elements that are in \code{subset0} but not in
 \code{subset1}, it calls \code{\LinkA{chol\_downdate}{choldowndate}}. For all
-elements that are not in \code{subset0} but in \code{subset1}, it calls 
+elements that are not in \code{subset0} but in \code{subset1}, it calls
 \code{\LinkA{chol\_update}{cholupdate}}.
 \end{Details}
 \begin{Value}
-On return, \code{L} and \code{xty} are overwritten with their updated values.
+The function returns a \code{\LinkA{wbacon\_error\_type}{wbaconerrortype}}:
+the return value is either \code{WBACON\_ERROR\_OK} (i.e., no error) or the
+error handed over by \code{\LinkA{chol\_downdate}{choldowndate}}.
 
-The function returns an \code{\LinkA{wbacon\_error\_type}{wbaconerrortype}}.
+On return, \code{L} and \code{xty} are overwritten with their updated values.
 \end{Value}
 
 %---------------------------------------
@@ -965,13 +1032,13 @@ void chol_update(double *L, double *u, int *p)
 \begin{Arguments}
 	\begin{ldescription}
 		\item[\code{L}] Cholesky factor, \code{double array[p, p]}.
-		\item[\code{u}] rank-one update for \code{L}.
+		\item[\code{u}] rank-one update for \code{L},
 			\code{double array[p]}.
 		\item[\code{p}] dimension.
 	\end{ldescription}
 \end{Arguments}
 \begin{Details}
-This function computes one rank-one update. 
+This function computes a one rank-one update of the Cholesky factor.
 \end{Details}
 \begin{Value}
 On return, \code{L} is overwritten by its updated value.
@@ -990,28 +1057,32 @@ wbacon_error_type chol_downdate(double *L, double *u, int *p)
 \begin{Arguments}
 	\begin{ldescription}
 		\item[\code{L}] Cholesky factor, \code{double array[p, p]}.
-		\item[\code{u}] rank-one downdate for \code{L}.
+		\item[\code{u}] rank-one downdate for \code{L},
 			\code{double array[p]}.
 		\item[\code{p}] dimension.
 	\end{ldescription}
 \end{Arguments}
 \begin{Details}
-This function computes one rank-one downdate. 
+This function computes a one rank-one downdate of the Cholesky factor. The
+attempt to downdate may break down if the Cholesky factor becomes/is not
+positive definite. In this case, an error is returned.
 \end{Details}
 \begin{Value}
-On return, \code{L} is overwritten by its downdated value. 
+The function returns a \code{\LinkA{wbacon\_error\_type}{wbaconerrortype}}:
+the return value is either \code{WBACON\_ERROR\_OK} (i.e., no error) or
+\code{WBACON\_ERROR\_RANK\_DEFICIENT}.
 
-The function returns an \code{\LinkA{wbacon\_error\_type}{wbaconerrortype}}.
+On return, \code{L} is overwritten by its downdated value.
 \end{Value}
 
 
 %===============================================================================
-\chapter{Weighted least squares [\texttt{fitwls.c}]}
+\section{Weighted least squares [\texttt{fitwls.c}]}
 %---------------------------------------
 \HeaderA{fitwls}{Weighted least squares}{fitwls}
 \begin{Description}
-	Returns the coefficients, the matrices Q and R of the QR factorization, and
-	the residuals of a weighted linear regression.
+	Returns the least squares estimate, the matrices Q and R of the QR
+	factorization, and the residuals of a weighted linear regression.
 \end{Description}
 \begin{Usage}
 \begin{verbatim}
@@ -1023,73 +1094,72 @@ void fitwls(double *x, double *work_x, double *y, double *work_y, double *w,
 
 \begin{Arguments}
 	\begin{ldescription}
-		\item[\code{x}] design matrix, \code{double array[n, p]}. 
+		\item[\code{x}] design matrix, \code{double array[n, p]}.
 		\WORKARRAY{\_x}{work array}{n, p}
-		\item[\code{y}] response variable, \code{double array[n]}. 
+		\item[\code{y}] response variable, \code{double array[n]}.
 		\WORKARRAY{\_y}{work array}{n}
-		\WEIGHTS{w}	
-		\item[\code{resid}] residuals, \code{double array[n]}. 
-		\item[\code{beta0}] coefficients, \code{double array[p]}. 
-		\item[\code{n, p}] dimensions, \code{int}. 
-		\item[\code{work}] work array used in \code{LAPACK::dgels}, which is of
-			size \code{double array[lwork]}. 
-		\item[\code{lwork}] dimension of array \code{work}, \code{int}; if 
-			\code{lwork<1}, the function determines and returns the optimal size
-			of \code{lwork}.
-		\item[\code{info}] status, \code{int}; if successful, \code{info=0}; 
-			otherwise \code{info}$\neq$\code{0}. 
+		\WEIGHTS{w}
+		\item[\code{resid}] residuals, \code{double array[n]}.
+		\item[\code{beta0}] coefficients, \code{double array[p]}.
+		\item[\code{n, p}] dimensions, \code{[int]}.
+		\item[\code{work}] work array used in \code{LAPACK:dgels}, which is
+			of size \code{double array[lwork]}.
+		\item[\code{lwork}] dimension of array \code{work}, \code{[int]}; if
+			\code{lwork<1}, the function determines and returns the optimal
+			size of \code{lwork}.
+		\item[\code{info}] status, \code{[int]}; if successful, \code{info=0};
+			otherwise \code{info}$\neq$\code{0}.
 	\end{ldescription}
 \end{Arguments}
 \begin{Details}
-	\begin{itemize}
-		\item The regression coefficients are computed with the
-			\code{LAPACK::dgels} subroutine using a QR factorization of the
-			weighted design matrix.
-		\item The functions uses subroutines from \code{BLAS}. 
-	\end{itemize}
+The regression coefficients are computed with the \code{LAPACK:dgels}
+subroutine using a QR factorization of the weighted design matrix.
 \end{Details}
+\begin{Dependencies}
+\code{LAPACK:dgels} and \code{BLAS:dgemv}.
+\end{Dependencies}
 \begin{Value}
-On return, the following slots are overwritten with:
-	\begin{ldescription}	
-		\item[\code{beta0}] regression coefficients. 
-		\item[\code{resid}] residuals.
+On return, the following slots are overwritten:
+	\begin{ldescription}
+		\item[\code{beta0}] regression coefficients
+		\item[\code{resid}] residuals
 		\item[\code{work\_x}] the QR factorization as returned by the
-			subroutine \code{LAPACK::dgeqrf}.
-		\item[\code{info}] status; if successful, \code{info=0}; otherwise the
-		computation failed.
+			subroutine \code{LAPACK:dgeqrf}
+		\item[\code{info}] status; if successful, \code{info=0}; otherwise
+		the computation failed
 	\end{ldescription}
 \end{Value}
 
 %===============================================================================
-\chapter{Weighted quantile [\texttt{wquantile.c}]}
+\section{Weighted quantile [\texttt{wquantile.c}]}
 \label{ch:wquantile}
-The following functions are documented in this chapter:
+The following functions are documented in this section:
 \begin{itemize}
 	\item \code{\LinkA{wquantile\_noalloc}{wquantilenoalloc}}
 	\item \code{\LinkA{wselect0}{wselect0}}
 	\item some internal functions
-\end{itemize} 
+\end{itemize}
 
-\noindent The source file \code{wquantile.c} defines two macros: 
+\noindent The source file \code{wquantile.c} defines two macros:
 \begin{ldescription}
 	\item[\code{\_n\_quickselect}] threshold to switch from insertion sort to
-		quickselect, default: \code{40} (i.e., for samples smaller than 40,
-		insertion sort is used).
+		a weighted variant of the Select (FIND, quickselect) algorithm,
+		default: \code{40} (i.e., for samples smaller than 40, insertion sort
+		is used).
 	\item[\code{\_n\_ninther}] threshold for choosing the pivotal element,
 		default: \code{50}; for samples smaller than 50, the pivot is chosen
 		by the median-of-three; for larger samples, Tukey's ninther is used.
-\end{ldescription} 
-\noindent (Weighted) quicksort/quickselect is efficient for large arrays. 
-Though, its overhead can be severe for small arrays; hence, we use insertion
-sort for small arrays; cf. Bentley and McIlroy (1993). We have determined the
-numerical values by a series of benchmark tests with 
-\href{https://github.com/google/benchmark}{Google benchmark} on an ordinary 
-laptop computer (Intel i7 8th generation). 
- 
-
+\end{ldescription}
+\noindent (Weighted) quicksort/ Select(FIND, quickselect) method is efficient
+for large arrays. But its overhead can be severe for small arrays; hence,
+we use insertion sort for small arrays; cf. Bentley and McIlroy (1993). We
+have determined the numerical values by a series of benchmark tests with
+\href{https://github.com/google/benchmark}{Google benchmark} on an ordinary
+laptop computer (Intel i7 8th generation).
 
 %---------------------------------------
-\HeaderA{wquantile\_noalloc}{Weighted quantile without memory allocation}{wquantilenoalloc}
+\HeaderA{wquantile\_noalloc}{Weighted quantile without memory allocation}%
+	{wquantilenoalloc}
 \begin{Description}
 The same as \code{wquantile} but without memory allocation.
 \end{Description}
@@ -1102,28 +1172,29 @@ void wquantile_noalloc(double *array, double *weights, double *work, int *n,
 \begin{Arguments}
 	\begin{ldescription}
 		\DATA{array}{data}{n}
-		\WEIGHTS{weights}	
+		\WEIGHTS{weights}
 		\WORKARRAY{work}{work array}{2*n}
-		\item[\code{n}] dimension, \code{int}. 
-		\item[\code{prob}] probability, \code{double}, such that 
-			$0 \leq$\code{prob}$\leq 1$. 
-		\item[\code{result}] quantile, \code{double}. 
+		\item[\code{n}] dimension, \code{[int]}.
+		\item[\code{prob}] probability that defines the quantile,
+			such that $0 \leq$\code{prob}$\leq 1$, \code{[double]}.
+		\item[\code{result}] quantile, \code{[double]}.
 	\end{ldescription}
 \end{Arguments}
 \begin{Details}
-	See \code{\LinkA{wquantile}{Rfn.wquantile}}.
+See \code{\LinkA{wquantile}{wquantile}}.
 \end{Details}
 \begin{Dependencies}
-	\code{\LinkA{wselect0}{wselect0}} and \code{\LinkA{wquant0}{wquant0}}.
+\code{\LinkA{wselect0}{wselect0}} and \code{\LinkA{wquant0}{wquant0}}.
 \end{Dependencies}
 \begin{Value}
-See \code{\LinkA{wquantile}{Rfn.wquantile}}.
+On return, \code{result} is overwritten with the weighted quantile.
 \end{Value}
 
 %---------------------------------------
-\HeaderA{wselect0}{Selection of the k-th largest element (k-th order statistic)}{wselect0}
+\HeaderA{wselect0}%
+	{Selection of the k-th largest element (k-th order statistic)}{wselect0}
 \begin{Description}
-Returns the k-th largest element (k-th order statistic); sampling weights 
+Returns the k-th largest element (k-th order statistic); sampling weights
 allowed.
 \end{Description}
 \begin{Usage}
@@ -1135,10 +1206,10 @@ void wselect0(double *array, double *weights, int lo, int hi, int k)
 	\begin{ldescription}
 		\DATA{array}{data}{lo..hi}
 		\WEIGHTS{weights}
-		\item[\code{lo}] lower boundary of arrays, \code{int}. 
-		\item[\code{hi}] upper boundary of arrays, \code{int}.
-		\item[\code{k}] k-th largest element, \code{int}, such that 
-			\code{lo}$\leq$ \code{k}$\leq$\code{hi}. 
+		\item[\code{lo}] lower boundary of arrays, \code{[int]}.
+		\item[\code{hi}] upper boundary of arrays, \code{[int]}.
+		\item[\code{k}] k-th largest element, such that
+			\code{lo}$\leq$ \code{k}$\leq$\code{hi}, \code{[int]}.
 	\end{ldescription}
 \end{Arguments}
 \begin{Details}
@@ -1148,7 +1219,38 @@ See \LinkA{wquantile}{wquantile}.
 	\code{\LinkA{partition\_3way}{partition3}}.
 \end{Dependency}
 \begin{Value}
-On return, element \code{array[k]} is in its final sorted position; 
+On return, element \code{array[k]} is in its final sorted position;
+\code{weights} is sorted along with \code{array}.
+\end{Value}
+
+%---------------------------------------
+\HeaderA{insertionselect}{Internal function}{insertionselect}
+\begin{Description}
+Computes the weighted quantile by sorting all elements in \code{array} in
+ascending order (using insertion sort). For small arrays, this can be
+considerably faster than quicksort.
+\end{Description}
+\begin{Usage}
+\begin{verbatim}
+double insertionselect(double *array, double *weights, int lo, int hi,
+    double prob)
+\end{verbatim}
+\end{Usage}
+\begin{Arguments}
+	\begin{ldescription}
+		\DATA{array}{data}{n}
+		\WEIGHTS{weights}
+		\item[\code{lo}] lower boundary of arrays, \code{[int]}.
+		\item[\code{hi}] upper boundary of arrays, \code{[int]}.
+		\item[\code{prob}] probability that defines the quantile,
+			\code{double}, such that $0 \leq$\code{prob}$\leq 1$.
+	\end{ldescription}
+\end{Arguments}
+\begin{Dependency}
+\code{\LinkA{swap2}{swap2}}.
+\end{Dependency}
+\begin{Value}
+On return, element \code{array[k]} is in its final sorted position;
 \code{weights} is sorted along with \code{array}.
 \end{Value}
 
@@ -1160,7 +1262,7 @@ On return, element \code{array[k]} is in its final sorted position;
 %---------------------------------------
 \HeaderB{wquant0}{Internal function}{wquant0}
 \begin{Description}
-Workhorse function that computes the weighted quantile recursively; see 
+Workhorse function that computes the weighted quantile recursively; see
 \LinkA{wquantile}{wquantile}.
 \end{Description}
 \begin{Usage}
@@ -1170,7 +1272,7 @@ void wquant0(double *array, double *weights, double sum_w, int lo, int hi,
 \end{verbatim}
 \end{Usage}
 \begin{Dependencies}
-	\code{\LinkA{insertionselect}{insertionselect}} and 
+	\code{\LinkA{insertionselect}{insertionselect}} and
 	\code{\LinkA{partition\_3way}{partition3way}}.
 \end{Dependencies}
 
@@ -1178,27 +1280,28 @@ void wquant0(double *array, double *weights, double sum_w, int lo, int hi,
 %---------------------------------------
 \HeaderB{partition\_3way}{Internal function}{partition3way}
 \begin{Description}
-3-way partitioning scheme of Bentley and McIlroy's (1993) with weights. 
+3-way partitioning scheme of Bentley and McIlroy's (1993) with weights.
 \end{Description}
 \begin{Usage}
 \begin{verbatim}
-void partition_3way(double *array, double *weights, int lo, int hi, int *i, int *j)
+void partition_3way(double *array, double *weights, int lo, int hi, int *i,
+    int *j)
 \end{verbatim}
 \end{Usage}
 \begin{Dependency}
-	\code{\LinkA{swap2}{swap2}}. 
+	\code{\LinkA{swap2}{swap2}}.
 \end{Dependency}
 \begin{References}
-	Bentley, J.L. and D.M. McIlroy (1993). Engineering a Sort Function, 
+	Bentley, J.L. and D.M. McIlroy (1993). Engineering a Sort Function,
 	\textit{Software - Practice and Experience} 23, pp. 1249-1265.
 \end{References}
 
 %---------------------------------------
 \HeaderB{choose\_pivot}{Internal function}{choosepivot}
 \begin{Description}
-Choose pivotal element: for arrays of size < \code{\_n\_ninther}, the 
+Choose pivotal element: for arrays of size < \code{\_n\_ninther}, the
 median of three is taken as pivotal element, otherwise Tukey's ninther is
-used; see e.g. Bentley and McIlroy (1993). 
+used; see e.g. Bentley and McIlroy (1993).
 \end{Description}
 \begin{Usage}
 \begin{verbatim}
@@ -1209,7 +1312,7 @@ static inline int choose_pivot(double *array, int lo, int hi)
 	\code{\LinkA{med3}{med3}}.
 \end{Dependency}
 \begin{References}
-Bentley, J.L. and D.M. McIlroy (1993). Engineering a Sort Function, 
+Bentley, J.L. and D.M. McIlroy (1993). Engineering a Sort Function,
 \textit{Software - Practice and Experience} 23, pp. 1249-1265.
 \end{References}
 
@@ -1217,7 +1320,7 @@ Bentley, J.L. and D.M. McIlroy (1993). Engineering a Sort Function,
 \HeaderB{swap2}{Internal function}{swap2}
 \begin{Description}
 Two elements in \code{array} are swapped (and the corresponding elements in
-array \code{weights} are also swapped). 
+array \code{weights} are also swapped).
 \end{Description}
 \begin{Usage}
 \begin{verbatim}
@@ -1236,34 +1339,19 @@ static inline double med3(double *array, int i, int j, int k)
 \end{verbatim}
 \end{Usage}
 \begin{References}
-Sedgewick, R. (1997). \textit{Algorithms in C}, Parts 1-4, Fundamentals, Data
-Structures, Sorting, and Searching, USA: Addison-Wesley Longman Publishing Co.,
+Sedgewick, R. (1997). \textit{Algorithms in C, Parts 1-4, Fundamentals, Data
+Structures, Sorting, and Searching}, Addison-Wesley Longman Publishing Co.,
 Inc., 3rd ed.
 \end{References}
 
-%---------------------------------------
-\HeaderB{insertionselect}{Internal function}{insertionselect}
-\begin{Description}
-Computes the weighted quantile by sorting all elements in \code{array} in 
-ascending order (using insertion sort). For small arrays, this can be 
-considerably faster than quicksort. 
-\end{Description}
-\begin{Usage}
-\begin{verbatim}
-double insertionselect(double *array, double *weights, int lo, int hi, double prob)
-\end{verbatim}
-\end{Usage}
-\begin{Dependency}
-	\code{\LinkA{swap2}{swap2}}.
-\end{Dependency}
 
 %===============================================================================
-\chapter{Partial sorting [\texttt{partial\_sort.c}]}
+\section{Partial sorting [\texttt{partial\_sort.c}]}
 
 %---------------------------------------
 \HeaderA{psort\_array}{Partially sort an array with index}{psortarray}
 \begin{Description}
-Partially sorts a \code{double} array in ascending order; the accompanying
+Partially sorts array \code{x} in ascending order; the accompanying
 \code{int} array (called \code{index}) is sorted along with the array.
 \end{Description}
 \begin{Usage}
@@ -1274,30 +1362,40 @@ void psort_array(double *x, int *index, int n, int k)
 \begin{Arguments}
 	\begin{ldescription}
 		\DATA{x}{data}{n}
-		\item[\code{index}] index, \code{int array[n]}; the array will be 
-			overwritten. 
-		\item[\code{n}] dimension, \code{int}.
-		\item[\code{k}] \code{int} value that determines the upper array 
-			boundary, \code{array[0..k]}, where \code{k} $\leq$ \code{n}.
+		\item[\code{index}] index, \code{int array[n]}; the array will be
+			overwritten.
+		\item[\code{n}] dimension, \code{[int]}.
+		\item[\code{k}] value that determines the upper array boundary of
+			\code{x[0..k]}, where \code{k} $\leq$ \code{n}, \code{[int]}.
 	\end{ldescription}
 \end{Arguments}
 \begin{Details}
-This function is a wrapper for the function 
+This function is a wrapper for the function
 \LinkA{partial\_sort\_with\_index}{partialsortwithindex}.
 
 The function takes care of generating the array \code{index}. The elements of
-this array will set up to \code{0..(n - 1)}. 
+this array will set up to be \code{0..(n - 1)}.
 \end{Details}
+\begin{Dependency}
+\code{\LinkA{partial\_sort\_with\_index}{partialsortwithindex}}.
+\end{Dependency}
 \begin{Value}
 On return, the array \code{x[0..k]} is partially sorted in ascending order;
 the array \code{index[0..k]} is sorted along with \code{x[0..k]}.
 \end{Value}
 
+%---------------------------------------
+\subsection*{Internal functions}
+\addcontentsline{toc}{subsection}{Internal functions}%
+Most of the internal functions which are called from
+\code{\LinkA{psort\_array}{psortarray}} are identical with the internal
+functions of \code{\LinkA{wselect0}{wselect0}}. Therefore, we do not
+document separately.
 
 %---------------------------------------
 \HeaderB{partial\_sort\_with\_index}{Internal function}{partialsortwithindex}
 \begin{Description}
-Partially sorts a \code{double} array in ascending order; the accompanying
+Partially sorts a array \code{x} in ascending order; the accompanying
 \code{int} array (called \code{index}) is sorted along with the array.
 \end{Description}
 \begin{Usage}
@@ -1309,10 +1407,10 @@ void partial_sort_with_index(double *x, int *index, int *lo, int *hi, int *k)
 	\begin{ldescription}
 		\DATA{x}{data}{lo..hi}
 		\item[\code{index}] index, \code{int array[lo..hi]}; the array will be
-			overwritten. 
+			overwritten.
 		\item[\code{lo, hi}] indices, \code{[int]}, usually \code{lo = 0} and
-			\code{hi = n - 1}.  
-		\item[\code{k}] integer in \code{lo..hi}; determines the k-th largest
+			\code{hi = n - 1}.
+		\item[\code{k}] an \code{[int]} in \code{lo..hi}; determines the k-th largest
 			element up to  which \code{x} is to be sorted.
 	\end{ldescription}
 \end{Arguments}
@@ -1320,9 +1418,9 @@ void partial_sort_with_index(double *x, int *index, int *lo, int *hi, int *k)
 	The array \code{index} must be generated by the caller.
 \end{Details}
 \begin{Value}
-On return, the elements \code{lo..k} in the array \code{x[lo..hi]} are partially
-sorted in ascending order; the array \code{index[lo..k]} is sorted along with
-\code{x[lo..k]}.
+On return, the elements \code{lo..k} in the array \code{x[lo..hi]} are
+partially sorted in ascending order; the array \code{index[lo..k]} is sorted
+along with \code{x[lo..k]}.
 \end{Value}
 
 \end{document}

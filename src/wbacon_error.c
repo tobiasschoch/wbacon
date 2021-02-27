@@ -14,6 +14,6 @@ const char* wbacon_error(wbacon_error_type err)
 {
 	if (err >= WBACON_ERROR_COUNT)
 		return NULL;
-	else 
+	else
     	return CBACON_ERROR_STRINGS[err];
-} 
+}

@@ -1,6 +1,6 @@
-/* (partial) sorting of a double array with index 
+/* (partial) sorting of a double array with index
 
-   Copyright (C) 2020 Tobias Schoch (e-mail: tobias.schoch@gmail.com) 
+   Copyright (C) 2020 Tobias Schoch (e-mail: tobias.schoch@gmail.com)
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -16,18 +16,18 @@
    License along with this library; if not, a copy is available at
    https://www.gnu.org/licenses/
 
-   Reference:  Bentley, J.L. and D.M. McIlroy (1993). Engineering a 
-               Sort Function, Software - Practice and Experience 23, 
-               pp. 1249-1265    
+   Reference:  Bentley, J.L. and D.M. McIlroy (1993). Engineering a
+               Sort Function, Software - Practice and Experience 23,
+               pp. 1249-1265
 */
 
 #include "partial_sort.h"
 
 # define _large_array 50	// pivotal element determined by ninther
 
-static inline void swap2_indx(double*, int*, int, int) 
+static inline void swap2_indx(double*, int*, int, int)
 	__attribute__((always_inline));
-static inline double med3(double*, int, int, int) 
+static inline double med3(double*, int, int, int)
 	__attribute__((always_inline));
 static inline int choose_pivot(double*, int, int)
 	__attribute__((always_inline));
@@ -94,7 +94,7 @@ static inline void partition_3way_indx(double *array, int *index, int *lo,
 	swap2_indx(array, index, choose_pivot(array, *lo, *hi), *lo);
 	double pivot = array[*lo];
 
-	// Bentley-McIlroy's 3-way partitioning with sentinels i and j, 
+	// Bentley-McIlroy's 3-way partitioning with sentinels i and j,
 	// respectively, scanning up and down until they cross; elements equal to
 	// the pivot are swapped to the far left and right,
 
@@ -120,7 +120,7 @@ static inline void partition_3way_indx(double *array, int *index, int *lo,
 		swap2_indx(array, index, *i, *j);
 
 		// swap equal elements to the far left and right, respectively
-		if (is_equal(array[*i], pivot)) 
+		if (is_equal(array[*i], pivot))
 			swap2_indx(array, index, ++p, *i);
 
 		if (is_equal(array[*j], pivot))
@@ -162,7 +162,7 @@ static inline int choose_pivot(double *array, int lo, int hi)
 |*  i, j   elements to be swapped                                             *|
 \******************************************************************************/
 static inline void swap2_indx(double *array, int *index, int i, int j)
-{  
+{
 	double tmp0 = array[i]; array[i] = array[j]; array[j] = tmp0;
 	int tmp1 = index[i]; index[i] = index[j]; index[j] = tmp1;
 }
@@ -182,7 +182,7 @@ static inline int is_equal(double a, double b)
 \******************************************************************************/
 static inline double med3(double *array, int i, int j, int k)
 {
-	return array[i] < array[j] ? 
+	return array[i] < array[j] ?
 			(array[j] < array[k] ? j : array[i] < array[k] ? k : i)
 		:	(array[j] > array[k] ? j : array[i] > array[k] ? k : i);
-} 
+}

@@ -1,6 +1,6 @@
 \name{weighted_median}
 \alias{weighted_median}
-\title{Weighted median}
+\title{Weighted Median}
 \usage{
 weighted_median(x, w, na.rm = FALSE)
 }
@@ -9,16 +9,18 @@ weighted_median(x, w, na.rm = FALSE)
 
 \item{w}{\code{[numeric vector]} weights (same length as vector \code{x}).}
 
-\item{na.rm}{\code{[logical]} indicating whether \code{NA} values should be removed before the computation proceeds (default: \code{FALSE}).}
+\item{na.rm}{\code{[logical]} indicating whether \code{NA} values should be
+	removed before the computation proceeds (default: \code{FALSE}).}
 }
 \value{
-Weighted estimate of the population median
+Weighted estimate of the population median.
 }
 \description{
-\code{weighted_median} computes the weighted sample quantile
+\code{weighted_median} computes the weighted population median.
 }
 \details{
-Weighted sample median; see \code{\link{weighted_quantile}} for more information.
+Weighted sample median; see \code{\link{weighted_quantile}} for more
+information.
 }
 \seealso{
 \code{\link{weighted_quantile}}

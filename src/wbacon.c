@@ -1,8 +1,8 @@
 /* Implementation of the weighted BACON algorithm for multivariate outlier
    detection of Billor et al. (2000), with the extension to allow for weighting
-   of Béguin and Hulliger (2008) 
+   of Béguin and Hulliger (2008)
 
-   Copyright (C) 2020 Tobias Schoch (e-mail: tobias.schoch@gmail.com) 
+   Copyright (C) 2020 Tobias Schoch (e-mail: tobias.schoch@gmail.com)
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -18,21 +18,21 @@
    License along with this library; if not, a copy is available at
    https://www.gnu.org/licenses/
 
-   Billor N, Hadi AS, Vellemann PF (2000). BACON: Blocked Adaptative 
-      Computationally efficient Outlier Nominators. Computational Statistics 
+   Billor N, Hadi AS, Vellemann PF (2000). BACON: Blocked Adaptative
+      Computationally efficient Outlier Nominators. Computational Statistics
       and Data Analysis 34, pp. 279-298.
-   Béguin C, Hulliger B (2008). The BACON-EEM Algorithm for Multivariate 
-      Outlier Detection in Incomplete Survey Data. Survey Methodology 34, 
+   Béguin C, Hulliger B (2008). The BACON-EEM Algorithm for Multivariate
+      Outlier Detection in Incomplete Survey Data. Survey Methodology 34,
       pp. 91-103.
 */
 
-#include "wbacon.h" 
+#include "wbacon.h"
 
 #define _POWER2(_x) ((_x) * (_x))
 
 // data structure
 typedef struct wbdata_struct {
-	int n; 
+	int n;
 	int p;
 	double *x;
 	double *w;
@@ -78,7 +78,7 @@ static inline double qchisq2(double p, double df)
 	xp2 = xp * xp;
 	d_df = (double)df;
 	sqrt_df = sqrt(d_df);
-	hv = - c1 / d_df * (c2 * (xp2 - 1.0) / (3.0 * sqrt_df) 
+	hv = - c1 / d_df * (c2 * (xp2 - 1.0) / (3.0 * sqrt_df)
 		- (xp * xp2 - 3.0 * xp) / 4.0);
 	res = 1.0 - 2.0 / (9.0 * d_df) + (xp - hv) * c3 / sqrt_df;
 	return d_df * res * res * res;
@@ -126,8 +126,8 @@ wbacon_error_type initialsubset(wbdata *dat, workarray *work, double *center,
 
 //FIXME: take out collect = 4.0 as a parameter
 
-	// set weights of observations (m+1):n to zero 
-	for (int i = m; i < n; i++) 
+	// set weights of observations (m+1):n to zero
+	for (int i = m; i < n; i++)
 		dat->w[work->iarray[i]] = 0.0;
 
 	// set subset = 1 for the first 1:m elements
@@ -138,10 +138,10 @@ wbacon_error_type initialsubset(wbdata *dat, workarray *work, double *center,
 	while (m < n) {
 		weightedscatter(dat, work->work_np, center, scatter);
 		status = check_matrix_fullrank(scatter, p, 1);
-		if (status == WBACON_ERROR_OK)		
+		if (status == WBACON_ERROR_OK)
 			break;
 
-		if (*verbose) 
+		if (*verbose)
 			PRINT_OUT("Initial subset: scatter is rank deficient\n");
 
 		m++;
@@ -170,10 +170,10 @@ wbacon_error_type check_matrix_fullrank(double *x, int p, int decom)
 		if (rank != p)
 			return WBACON_ERROR_NOT_POSITIVE_DEFINITE;
 
-		// Cholesky decomposition 
+		// Cholesky decomposition
 		int info;
 		F77_CALL(dpotrf)("L", &p, x, &p, &info);
-		if (info != 0) 
+		if (info != 0)
 			return WBACON_ERROR_NOT_POSITIVE_DEFINITE;
 	}
 
@@ -184,8 +184,8 @@ wbacon_error_type check_matrix_fullrank(double *x, int p, int decom)
 
 	if (rank == p)
 		return WBACON_ERROR_OK;
-	else 
-		return WBACON_ERROR_RANK_DEFICIENT; 
+	else
+		return WBACON_ERROR_RANK_DEFICIENT;
 }
 
 /******************************************************************************\
@@ -216,14 +216,14 @@ void wbacon(double *x, double *w, double *center, double *scatter, double *dist,
 	Memcpy(original_w, w, *n);
 
 	// initialize and populate the struct 'wbdata'
-	wbdata dat;							
+	wbdata dat;
 	dat.n = *n;
 	dat.p = *p;
 	dat.x = x;
 	dat.w = w;
 	dat.dist = dist;
 
-	// initialize and populate the struct 'workarray' 
+	// initialize and populate the struct 'workarray'
 	workarray work;
 	int *iarray = (int*) Calloc(*n, int);
 	double *work_n = (double*) Calloc(*n, double);
@@ -236,11 +236,11 @@ void wbacon(double *x, double *w, double *center, double *scatter, double *dist,
 	work.work_pp = work_pp;
 	work.work_2n = work_2n;
 
-	// STEP 0: establish initial subset 
+	// STEP 0: establish initial subset
 	if (*version2) {
 		// center: coordinate-wise weighted median
 		double d_half = 0.5;
-		for (int j = 0; j < *p; j++)	 
+		for (int j = 0; j < *p; j++)
 			wquantile_noalloc(x + *n * j, w, work_2n, n, &d_half, &center[j]);
 
 		// distance: Euclidean norm
@@ -267,7 +267,7 @@ void wbacon(double *x, double *w, double *center, double *scatter, double *dist,
 	}
 
 	// STEP 1: update iteratively
-	double chi2 = sqrt(qchisq(*alpha / (double)*n , (double)(*p), 0, 0));	
+	double chi2 = sqrt(qchisq(*alpha / (double)*n , (double)(*p), 0, 0));
 	int iter = 1, is_different;
 	for (;;) {
 		if (*verbose)
@@ -277,7 +277,7 @@ void wbacon(double *x, double *w, double *center, double *scatter, double *dist,
 		err = mahalanobis(&dat, work_np, work_pp, center, scatter);
 		if (err != WBACON_ERROR_OK) {
 			*success = 0;
-			PRINT_OUT("Error: covariance %s (iterative updating)\n", 
+			PRINT_OUT("Error: covariance %s (iterative updating)\n",
 				wbacon_error(err));
 			goto clean_up;
 		}
@@ -293,7 +293,7 @@ void wbacon(double *x, double *w, double *center, double *scatter, double *dist,
 		if (is_different == 0) {
 			*maxiter = iter;
 			break;
-		} 
+		}
 
 		// chi-square cutoff value (quantile)
 		*cutoff = chi2 * cutoffval(*n, subsetsize, *p);
@@ -321,7 +321,7 @@ void wbacon(double *x, double *w, double *center, double *scatter, double *dist,
 	}
 
 clean_up:
-	Free(subset0); Free(original_w); Free(work_np); Free(work_pp); 
+	Free(subset0); Free(original_w); Free(work_np); Free(work_pp);
 	Free(work_2n); Free(work_n); Free(iarray);
 }
 
@@ -336,9 +336,9 @@ void verbose_message(int subsetsize, int n, int iter, double cutoff)
 {
 	double percentage = 100.0 * (double)subsetsize / (double)n;
 	if (iter > 1)
-		PRINT_OUT("Subset %d: n = %d (%.1f%%); cutoff: %.2f\n", iter, 
+		PRINT_OUT("Subset %d: n = %d (%.1f%%); cutoff: %.2f\n", iter,
 			subsetsize, percentage, cutoff);
-	else 
+	else
 		PRINT_OUT("Subset %d: n = %d (%.1f%%)\n", iter, subsetsize, percentage);
 }
 
@@ -355,7 +355,7 @@ void weightedmean(wbdata *dat, double *center)
 	double sum_w = 0.0;
 	for (int i = 0; i < dat->n; i++) {
 		sum_w += dat->w[i];
-		for (int j = 0; j < dat->p; j++) 
+		for (int j = 0; j < dat->p; j++)
 			center[j] += dat->x[dat->n * j + i] * dat->w[i];
    	}
 
@@ -422,7 +422,7 @@ void euclidean_norm2(wbdata *dat, double *work, double *center)
 |*  center   array[p]                                                         *|
 |*  scatter  array[p, p]                                                      *|
 \******************************************************************************/
-wbacon_error_type mahalanobis(wbdata *dat, double *work_np, double *work_pp, 
+wbacon_error_type mahalanobis(wbdata *dat, double *work_np, double *work_pp,
 	double *center, double *scatter)
 {
 	int n = dat->n, p = dat->p;
@@ -431,7 +431,7 @@ wbacon_error_type mahalanobis(wbdata *dat, double *work_np, double *work_pp,
 	weightedmean(dat, center);
 	weightedscatter(dat, work_np, center, scatter);
 
-	Memcpy(work_np, dat->x, n * p);					// copy of 'x' 
+	Memcpy(work_np, dat->x, n * p);					// copy of 'x'
 
 	for (int i = 0; i < n; i++)
 		for (int j = 0; j < p; j++)
@@ -442,7 +442,7 @@ wbacon_error_type mahalanobis(wbdata *dat, double *work_np, double *work_pp,
 
 	int info;
 	F77_CALL(dpotrf)("L", &p, work_pp, &p, &info);
-	if (info != 0) 
+	if (info != 0)
 		return WBACON_ERROR_RANK_DEFICIENT;
 
 	// Solve for y in A * y = B by forward substitution (A = Cholesky factor)
@@ -451,7 +451,7 @@ wbacon_error_type mahalanobis(wbdata *dat, double *work_np, double *work_pp,
 		&n);
 
 	// Mahalanobis distances (row sums)
-	for (int i = 0; i < n; i++) {   
+	for (int i = 0; i < n; i++) {
 		dat->dist[i] = 0.0;
 		for (int j = 0; j < p; j++)
 			dat->dist[i] += _POWER2(work_np[n * j + i]);
@@ -459,6 +459,6 @@ wbacon_error_type mahalanobis(wbdata *dat, double *work_np, double *work_pp,
 		dat->dist[i] = sqrt(dat->dist[i]);
 	}
 
-	return WBACON_ERROR_OK; 
+	return WBACON_ERROR_OK;
 }
-#undef _POWER2 
+#undef _POWER2

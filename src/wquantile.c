@@ -1,6 +1,6 @@
-/* weighted quantile and selection of k-th largest element 
+/* weighted quantile and selection of k-th largest element
 
-   Copyright (C) 2020 Tobias Schoch (e-mail: tobias.schoch@gmail.com) 
+   Copyright (C) 2020 Tobias Schoch (e-mail: tobias.schoch@gmail.com)
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -16,9 +16,9 @@
    License along with this library; if not, a copy is available at
    https://www.gnu.org/licenses/
 
-   Reference:  Bentley, J.L. and D.M. McIlroy (1993). Engineering a 
-               Sort Function, Software - Practice and Experience 23, 
-               pp. 1249-1265    
+   Reference:  Bentley, J.L. and D.M. McIlroy (1993). Engineering a
+               Sort Function, Software - Practice and Experience 23,
+               pp. 1249-1265
    Note:       The extension of the method to weighted problems is ours.
 */
 
@@ -30,7 +30,7 @@
 
 static inline void swap2(double*, double*, int, int)
 	__attribute__((always_inline));
-static inline double med3(double*, int, int, int) 
+static inline double med3(double*, int, int, int)
 	__attribute__((always_inline));
 static inline int min(int, int) __attribute__((always_inline));
 static inline int choose_pivot(double*, int, int)
@@ -38,11 +38,11 @@ static inline int choose_pivot(double*, int, int)
 static inline int is_equal(double, double) __attribute__((always_inline));
 
 void partition_3way(double*, double*, int, int, int*, int*);
-double insertionselect(double*, double*, int, int, double); 
+double insertionselect(double*, double*, int, int, double);
 void wquant0(double*, double*, double, int, int, double, double*);
 
 // debugging tools
-#if DEBUG_MODE 
+#if DEBUG_MODE
 #include <stdio.h>
 #include <string.h>
 void debug_print_data(double*, double*, int, int, char*);
@@ -64,7 +64,7 @@ void wquantile(double *array, double *weights, int *n, double *prob,
 	double *work;
 	work = (double*) Calloc(2 * *n, double);
 	wquantile_noalloc(array, weights, work, n, prob, result);
-	Free(work); 
+	Free(work);
 }
 
 /******************************************************************************\
@@ -77,7 +77,7 @@ void wquantile(double *array, double *weights, int *n, double *prob,
 |*  prob     probability defining quantile (0 <= prob <= 1)                   *|
 |*  result   on return: weighted quantile                                     *|
 \******************************************************************************/
-void wquantile_noalloc(double *array, double *weights, double *work, int *n, 
+void wquantile_noalloc(double *array, double *weights, double *work, int *n,
 	double *prob, double *result)
 {
 	if (is_equal(*prob, 0.0)) {				// prob = 0.0
@@ -246,7 +246,7 @@ void partition_3way(double *array, double *weights, int lo, int hi, int *i,
 		swap2(array, weights, *i, *j);
 
 		// swap equal elements to the far left and right, respectively
-		if (is_equal(array[*i], pivot)) 
+		if (is_equal(array[*i], pivot))
 			swap2(array, weights, ++p, *i);
 
 		if (is_equal(array[*j], pivot))
@@ -357,7 +357,7 @@ double insertionselect(double *array, double *weights, int lo, int hi,
 		}
 	}
 
-	// part: select 
+	// part: select
 	double sum_w = 0.0;
 	for (int k = lo; k <= hi; k++)		// total sum of weight
 		sum_w += weights[k];
@@ -388,7 +388,7 @@ double insertionselect(double *array, double *weights, int lo, int hi,
 #if DEBUG_MODE
 void debug_print_data(double *array, double *weights, int lo, int hi,
 	char *message)
-{ 
+{
 	if (strlen(message) > 0) {
 		printf("------\n");
 		printf("%s x\t", message);
@@ -412,7 +412,7 @@ void debug_print_data(double *array, double *weights, int lo, int hi,
 }
 
 void debug_print_state(int i, int j)
-{ 
+{
 	printf("final:\ti = %d\tj = %d\n", i, j);
 }
-#endif 
+#endif

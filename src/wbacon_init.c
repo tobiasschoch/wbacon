@@ -3,7 +3,7 @@
 #include "wbacon.h"
 #include "wbacon_reg.h"
 
-// create arrays describing each C routine 
+// create arrays describing each C routine
 static const R_CMethodDef cMethods[]  = {
 	{"wbacon", (DL_FUNC) &wbacon, 13},
 	{"wbacon_reg", (DL_FUNC) &wbacon_reg, 15},

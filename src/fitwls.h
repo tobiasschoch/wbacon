@@ -13,9 +13,9 @@
 #include <R_ext/BLAS.h>
 #include "regdata.h"
 
-#ifndef _FITWLS_H 
+#ifndef _FITWLS_H
 #define _FITWLS_H
 
 // prototypes for the functions
 int fitwls(regdata*, double*, double*, int, double*, double*);
-#endif 
+#endif

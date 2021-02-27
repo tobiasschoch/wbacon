@@ -1,6 +1,6 @@
-/* Weighted linear regression 
+/* Weighted linear regression
 
-   Copyright (C) 2020 Tobias Schoch (e-mail: tobias.schoch@gmail.com) 
+   Copyright (C) 2020 Tobias Schoch (e-mail: tobias.schoch@gmail.com)
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -35,15 +35,15 @@
 |*  on return, dat->wx is overwritten by the QR factorization as returned by  *|
 |*  LAPACK: dgeqrf                                                            *|
 \******************************************************************************/
-int fitwls(regdata *dat, double *weight, double *work_dgels, int lwork, 
+int fitwls(regdata *dat, double *weight, double *work_dgels, int lwork,
 	double *beta, double *resid)
 {
 	const int int_1 = 1;
 	int info_dgels = 1, n = dat->n, p = dat->p;
-	
-	// STEP 0: determine the optimal size of array 'work' and return 
+
+	// STEP 0: determine the optimal size of array 'work' and return
 	if (lwork < 0) {
-		F77_CALL(dgels)("N", &n, &p, &int_1, dat->x, &n, dat->y, &n, work_dgels, 
+		F77_CALL(dgels)("N", &n, &p, &int_1, dat->x, &n, dat->y, &n, work_dgels,
 			&lwork, &info_dgels);
 		return (int) work_dgels[0];
 	}
@@ -68,7 +68,7 @@ int fitwls(regdata *dat, double *weight, double *work_dgels, int lwork,
 
 	// dgels is not well suited as a rank-revealing procedure; i.e., INFO<0
 	// iff a diagonal element of the R matrix is exactly 0. This is not
-	// helpful; hence, we check the diagonal elements of R separately and 
+	// helpful; hence, we check the diagonal elements of R separately and
 	// issue and error flag if any(abs(diag(R))) is close to zero
 	for (int i = 0; i < p; i++)
 		if (fabs(dat->wx[(n + 1) * i]) < sqrt(DBL_EPSILON))
@@ -82,5 +82,5 @@ int fitwls(regdata *dat, double *weight, double *work_dgels, int lwork,
 	F77_CALL(dgemv)("N", &n, &p, &double_minus1, dat->x, &n, beta, &int_1,
 		&double_1, resid, &int_1);
 
-	return 0; 
-} 
+	return 0;
+}

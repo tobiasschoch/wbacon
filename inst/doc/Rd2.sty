@@ -9,6 +9,8 @@
 %%% Modified 1999/12/26 by Kurt Hornik
 %%% and so on.
 
+%%% Modified 2021/1/24 by Tobias Schoch
+
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesPackage{Rd}{}
 
@@ -44,12 +46,15 @@
 \RequirePackage{url}             % set urls
 \RequirePackage{textcomp}        % for \textquotesingle etc
 
-% Tobias Schoch, January 24, 2021 commented out
+%-------------------------------------------------------------------------------
+% Commented out by Tobias Schoch, January 24, 2021
+%
 % \addtolength{\textheight}{12mm}
 % \addtolength{\topmargin}{-9mm}   % still fits on US paper
 % \addtolength{\textwidth}{24mm}   % still fits on US paper
 % \setlength{\oddsidemargin}{10mm}
 % \setlength{\evensidemargin}{\oddsidemargin}
+%-------------------------------------------------------------------------------
 
 \newenvironment{display}[0]%
   {\begin{list}{}{\setlength{\leftmargin}{30pt}}\item}%
@@ -63,9 +68,14 @@
 \newcommand{\vneed}[1]{%
   \penalty-1000\vskip#1 plus 10pt minus #1\penalty-1000\vspace{-#1}}
 
-\newcommand{\Rdcontents}[1]{% modified \tableofcontents -- not \chapter
-\section*{{#1}\@mkboth{\MakeUppercase#1}{\MakeUppercase#1}}
+\newcommand{\Rdcontents}[1]{
+
+%-------------------------------------------------------------------------------
+% Modified by Tobias Schoch, January 24, 2021: \subsection instead of \section
+%
+\subsection*{{#1}\@mkboth{\MakeUppercase#1}{\MakeUppercase#1}}
   \@starttoc{toc}}
+%-------------------------------------------------------------------------------
 
 \newcommand{\Header}[2]{%
   \vneed{1ex}
@@ -160,12 +170,15 @@
   \begin{Rdsection}{Usage}}{\end{Rdsection}}
 \newenvironment{Value}{%
   \begin{Rdsection}{Value}}{\end{Rdsection}}
-%TS
+
+%-------------------------------------------------------------------------------
+% Added by Tobias Schoch, January 24, 2021
+%
 \newenvironment{Dependencies}{%
   \begin{Rdsection}{Dependencies}}{\end{Rdsection}}
 \newenvironment{Dependency}{%
   \begin{Rdsection}{Dependency}}{\end{Rdsection}}
-
+%-------------------------------------------------------------------------------
 
 \newenvironment{SubSection}[1]{%
   \begin{list}{}{\setlength{\leftmargin}{0.1in}}\item \textbf{#1: }}{\end{list}}
@@ -337,13 +350,18 @@
     \else
       \@restonecolfalse
     \fi
-    \chapter*{\contentsname
+
+	%---------------------------------------------------------------------------
+	% Modified by Tobias Schoch, January 24, 2021: section in place of chapter
+    \section*{\contentsname
         \@mkboth{%
            \MakeUppercase\contentsname}{\MakeUppercase\contentsname}}%
     \pdfbookmark{Contents}{contents}
     \@starttoc{toc}%
     \if@restonecol\twocolumn\fi
     }
+	%---------------------------------------------------------------------------
+
   \renewenvironment{theindex}
   {\if@twocolumn
     \@restonecolfalse
@@ -356,7 +374,12 @@
     \@mkboth{\MakeUppercase\indexname}%
     {\MakeUppercase\indexname}%
     \pdfbookmark{Index}{index}
-    \myaddcontentsline{toc}{chapter}{Index}
+
+	%---------------------------------------------------------------------------
+	% Modified by Tobias Schoch, January 24, 2021: section in place of chapter
+    \myaddcontentsline{toc}{section}{Index}
+	%---------------------------------------------------------------------------
+
     \thispagestyle{plain}\parindent\z@
     \parskip\z@ \@plus .3\p@\relax
     \raggedright
@@ -442,8 +465,10 @@
 \InputIfFileExists{Rd.cfg}{%
   \typeout{Reading personal defaults ...}}{}
 
+%-------------------------------------------------------------------------------
 % Tobias Schoch, January 24, 2021: Header for internal functions (without 
 % an entry in the table of contents
+%
 \newcommand{\HeaderB}[3]{%
   \vneed{1ex}
   \markboth{#1}{#1}
@@ -465,3 +490,4 @@
     \hrule
   \end{center}
   \nopagebreak} 
+%------------------------------------------------------------------------------- 

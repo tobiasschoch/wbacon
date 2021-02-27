@@ -9,9 +9,9 @@ library(robustX)
 library(wbacon)
 
 #===============================================================================
-# Comparison function 
+# Comparison function
 #===============================================================================
-# this function compares our implementation with the reference implementation 
+# this function compares our implementation with the reference implementation
 # in pkg 'robustX'
 compare <- function(data, name, init = "V2"){
 	# we test 11 different values for the parameter 'alpha'
@@ -102,4 +102,8 @@ compare(milk, "milk", "V2")
 data(pulpfiber, package = "robustbase")
 pulp <- as.matrix(pulpfiber)
 compare(pulp, "pulpfiber", "V1")
-compare(pulp, "pulpfiber", "V2") 
+compare(pulp, "pulpfiber", "V2")
+
+
+
+

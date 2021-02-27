@@ -6,11 +6,16 @@
 \usepackage{bm}
 
 \setkomafont{captionlabel}{\sffamily\bfseries\small}
-\setkomafont{caption}{\sffamily}
+\setkomafont{caption}{\sffamily\small}
+
+% position figure 't' on an empty page
+\makeatletter
+    \setlength\@fptop{0\p@}
+\makeatother
 
 \usepackage[T1]{fontenc}
 \usepackage{times}
-\renewcommand{\familydefault}{\rmdefault} 
+\renewcommand{\familydefault}{\rmdefault}
 
 \usepackage{SweaveCOLOR}
 \setkeys{Gin}{width = 0.8\textwidth}
@@ -22,7 +27,7 @@
 \hypersetup{
     colorlinks=true,
     linkcolor=blue,
-    filecolor=blue,      
+    filecolor=blue,
     urlcolor=blue,
     citecolor=blue
 }
@@ -30,20 +35,19 @@
 \setlength\parindent{24pt}
 \newcommand{\code}[1]{{\texttt{#1}}}
 
-
 % ==============================================================================
 \begin{document}
 
 \title{\Large Vignette: Weighted BACON algorithms}
 
-\author{{\normalsize Tobias Schoch} \\ 
+\author{{\normalsize Tobias Schoch} \\
 \begin{minipage}[t][][t]{\textwidth}
 	\begin{center}
 	\small{University of Applied Sciences Northwestern Switzerland FHNW} \\
 	\small{School of Business, Riggenbachstrasse 16, CH-4600 Olten} \\
 	\small{\texttt{tobias.schoch{@}fhnw.ch}}
 	\end{center}
-\end{minipage}} 
+\end{minipage}}
 
 \date{{\small \today}}
 \maketitle
@@ -57,28 +61,25 @@
 The package \code{wbacon} implements a weighted variant of the BACON algorithms
 \citep{billor_hadi_etal_2000} for multivariate outlier detection and robust
 linear regression. The extension of the BACON algorithm for outlier detection
-to allow for weighting is due to \citet{beguin_hulliger_2008}. These authors
-also have extended the algorithms in other directions (not implemented in
-\code{wbacon}). 
+to allow for weighting is due to \citet{beguin_hulliger_2008}.
 
 Additional information on the BACON algorithms and the inplementation can be
 found in the documents:
 \begin{itemize}
 	\item \code{methods.pdf}: A mathematical description of the algorithms and
 		their implementation;
-	\item \code{doc\_c\_functions.pdf}: A documentation of the \code{C} 
+	\item \code{doc\_c\_functions.pdf}: A documentation of the \code{C}
 		functions.
 \end{itemize}
-\noindent Both documents are filed in the package folder \code{inst/doc/}.
+\noindent Both documents can be found in the package folder \code{inst/doc/}.
 
 \subsubsection*{Organization of this document}
 Section \ref{sec:installation} gives instructions how to install and load the
 package.  In Section \ref{sec:multivariate}, we illustrate the application of
 the \code{wbacon} algorithm for multivariate outlier detection in two case
 studies (\code{bushfire} and \code{philips} data). In Section
-\ref{sec:regression}, we study the robust regression estimator 
+\ref{sec:regression}, we study the robust regression estimator
 \code{wbacon\_reg}.
-
 
 %------------------------------------------------------------------------------
 \section{Installation}\label{sec:installation}
@@ -86,24 +87,23 @@ Make sure that the package \code{devtools} is installed.\footnote{The
 \code{devtools} package can be installed from CRAN by
 \code{install.packages("devtools")}.} Then, the \code{wbacon} package can be
 pulled and installed from
-\href{https://www.github.com/tobiasschoch/cbacon}{www.github.com/tobiasschoch/wbacon}
-using 
+\href{https://www.github.com/tobiasschoch/cbacon}
+	{www.github.com/tobiasschoch/wbacon} using
 
 <<eval=FALSE>>=
 devtools::install_github("tobiasschoch/wbacon")
 @
 
-\noindent The package contains \code{C} code to be compiled. Users of Microsoft
-Windows need an installation of the the R tool chain bundle
+\noindent The package contains \code{C} code that needs to be compiled.
+Users of Microsoft Windows need an installation of the the R tool chain bundle
 \href{https://cran.r-project.org/bin/windows/Rtools/}{\code{rtools40}} to build
-the package. 
+the package.
 
-Once the package has been installed, it can be loaded and attached to the 
-current R session by 
+Once the package has been installed, it can be loaded and attached to the
+current R session by
 <<>>=
 library(wbacon)
 @
-
 
 %===============================================================================
 \section{Multivariate outlier detection}\label{sec:multivariate}
@@ -114,10 +114,26 @@ In this section, we study multivariate outlier detection for the two datasets
 \end{itemize}
 
 \subsection{Bushfire data}
-The \code{bushfire} dataset is on satellite remote sensing. These data were used by Campbell (1984)\footnote{Campbell, N.A. (1989). Bushfire Mapping using NOAA AVHRR Data. Technical Report. Commonwealth Scientific and Industrial Research Organisation, North Ryde.} to locate bushfire scars. The data are radiometer readings from polar-orbiting satellites of the National Oceanic and Atmospheric Administration (NOAA) which have been collected continuously since 1981. The measurements are taken on five frequency bands or channels. In the near infrared band, it is possible to distinguish vegetation types from burned surface. At visible wavelengths, the vegetation spectra are similar to burned surface. The spatial resolution is rather low (1.1 km per pixel). 
+The \code{bushfire} dataset is on satellite remote sensing. These data
+were used by Campbell (1984)\footnote{Campbell, N.A. (1989). Bushfire
+Mapping using NOAA AVHRR Data. Technical Report. Commonwealth Scientific
+and Industrial Research Organisation, North Ryde.} to locate bushfire
+scars. The data are radiometer readings from polar-orbiting satellites
+of the National Oceanic and Atmospheric Administration (NOAA) which have
+been collected continuously since 1981. The measurements are taken on
+five frequency bands or channels. In the near infrared band, it is
+possible to distinguish vegetation types from burned surface. At
+visible wavelengths, the vegetation spectra are similar to burned
+surface. The spatial resolution is rather low (1.1 km per pixel).
 
 \subsubsection*{Data preparation}
-The \code{bushfire} data contain radiometer readings for 38 pixels and have been studied in \citet{maronna_yohai_1995}, \citet{beguin_hulliger_2002}, \cite{beguin_hulliger_2008}, and \cite{hulliger_schoch_2009a}. The data can be obtained from the \code{R} package \code{modi} \citep{hulliger_sterchi_2020}.\footnote{The data are also distributed with the \code{R} package \code{robustbase} \citep{machler_rousseeuw_etal_2020}.} 
+The \code{bushfire} data contain radiometer readings for 38 pixels
+and have been studied in \citet{maronna_yohai_1995},
+\citet{beguin_hulliger_2002}, \cite{beguin_hulliger_2008}, and
+\cite{hulliger_schoch_2009a}. The data can be obtained from the
+\code{R} package \code{modi} \citep{hulliger_sterchi_2020}.\footnote{The
+data are also distributed with the \code{R} package \code{robustbase}
+\citep{machler_rousseeuw_etal_2020}.}
 <<>>=
 data(bushfire, package = "modi")
 @
@@ -127,7 +143,8 @@ data(bushfire, package = "modi")
 head(bushfire)
 @
 \setstretch{1.1}
-\noindent \citet{beguin_hulliger_2008} generated a set of sampling weights. The weights can be attached to the current session by
+\noindent \citet{beguin_hulliger_2008} generated a set of sampling weights.
+The weights can be attached to the current session by
 <<>>=
 data(bushfire.weights, package = "modi")
 @
@@ -141,36 +158,73 @@ fit
 @
 \setstretch{1.1}
 
-%FIXME:
-\noindent The argument \code{alpha} determines the $(1-\alpha)$-quantile $\chi_{\alpha,d}^2$ of the chi-square distribution with $d$ degrees of freedom.\footnote{The degrees of freedom $d$ is a function of the number of variables $p$, the number of observations $n$, and the size of the current subset $m$; see \code{methods.pdf} in the \code{inst/doc} folder of the package.} All observations whose Mahalanobis distances are smaller than $\chi_{\alpha, d}^2$ are selected into the subset of outlier-free data. It is recommended to choose \code{alpha} on grounds of an educated guess of the share of ``good'' observations in the data. Here, we guessed that 95\% of the observations are not outliers. In general, the choice of \code{alpha} does not exert great influence on the result. For instance, the specifications \code{alpha = 0.95}, \code{alpha = 0.9}, and \code{alpha = 0.8} yield the same result.
+\noindent The argument \code{alpha} determines the $(1-\alpha)$-quantile
+$\chi_{\alpha,d}^2$ of the chi-square distribution with $d$ degrees of
+freedom.\footnote{The degrees of freedom $d$ is a function of the number
+of variables $p$, the number of observations $n$, and the size of the
+current subset $m$; see \code{methods.pdf} in the \code{inst/doc} folder
+of the package.} All observations whose Mahalanobis distances are smaller
+than $\chi_{\alpha, d}^2$ are selected into the subset of outlier-free
+data. It is recommended to choose \code{alpha} on grounds of an educated
+guess of the share of ``good'' observations in the data. Here, we guessed
+that 95\% of the observations are not outliers. In general, the choice of
+\code{alpha} does not exert great influence on the result. For instance,
+the specifications \code{alpha = 0.95}, \code{alpha = 0.9}, and
+\code{alpha = 0.8} yield the same result.
 
-By default, the initial subset is determined by the Euclidean norm (initialization method: \code{version = "V2"}). This initialization method is robust because it is based on the coordinate-wise (weighted) median but the resulting estimators of center and scatter are \emph{not affine equivariant}. Let $T(\cdot)$ denote an estimator of a parameter of interest (e.g., covariance matrix) and let $\bm X$ denote the $(n \times p)$ data matrix. An estimator $T$ is affine equivariant if and only if 
+By default, the initial subset is determined by the Euclidean norm
+(initialization method: \code{version = "V2"}). This initialization
+method is robust because it is based on the coordinate-wise (weighted)
+median but the resulting estimators of center and scatter are
+\emph{not affine equivariant}. Let $T(\cdot)$ denote an estimator of a
+parameter of interest (e.g., covariance matrix) and let $\bm X$ denote
+the $(n \times p)$ data matrix. An estimator $T$ is affine equivariant
+if and only if
 \begin{equation*}
-	T(\bm A \bm X + \bm b) = \bm A T(\bm X) + \bm b, 
+	T(\bm A \bm X + \bm b) = \bm A T(\bm X) + \bm b,
 \end{equation*}
-\noindent for any nonsingular $(m \times n)$ matrix $\bm A$ and any $n$-vector $\bm b$. Although version \code{"V2"} of the BACON method leads to estimators that are not affine equivariant in the above sense, \citet{billor_hadi_etal_2000} point out that the method is nearly affine equivariant. There exists an alternative initialization method (\code{"version = V1"}) which is based on the coordinate-wise (weighted) means; therefore, it is affine equivariant but \emph{not robust}. 
+\noindent for any nonsingular $(m \times n)$ matrix $\bm A$ and any
+$n$-vector $\bm b$. Although version \code{"V2"} of the BACON method
+leads to estimators that are not affine equivariant in the above sense,
+\citet{billor_hadi_etal_2000} point out that the method is nearly
+affine equivariant. There exists an alternative initialization method
+(\code{"version = V1"}) which is based on the coordinate-wise (weighted)
+means; therefore, it is affine equivariant but \emph{not robust}.
 
-From the above output, we see that the algorithm converged in three iterations. In case the algorithm does not converge, we may increase the maximum number of iterations (default: \code{maxiter = 50}) and toggle \code{verbose = TRUE} to (hopefully) learn more why the method did not converge.  
+From the above output, we see that the algorithm converged in three
+iterations. In case the algorithm does not converge, we may increase
+the maximum number of iterations (default: \code{maxiter = 50}) and
+toggle \code{verbose = TRUE} to (hopefully) learn more why the method
+did not converge.
 
-In the next step, we want to study the result in more detail. In particular, we are interested in the estimated center and scatter (or covariance) matrix. To this end, we can call the \code{summary()} method on the object \code{fit}. 
+In the next step, we want to study the result in more detail. In particular,
+we are interested in the estimated center and scatter (or covariance)
+matrix. To this end, we can call the \code{summary()} method on the
+object \code{fit}.
 \setstretch{1.0}
 <<>>=
 summary(fit)
 @
 \setstretch{1.1}
 
-\noindent The method detected 24 outliers. The method \code{is\_outlier()} returns a vector of logicals whether an observation has been flagged as an outlier. 
+\noindent The method detected 24 outliers. The method \code{is\_outlier()}
+returns a vector of logicals whether an observation has been flagged
+as an outlier.
 <<>>=
 which(is_outlier(fit))
 @
 
-\noindent The center and covariance (scatter) matrix can be extracted with the auxiliary functions, respectively, \code{center()} and \code{cov()}.
+\noindent The center and covariance (scatter) matrix can be extracted
+with the auxiliary functions, respectively, \code{center()} and \code{cov()}.
 <<>>=
 center(fit)
 @
 
-\noindent The robust Mahalanobis distances, whose summary statistic is printed by the \code{summary()} method, can be extracted with the \code{distance()} method. 
-An application of this function is the following code snipped 
+\noindent The robust Mahalanobis distances, whose summary statistic
+is printed by the \code{summary()} method, can be extracted with the
+\code{distance()} method.
+
+An application of this function is the following code snipped
 
 \setstretch{1.0}
 <<eval=FALSE>>=
@@ -178,7 +232,9 @@ hist(distance(fit), breaks = 20)
 abline(v = fit$cutoff, lty = 2)
 @
 \setstretch{1.1}
-\noindent the resulting graph is shown in Figure \ref{fig:bushfire_hist}. The vertical dotted line shows the cutoff threshold that has been used by \code{wbacon()} for outlier detection/ nomination. 
+\noindent the resulting graph is shown in Figure \ref{fig:bushfire_hist}.
+The vertical dotted line shows the cutoff threshold that has been used
+by \code{wbacon()} for outlier detection/ nomination.
 
 \begin{figure}[htb]
 \begin{center}
@@ -187,19 +243,23 @@ hist(distance(fit), breaks = 10, main = "", cex.lab = 1.3, cex.axis = 1.2)
 abline(v = fit$cutoff, lty = 2)
 box()
 @
-\caption{Histogram of distances from the center (bushfire data)}\label{fig:bushfire_hist}
+\caption{Histogram of distances from the center (bushfire data)}
+\label{fig:bushfire_hist}
 \end{center}
 \end{figure}
 
-
-
-
 %------------------------------------------------------------------------------
 \subsection{Philips data}
-Old television sets had a cathode ray tube with an electron gun. The emitted beam runs through a diaphragm that lets pass only a partial beam to the screen. The diaphragm consists of 9 components. The Philips data set contains $n = 667$ measurements on the $p = 9$ components (variables); see \citet{rousseeuw_van-driessen_1999}. 
+Old television sets had a cathode ray tube with an electron gun. The
+emitted beam runs through a diaphragm that lets pass only a partial beam
+to the screen. The diaphragm consists of 9 components. The Philips data
+set contains $n = 667$ measurements on the $p = 9$ components (variables);
+see \citet{rousseeuw_van-driessen_1999}.
 
 \subsubsection*{Data preparation}
-The \code{philips} data can be loaded from the \code{R} package \code{cellWise} \citep{raymaekers_rousseeuw_2020}. These data do not have sampling weights. 
+The \code{philips} data can be loaded from the \code{R} package
+\code{cellWise} \citep{raymaekers_rousseeuw_2020}. These data do not
+have sampling weights.
 \setstretch{1.0}
 <<>>=
 data(philips, package = "cellWise")
@@ -207,9 +267,9 @@ head(philips)
 @
 \setstretch{1.1}
 
-
 \subsection*{Outlier detection}
-We compute the BACON algorithm but this time with the initialization method \code{version = "V1"}.  
+We compute the BACON algorithm but this time with the initialization
+method \code{version = "V1"}.
 \setstretch{1.0}
 <<>>=
 fit <- wBACON(philips, alpha = 0.99, version = "V1")
@@ -227,72 +287,193 @@ print(center(fit), digits = 2)
 sum(is_outlier(fit))
 @
 \noindent outliers.
- 
-\subsection*{Comparison with MCD}
-\citet{rousseeuw_driessen_1999}
-
-\code{covMcd} implemented in the \code{R} package \code{robustbase} of \citet{machler_rousseeuw_etal_2020}
-
-
-<<>>=
-library(robustbase)
-fit_mcd <- covMcd(philips)
-@
-
 
 \begin{figure}[htb]
 \begin{center}
 <<fig = TRUE, echo = FALSE, height = 5, width = 10>>=
+library(robustbase)
+fit_mcd <- covMcd(philips)
+
 plot(sqrt(fit_mcd$mah), pch = 19, cex = 0.6, cex.axis = 1.2, cex.lab = 1.3,
 	ylab = "robust distance", xlab = "obs.", type = "n")
 rect(491, 0, 565, 20, col = "grey90", border = NA)
 points(sqrt(fit_mcd$mah), pch = 19, cex = 0.6)
 points(distance(fit), pch = "+", col = 2)
 box()
-legend("topleft", pch = c(19, 3), col = c(1, 2), 
+legend("topleft", pch = c(19, 3), col = c(1, 2),
 	legend = c("covMcd", "wBACON"), cex = 1.3, pt.cex = 0.8, bty = "n")
 @
-\caption{Distances from the center (philips data)}\label{fig:philips_dist}
+\caption{Robust Mahalanobis distances of the BACON algorithm and the
+fast MCD (philips data)}\label{fig:philips_dist}
 \end{center}
 \end{figure}
 
+\subsection*{Comparison with MCD}
+It is instructive to compare the detected outlier patterns of the
+BACON method with the patterns detected by the fast minimum covariance
+determinant (fast MCD) of \citet{rousseeuw_van-driessen_1999}. The fast MCD
+is implemented as function \code{covMcd} in the \code{R} package
+\code{robustbase} of \citet{machler_rousseeuw_etal_2020}. In terms of
+computational costs, fast MCD is much more expensive than the BACON
+algorithm.
 
-
-
-%===============================================================================
-\clearpage
-\section{Robust linear regression}\label{sec:regression}
-
-<<>>=
-data(iris, package = "datasets")
+<<eval=FALSE>>=
+library(robustbase)
+fit_mcd <- covMcd(philips)
 @
 
+\noindent The robust Mahalanobis distances of the BACON algorithm and
+the fast MCD are shown in Figure \ref{fig:philips_dist}. The outlier
+patterns of the two methods are very similar. In particular, the BACON
+algorithm detects the strongly deviating group of observations with
+no. 491--565 (highlighted by the gray background); see
+\citet{rousseeuw_van-driessen_1999} for a discussion of these observations.
+The computed distances of the first 100 observations are slightly different
+for the two detection methods.
+
+%===============================================================================
+\section{Robust linear regression}\label{sec:regression}
+The \code{education} data is on education expenditures in 50 US states in
+1975 \citep[][Chap. 5.7]{chatterjee_hadi_2012}. The data can be loaded
+from the \code{robustbase} package.
+<<>>=
+data(education, package = "robustbase")
+@
+\noindent It is convenient to rename the variables.
+
+\setstretch{1.1}
+<<>>=
+names(education)[3:6] <- c("RES", "INC", "YOUNG", "EXP")
+head(education)
+@
+\setstretch{1.0}
+
+\noindent The measured variables for the 50 states are:
+\begin{enumerate}[  ]
+	\item \code{State} State
+	\item \code{Region} group variable with outcomes: 1=Northeastern,
+		2=North central, 3=Southern, and 4=Western
+	\item \code{RES}: Number of residents per thousand residing in urban
+		areas in 1970
+	\item \code{INC}: Per capita personal income in 1973 (\$US)
+	\item \code{YOUNG}: Number of residents per thousand under 18 years of
+		age in 1974
+	\item \code{EXP}: Per capita expenditure on public education in a
+		state (\$US), projected for 1975
+\end{enumerate}
+
+\subsection*{Model fit}
+We want to regress education expenditures (\code{EXP}) on the
+variables \code{RES}, \code{INC}, and \code{YOUNG} by the BACON algorithm,
+and obtain
 
 \setstretch{1.0}
 <<>>=
-reg <- wBACON_reg(Sepal.Length ~ Sepal.Width + Petal.Length + Petal.Width,
-       data = iris)
+reg <- wBACON_reg(EXP ~ RES + INC + YOUNG, data = education)
+reg
 @
 \setstretch{1.1}
 
-\noindent and the \code{summary()} method
+\noindent The instance \code{reg} is an object of the class \code{roblm}.
+The printed output of \code{wBACON\_reg} is identical with the one
+of the \code{lm} function. In addition, we are told the size of the
+subset on which the regression has been computed. The observations not
+in the subset are considered outliers (here 3 out of 50 observations,
+i.e. 6\%).
+
+The \code{summary()} method can be used to obtain a summary of the
+estimated model.
+
 \setstretch{1.0}
 <<>>=
 summary(reg)
 @
 \setstretch{1.1}
-\noindent And \code{coef()}, \code{vcov()}, and \code{predict()} 
 
-
-\noindent Comparison with \code{lm()}
-\setstretch{1.0}
-<<>>=
-summary(lm(Sepal.Length ~ Sepal.Width + Petal.Length + Petal.Width,
-        data = iris[!is_outlier(reg), ]))
+\noindent The summary output of \code{wBACON\_reg} is identical with
+the output of the \code{lm} estimate on the subset of outlier-free
+data,
+<<eval=FALSE>>=
+summary(lm(EXP ~ RES + INC + YOUNG, data = education[!is_outlier(reg), ]))
 @
-\setstretch{1.1}
+\noindent where we have used \code{is\_outlier()} to extract the set of
+declared outliers from \code{reg} (the summary output of the \code{lm}
+estimate is not shown).
 
+\subsection*{Tuning}
+By default, \code{wBACON\_reg} uses the parametrization $\alpha = 0.95$,
+\code{collect = 4}, and \code{version = "V2"}. These parameters are
+used to call the \code{wBACON} algorithm on the design matrix. Then,
+the same parameters are used to compute the robust regression.
 
+To ensure a high breakdown point, \code{version = "V2"} should not
+be changed to \code{version = "V1"} unless you have good reasons.
+The main ``turning knob'' to tune the algorithm is \code{alpha}, which
+defines the $(1-$\code{alpha}$)$ quantile of the Student $t$-distribution.
+All observations whose distances/discrepancies\footnote{See document
+\code{methods.pdf} in the folder \code{/inst/doc} of the package.} are
+smaller (in absolute value) than the quantile are selected into the
+subset of ``good'' data.  By choosing smaller values for \code{alpha}
+(e.g., 0.7), more observations are selected (ceteris paribus) into the
+subset of ``good'' data (and vice versa).
+
+The parameter \code{collect} specifies the initial subset size, which
+is defined as $m = p \cdot collect$. It can be modified but should
+be chosen such that $m$ is considerably smaller than the number of
+observations $n$.  Otherwise there is a high risk of selecting too
+many ``bad'' observations into the initial subset, which will
+eventually bias the regression estimates.
+
+In case the algorithm does not converge, we may increase
+the maximum number of iterations (default: \code{maxiter = 50}) and
+toggle \code{verbose = TRUE} to (hopefully) learn more why the method
+did not converge.
+
+\subsection*{Model diagnostics}
+The methods \code{coef()}, \code{vcov()}, and \code{predict()} work
+exactly the same as their \code{lm} counterparts. This is also true for
+the first three \code{plot} types (\code{which \%in\% 1:3}), that is
+\begin{enumerate}[  ]
+	\item \code{1}: Residuals vs Fitted,
+	\item \code{2}: Normal Q-Q,
+	\item \code{3}: Scale-Location
+\end{enumerate}
+
+\noindent The plot types \code{4:6} of \code{plot.lm} are not implemented
+for objects of the class \code{roblm} because it is not sensible to study
+the standard regression influence diagnostics in the presence of outliers
+in the model's design space. Instead, type four (\code{which = 4}) plots
+the robust Mahalanobis distances with respect to the non-constant
+design variables against the standardized residual. This plot has been
+proposed by \citet{rousseeuw_zomeren_1990}.
+
+\begin{figure}[htb]
+\begin{center}
+<<fig = TRUE, echo = FALSE>>=
+plot(reg, 4)
+@
+\caption{A}\label{fig:robmahalanobis}
+\end{center}
+\end{figure}
+
+Figure \ref{fig:robmahalanobis} shows \code{plot(reg, which = 4)}. The
+filled circles represent the outliers detected by the BACON algorithm.
+The two outlying observations with robust Mahalanobis distances
+(see abscissae) slightly below 1.0 are flagged as outliers because
+their standardized residual falls outside the interval spanned by
+$\pm \, t_{\alpha/(2m+2), m - p}$, where $t_{\alpha, m - p}$ is
+the $(1-\alpha)$ quantile of the Student $t$-distribution with
+$m-p$ degrees of freedom, $m$ denoting the size of the final subset of
+outlier-free data. Here, we have $m=47$, $\alpha = 0.95$
+(see argument \code{alpha} of \code{wBACON\_reg}), thus the interval
+is $[-2.42, \; 2.42]$. The outlier in the top right corner of
+Figure \ref{fig:robmahalanobis} is both a residual outlier and an
+outlier in the model's design space.
+
+\subsection*{Note}
+For small samples, exclusion of outliers instead of downweighting
+efficiency 
+outliers in x and y
 
 
 %===============================================================================
@@ -304,61 +485,62 @@ summary(lm(Sepal.Length ~ Sepal.Width + Petal.Length + Petal.Width,
 \expandafter\ifx\csname natexlab\endcsname\relax\def\natexlab#1{#1}\fi
 
 \bibitem[\protect\citeauthoryear{B{\'e}guin and Hulliger}{B{\'e}guin and
-  Hulliger}{2002}]{beguin_hulliger_2002}
-\textsc{B{\'e}guin, C. and B.~Hulliger} (2002): \emph{Robust Multivariate
-  Outlier Detection and Imputation with Incomplete Survey Data}, {D}eliverable
-  D4/5.2.1/2 {P}art {C}: {EUREDIT} project,
-  https://www.cs.york.ac.uk/euredit/euredit-main.html, research project funded
-  by the {E}uropean {C}ommission, {IST}-1999-10226.
-
+	Hulliger}{2002}]{beguin_hulliger_2002}
+	\textsc{B{\'e}guin, C. and B.~Hulliger} (2002): \emph{Robust Multivariate
+	Outlier Detection and Imputation with Incomplete Survey Data},
+	{D}eliverable D4/5.2.1/2 {P}art {C}: {EUREDIT} project,
+	https://www.cs.york.ac.uk/euredit/euredit-main.html, research project
+	funded by the {E}uropean {C}ommission, {IST}-1999-10226.
 \bibitem[\protect\citeauthoryear{B\'{e}guin and Hulliger}{B\'{e}guin and
-  Hulliger}{2008}]{beguin_hulliger_2008}
-\textsc{B\'{e}guin, C. and B.~Hulliger} (2008): \enquote{The BACON-EEM
-  Algorithm for Multivariate Outlier Detection in Incomplete Survey Data,}
-  \emph{Survey Methodology}, Vol. 34, No. 1, 91--103.
-
+	Hulliger}{2008}]{beguin_hulliger_2008}
+	\textsc{B\'{e}guin, C. and B.~Hulliger} (2008): \enquote{The BACON-EEM
+	Algorithm for Multivariate Outlier Detection in Incomplete Survey Data,}
+	\emph{Survey Methodology}, Vol. 34, No. 1, 91--103.
 \bibitem[\protect\citeauthoryear{Billor, Hadi, and Vellemann}{Billor
-  et~al.}{2000}]{billor_hadi_etal_2000}
-\textsc{Billor, N., A.~S. Hadi, and P.~F. Vellemann} (2000): \enquote{{BACON}:
-  Blocked Adaptative Computationally-efficient Outlier Nominators,}
-  \emph{Computational Statistics and Data Analysis}, 34, 279--298.
-
-\bibitem[\protect\citeauthoryear{Hulliger and Schoch}{Hulliger and
-  Schoch}{2009}]{hulliger_schoch_2009a}
-\textsc{Hulliger, B. and T.~Schoch} (2009): \enquote{Robust multivariate
-  imputation with survey data,} in \emph{Proceedings of the 57th Session of the
-  International Statistical Institute}, Durban.
-
+	et~al.}{2000}]{billor_hadi_etal_2000}
+	\textsc{Billor, N., A.~S. Hadi, and P.~F. Vellemann} (2000):
+	\enquote{{BACON}: Blocked Adaptive Computationally-efficient Outlier
+	Nominators,} \emph{Computational Statistics and Data Analysis}, 34,
+	279--298.
+\bibitem[\protect\citeauthoryear{Chatterjee and Hadi}{Chatterjee and Hadi}
+	{2012}] {chatterjee_hadi_2012} \textsc{Chatterjee, S. and A.~H.~Hadi}
+	(2012): \emph{Regression Analysis by Example}, 5th ed., Hoboken (NJ):
+	John Wiley \& Sons.
+\bibitem[\protect\citeauthoryear{Hulliger and Schoch}{Hulliger and Schoch}
+	{2009}]{hulliger_schoch_2009a}
+	\textsc{Hulliger, B. and T.~Schoch} (2009): \enquote{Robust multivariate
+	imputation with survey data,} in \emph{Proceedings of the 57th Session
+	of the International Statistical Institute}, Durban.
 \bibitem[\protect\citeauthoryear{Hulliger and Sterchi}{Hulliger and
-  Sterchi}{2020}]{hulliger_sterchi_2020}
-\textsc{Hulliger, B. and M.~Sterchi} (2020): \emph{modi: Multivariate Outlier
-  Detection and Imputation for Incomplete Survey Data}, {R} package version
-  0.1-0.
-
+	Sterchi}{2020}]{hulliger_sterchi_2020}
+	\textsc{Hulliger, B. and M.~Sterchi} (2020): \emph{modi: Multivariate
+	Outlier Detection and Imputation for Incomplete Survey Data}, {R} package
+	version 0.1-0.
 \bibitem[\protect\citeauthoryear{M{\"a}chler, Rousseeuw, Croux, Todorov,
-  Ruckstuhl, Salibian-Barrera, Verbeke, Koller, Conceicao, and {Anna di
-  Palma}}{M{\"a}chler et~al.}{2020}]{machler_rousseeuw_etal_2020}
-\textsc{M{\"a}chler, M., P.~Rousseeuw, C.~Croux, V.~Todorov, A.~Ruckstuhl,
-  M.~Salibian-Barrera, T.~Verbeke, M.~Koller, E.~L.~T. Conceicao, and M.~{Anna
-  di Palma}} (2020): \emph{robustbase: Basic Robust Statistics}, {R} package
-  version 0.93-6.
-
+	Ruckstuhl, Salibian-Barrera, Verbeke, Koller, Conceicao, and {Anna di
+	Palma}}{M{\"a}chler et~al.}{2020}]{machler_rousseeuw_etal_2020}
+	\textsc{M{\"a}chler, M., P.~Rousseeuw, C.~Croux, V.~Todorov, A.~Ruckstuhl,
+	M.~Salibian-Barrera, T.~Verbeke, M.~Koller, E.~L.~T. Conceicao, and M.~{Anna
+	di Palma}} (2020): \emph{robustbase: Basic Robust Statistics}, {R} package
+	version 0.93-6.
 \bibitem[\protect\citeauthoryear{Maronna and Yohai}{Maronna and
-  Yohai}{1995}]{maronna_yohai_1995}
-\textsc{Maronna, R.~A. and V.~J. Yohai} (1995): \enquote{The Behavior of the
-  Stahel-Donoho Robust Multivariate Estimator,} \emph{Journal of the American
-  Statistical Association}, 90, 330--341.
-
+	Yohai}{1995}]{maronna_yohai_1995}
+	\textsc{Maronna, R.~A. and V.~J. Yohai} (1995): \enquote{The Behavior of the
+	Stahel-Donoho Robust Multivariate Estimator,} \emph{Journal of the American
+	Statistical Association}, 90, 330--341.
 \bibitem[\protect\citeauthoryear{Raymaekers and Rousseeuw}{Raymaekers and
-  Rousseeuw}{2020}]{raymaekers_rousseeuw_2020}
-\textsc{Raymaekers, J. and P.~Rousseeuw} (2020): \emph{cellWise: Analyzing Data
-  with Cellwise Outliers}, {R} package version 2.2.1.
-
-\bibitem[\protect\citeauthoryear{Rousseeuw and {Van Driessen}}{Rousseeuw and
-  {Van Driessen}}{1999}]{rousseeuw_van-driessen_1999}
-\textsc{Rousseeuw, P.~J. and K.~{Van Driessen}} (1999): \enquote{A fast
-  algorithm for the Minimum Covariance Determinant estimator,}
-  \emph{Technometrics}, 41, 212--223.
+	Rousseeuw}{2020}]{raymaekers_rousseeuw_2020}
+	\textsc{Raymaekers, J. and P.~Rousseeuw} (2020): \emph{cellWise: Analyzing
+	Data with Cellwise Outliers}, {R} package version 2.2.1.
+\bibitem[\protect\citeauthoryear{Rousseeuw and {van Driessen}}{Rousseeuw and
+	{van Driessen}}{1999}]{rousseeuw_van-driessen_1999}
+	\textsc{Rousseeuw, P.~J. and K.~{van Driessen}} (1999): \enquote{A fast
+	algorithm for the Minimum Covariance Determinant estimator},
+	\emph{Technometrics}, 41, 212--223.
+\bibitem[\protect\citeauthoryear{Rousseeuw and {van Zomeren}}{Rousseeuw and
+	{van Zomeren}}{1990}]{rousseeuw_zomeren_1990}
+	\textsc{Rousseeuw, P.~J. and K.~{van Zomeren}} (1990): \enquote{Unmasking
+	Multivariate Outliers and Leverage Points},
+	\emph{Journal of the American Statistical Association}, 411, 633--639.
 \end{thebibliography}
- 
 \end{document}

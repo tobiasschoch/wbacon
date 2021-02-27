@@ -1,7 +1,7 @@
 \name{is_outlier}
 \alias{is_outlier.roblm}
 \alias{is_outlier.robmv}
-\title{Flag outliers}
+\title{Flag Outliers}
 \usage{
 is_outlier(object, ...)
 \method{is_outlier}{roblm}(object, ...)
@@ -17,4 +17,7 @@ outlier by the method.
 }
 \value{
 A logical vector.
+}
+\seealso{
+\code{\link{wBACON_reg}} and \code{\link{wBACON}}
 }

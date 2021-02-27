@@ -69,4 +69,6 @@ file.copy(paste0(PKG_SOURCE, "/", c("NAMESPACE", "DESCRIPTION", "LICENSE")),
 setwd(PKG_ROOT)
 system("R CMD INSTALL --build wbacon")
 
+# R CMD Rd2pdf wbacon # render pdf manual
+
 
