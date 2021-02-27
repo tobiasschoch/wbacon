@@ -95,9 +95,9 @@ devtools::install_github("tobiasschoch/wbacon")
 @
 
 \noindent The package contains \code{C} code that needs to be compiled.
-Users of Microsoft Windows need an installation of the the R tool chain bundle
-\href{https://cran.r-project.org/bin/windows/Rtools/}{\code{rtools40}} to build
-the package.
+Users of Microsoft Windows need an installation of the R tool chain bundle
+\href{https://cran.r-project.org/bin/windows/Rtools/}{\code{rtools40}} to
+build the package.
 
 Once the package has been installed, it can be loaded and attached to the
 current R session by
