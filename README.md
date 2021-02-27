@@ -74,7 +74,7 @@ Imputation for Incomplete Survey Data, R package version 0.1-0. URL
 Mächler, M., W. A. Stahel, R. Turner, U. Oetliker, and T. Schoch (2021).
 robustX: ’eXtra’ / ’eXperimental’ Functionality for Robust Statistics,
 R package version 1.2-5. URL
-[https://CRAN.R-project.org/package=robustX)] (https://CRAN.R-project.org/package=robustX)
+[https://CRAN.R-project.org/package=robustX)](https://CRAN.R-project.org/package=robustX)
 
 R Core Team (2021). R. A language and environment for statistical computing.
 R Foundation for Statistical Computing, Vienna, Austria.

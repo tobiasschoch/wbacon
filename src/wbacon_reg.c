@@ -22,9 +22,6 @@
       and Data Analysis 34, pp. 279-298.
 */
 
-//FIXME
-// regression_scale -> into compute_ti
-
 #include "wbacon_reg.h"
 #define _POWER2(_x) ((_x) * (_x))
 
@@ -63,7 +60,6 @@ wbacon_error_type update_chol_xty(regdata*, workarray*, estimate*, int*, int*,
 	int*);
 wbacon_error_type chol_downdate(double*, double*, int);
 wbacon_error_type hat_matrix(regdata*, workarray*, double*, double*);
-double regression_scale(double*, double*, int, int);
 void select_subset(double*, int*, int*, int*, int*);
 void cholesky_reg(double*, double*, double*, double*, int*, int*);
 void chol_update(double*, double*, int);
@@ -86,7 +82,7 @@ void chol_update(double*, double*, int);
 |*           0: quiet                                                         *|
 |*  success  on return, 1 if sucessfull; 0 if failed to converge              *|
 |*  collect  on entry: parameter to specify the size of the intial subset     *|
-|*  alpha*   level of significance that determines the (1-alpha) quantile of  *|
+|*  alpha    level of significance that determines the (1-alpha) quantile of  *|
 |*           the Student t-distr. used as a cutoff value for the t[i]'s       *|
 |*  maxiter  maximum number of iterations                                     *|
 \******************************************************************************/
@@ -147,14 +143,6 @@ void wbacon_reg(double *x, double *y, double *w, double *resid, double *beta,
 	if (err != WBACON_ERROR_OK) {
 		*success = 0;
 		PRINT_OUT("Error: design %s (step 0)\n", wbacon_error(err));
-		goto clean_up;
-	}
-
-	// compute t[i]'s
-	err = compute_ti(dat, work, est, subset0, m, est->dist);
-	if (err != WBACON_ERROR_OK) {
-		*success = 0;
-		PRINT_OUT("Error: %s (step 0)\n", wbacon_error(err));
 		goto clean_up;
 	}
 
@@ -256,8 +244,8 @@ wbacon_error_type initial_reg(regdata *dat, workarray *work, estimate *est,
 			if (subset[j])
 				est->xty[i] += dat->w[j] * dat->x[j + i * n] * dat->y[j];
 
-	// compute the regression scale (weighted)
-	est->sigma = regression_scale(est->resid, est->weight, n, p);
+	// compute t[i]'s
+	status = compute_ti(dat, work, est, subset, m, est->dist);
 
 	return status;
 }
@@ -324,9 +312,6 @@ wbacon_error_type algorithm_4(regdata *dat, workarray *work, estimate *est,
 		F77_CALL(dgemv)("N", &n, &p, &double_minus1, dat->x, &n, est->beta,
 			&int_1, &double_1, est->resid, &int_1);
 
-		// compute regression scale (sigma)
-		est->sigma = regression_scale(est->resid, est->weight, n, p);
-
 		// compute t[i]'s
 		err = compute_ti(dat, work, est, subset1, m, est->dist);
 		if (err != WBACON_ERROR_OK)
@@ -341,8 +326,18 @@ wbacon_error_type algorithm_4(regdata *dat, workarray *work, estimate *est,
 
 /******************************************************************************\
 |* Algorithm 5 of Billor et al. (2000), adapted for weighting                 *|
+|*  dat      typedef struct regdata                                           *|
+|*  work     typedef struct workarray                                         *|
+|*  est      typedef struct estimate                                          *|
+|*  subset0  subset, 1: obs. is in the subset, 0 otherwise, array[n]          *|
+|*  subset1  subset, 1: obs. is in the subset, 0 otherwise, array[n]          *|
+|*  alpha   level of significance that determines the (1-alpha) quantile of   *|
+|*           the Student t-distr. used as a cutoff value for the t[i]'s       *|
+|*  m        number of obs. in subset1                                        *|
+|*  maxiter  maximum number of iterations                                     *|
+|*  verbose  toggle: 1: additional information is printed to the console;     *|
+|*           0: quiet                                                         *|
 \******************************************************************************/
-//FIXME:
 wbacon_error_type algorithm_5(regdata *dat, workarray *work, estimate *est,
 	int *subset0, int *subset1, double *alpha, int *m, int *maxiter,
 	int *verbose)
@@ -368,9 +363,6 @@ wbacon_error_type algorithm_5(regdata *dat, workarray *work, estimate *est,
 		for (int i = 0; i < p; i++)
 			for (int j = i; j < p; j++)
 				est->L[j + i * p] = dat->wx[i + j * n];
-
-		// compute regression scale (sigma)
-		est->sigma = regression_scale(est->resid, est->weight, n, p);
 
 		// compute t[i]'s (est->dist)
 		err = compute_ti(dat, work, est, subset0, m, est->dist);
@@ -508,7 +500,7 @@ void chol_update(double *L, double *u, int p)
 	double a, b, c, tmp;
 	for (int i = 0; i < p - 1; i++) {
 		tmp = L[i * (p + 1)];						// element L[i,i]
-		a = sqrt(_POWER2(tmp) + _POWER2(u[i]));
+		a = hypot(tmp, u[i]);
 		b = a / tmp;
 		c = u[i] / tmp;
 		L[i * (p + 1)] = a;							// element L[i,i]
@@ -572,13 +564,24 @@ wbacon_error_type chol_downdate(double *L, double *u, int p)
 wbacon_error_type compute_ti(regdata *dat, workarray *work, estimate *est,
 	int *subset, int *m, double* tis)
 {
+	int n = dat->n, p = dat->p;
+
+	// regression scale
+	double sigma = 0.0, total_w = 0.0;
+	for (int i = 0; i < n; i++) {
+		total_w += est->weight[i];
+		sigma += est->weight[i] * _POWER2(est->resid[i]);
+	}
+	sigma /= total_w - (double)p;
+	est->sigma = sqrt(sigma);
+
 	// compute the diag. of the 'hat' matrix (work->work_n)
 	wbacon_error_type err = hat_matrix(dat, work, est->L, work->work_n);
 	if (err != WBACON_ERROR_OK)
 		return err;
 
 	// compute t[i]'s
-	for (int i = 0; i < dat->n; i++) {
+	for (int i = 0; i < n; i++) {
 		if (subset[i])
 			tis[i] = fabs(est->resid[i]) /
 				(est->sigma * sqrt(1.0 - work->work_n[i]));
@@ -587,20 +590,6 @@ wbacon_error_type compute_ti(regdata *dat, workarray *work, estimate *est,
 				(est->sigma * sqrt(1.0 + work->work_n[i]));
 	}
 	return WBACON_ERROR_OK;
-}
-
-/******************************************************************************\
-|*      *|
-\******************************************************************************/
-double regression_scale(double *resid, double *w, int n, int p)
-{
-	double sigma = 0.0, total_w = 0.0;
-	for (int i = 0; i < n; i++) {
-		total_w += w[i];
-		sigma += w[i] * _POWER2(resid[i]);
-	}
-	sigma /= total_w - p;
-	return sqrt(sigma);
 }
 
 /******************************************************************************\
