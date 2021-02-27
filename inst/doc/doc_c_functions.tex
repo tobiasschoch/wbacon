@@ -155,7 +155,7 @@ initialize the subset (see \code{\LinkA{initialsubset}{initialsubset}}).
 \begin{verbatim}
 void wbacon(double *x, double *w, double *center, double *scatter, double *dist,
     int *n, int *p, double *alpha, int *subset, double *cutoff, int *maxiter,
-    int *verbose, int *version2, int *success)
+    int *verbose, int *version2, int *collect, int *success)
 \end{verbatim}
 \end{Usage}
 \begin{Arguments}
@@ -176,6 +176,7 @@ void wbacon(double *x, double *w, double *center, double *scatter, double *dist,
 		\item[\code{version2}] toggle, \code{[int]}, defines the method to
 			construct the initial subset: \code{1}: ``Version 2'' of Billor et
 			al. (2000) is used; \code{0}: ``Version 1'' is used.
+		\COLLECT
 		\item[\code{success}] indicator, \code{[int]}, \code{1}: algorithm
 			converged, \code{0}: failure of convergence.
 	\end{ldescription}
@@ -441,7 +442,7 @@ et al. (2000).
 \begin{Usage}
 \begin{verbatim}
 wbacon_error_type initialsubset(wbdata *dat, workarray *work, double *center,
-    double *scatter, int *subset, int *subsetsize, int *verbose)
+    double *scatter, int *subset, int *subsetsize, int *verbose, int* collect)
 \end{verbatim}
 \end{Usage}
 \begin{Arguments}
@@ -453,6 +454,7 @@ wbacon_error_type initialsubset(wbdata *dat, workarray *work, double *center,
 		\SUBSET{}
 		\item[\code{subsetsize}] size of \code{subset}, \code{[int]}.
 		\VERBOSE
+		\COLLECT
 	\end{ldescription}
 \end{Arguments}
 \begin{Value}

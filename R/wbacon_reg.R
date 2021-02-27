@@ -46,7 +46,9 @@ wBACON_reg <- function(formula, weights = NULL, data, collect = 4,
 		cat("\nOutlier detection (Algorithm 3)\n---\n")
 	wb <- wBACON(if (attr(mt, "intercept")) x[, -1] else x, w, alpha, collect,
 		version, na.rm, maxiter, verbose)
-#FIXME: what if wBACON does not converge
+
+	if (isFALSE(wb$converged))
+		stop("wBACON on the design matrix failed\n")
 
 	# Algorithms 4 and 5
 	if (verbose)
@@ -61,8 +63,12 @@ wBACON_reg <- function(formula, weights = NULL, data, collect = 4,
 		alpha = as.double(alpha), maxiter = as.integer(maxiter))
 
 	# cast the QR factorization as returned by LAPACK:dgeqrf to a 'qr' object
-	QR <- structure(list(qr = matrix(tmp$x, ncol = p), qraux = rep(NA, p),
-		pivot = 1L:p, tol = NA, rank = p), class = "qr")
+	QR <- structure(
+		list(qr = matrix(tmp$x, ncol = p),
+		qraux = rep(NA, p),
+		pivot = 1L:p,
+		tol = NA,
+		rank = p), class = "qr")
 
 	# return value
 	res <- list(coefficients = tmp$beta,
