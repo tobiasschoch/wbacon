@@ -34,7 +34,7 @@ compare <- function(data, name, init = "V2"){
 
 		# absolute deviations
 		dev_location <- max(abs(reference$center - new_imp$center))
-		dev_scatter <- max(abs(reference$cov - new_imp$scatter))
+		dev_scatter <- max(abs(reference$cov - new_imp$cov))
 		dev_distance <- max(abs(reference$dis - new_imp$dist))
 
 		# deviations in terms of the selected subset
@@ -59,7 +59,7 @@ compare <- function(data, name, init = "V2"){
 
 	if (!is.null(res)) {
 		cat(name, ": differences detected\n")
-		colnames(res) <- c("center", "scatter", "distance", "subset")
+		colnames(res) <- c("center", "cov", "distance", "subset")
 	}
 
 	res

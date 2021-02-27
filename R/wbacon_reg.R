@@ -1,7 +1,7 @@
 wBACON_reg <- function(formula, weights = NULL, data, collect = 4,
-	na.rm = FALSE, alpha = 0.95, version = "V2", maxiter = 50, verbose = FALSE)
+	na.rm = FALSE, alpha = 0.05, version = "V2", maxiter = 50, verbose = FALSE)
 {
-	stopifnot(alpha < 1, alpha > 0, collect > 0, maxiter > 0)
+	stopifnot(alpha < 1, alpha > 0, collect > 0, maxiter > 0, collect > 0)
 	if (!inherits(formula, "formula"))
 		stop("Argument '", formula, "' must be a formula\n", call. = FALSE)
 
@@ -44,8 +44,8 @@ wBACON_reg <- function(formula, weights = NULL, data, collect = 4,
 	# Algorithm 3
 	if (verbose)
 		cat("\nOutlier detection (Algorithm 3)\n---\n")
-	wb <- wBACON(if (attr(mt, "intercept")) x[, -1] else x, w, alpha, version,
-		na.rm, maxiter, verbose)
+	wb <- wBACON(if (attr(mt, "intercept")) x[, -1] else x, w, alpha, collect,
+		version, na.rm, maxiter, verbose)
 #FIXME: what if wBACON does not converge
 
 	# Algorithms 4 and 5

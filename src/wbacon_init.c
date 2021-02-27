@@ -5,7 +5,7 @@
 
 // create arrays describing each C routine
 static const R_CMethodDef cMethods[]  = {
-	{"wbacon", (DL_FUNC) &wbacon, 13},
+	{"wbacon", (DL_FUNC) &wbacon, 14},
 	{"wbacon_reg", (DL_FUNC) &wbacon_reg, 15},
 	{"wquantile", (DL_FUNC) &wquantile, 5},
 	{NULL, NULL, 0}

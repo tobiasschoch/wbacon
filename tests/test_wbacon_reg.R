@@ -14,7 +14,7 @@ ERR <- 0
 
 #-------------------------------------------------------------------------------
 data(hbk, package = "robustbase")
-m <- wBACON_reg(Y ~ ., data = hbk)
+m <- wBACON_reg(Y ~ ., data = hbk, alpha = 0.95)
 
 ref_beta <- c(-0.18046162865083981, 0.08137871068818925, 0.03990181252317023,
 	-0.05166557707657377)
@@ -31,7 +31,7 @@ if (!all(which(is_outlier(m)) == ref_is_outlier)) {
 
 #-------------------------------------------------------------------------------
 data(aircraft, package = "robustbase")
-m <- wBACON_reg(Y ~ ., collect = 3, data = aircraft)
+m <- wBACON_reg(Y ~ ., collect = 3, data = aircraft, alpha = 0.95)
 
 ref_beta <- c(9.50074034620055308, -3.04879688663568649, 1.21003298781689805,
 	0.00138096419402889, -0.00055485757094962)
@@ -48,7 +48,7 @@ if (!all(which(is_outlier(m)) == ref_is_outlier)) {
 
 #-------------------------------------------------------------------------------
 data(education, package = "robustbase")
-m <- wBACON_reg(Y ~ Region + X1 + X2 + X2, data = education)
+m <- wBACON_reg(Y ~ Region + X1 + X2 + X2, data = education, alpha = 0.95)
 
 ref_beta <- c(20.8925307788478278, 9.6910657876150736, 0.0614905565468016,
 	0.0408586963725780)
@@ -65,7 +65,7 @@ if (!all(which(is_outlier(m)) == ref_is_outlier)) {
 
 #-------------------------------------------------------------------------------
 data(heart, package = "robustbase")
-m <- wBACON_reg(clength ~ ., collect = 3, data = heart)
+m <- wBACON_reg(clength ~ ., collect = 3, data = heart, alpha = 0.95)
 
 ref_beta <- c(31.0708746739284010, -0.1896775299044007, 0.3425817244946800)
 if (!all.equal(coef(m), ref_beta, check.attributes = FALSE)) {
@@ -81,7 +81,7 @@ if (!all(which(is_outlier(m)) == ref_is_outlier)) {
 
 #-------------------------------------------------------------------------------
 data(pulpfiber, package = "robustbase")
-m <- wBACON_reg(Y1 ~ X1 + X2 + X3, data = pulpfiber)
+m <- wBACON_reg(Y1 ~ X1 + X2 + X3, data = pulpfiber, alpha = 0.95)
 
 ref_beta <- c(5.1075264612314788, 2.1740952964309233, 0.3177965854148064,
 	0.1433700922951207)

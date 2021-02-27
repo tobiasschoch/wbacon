@@ -50,7 +50,7 @@ typedef struct workarray_struct {
 
 // declarations of local function
 wbacon_error_type initialsubset(wbdata*, workarray*, double*, double*, int*,
-	int*, int*);
+	int*, int*, int*);
 wbacon_error_type mahalanobis(wbdata*, double*, double*, double*, double*);
 wbacon_error_type check_matrix_fullrank(double*, int, int);
 void weightedmean(wbdata*, double*);
@@ -86,6 +86,148 @@ static inline double qchisq2(double p, double df)
 #endif
 
 /******************************************************************************\
+|* weighted BACON                                                             *|
+|*  x        data, array[n, p]                                                *|
+|*  w        weights, array[n]                                                *|
+|*  center   on return: array[p]                                              *|
+|*  scatter  on return: array[p, p]                                           *|
+|*  dist     on return: array[n]                                              *|
+|*  n, p     dimensions                                                       *|
+|*  alpha    prob.                                                            *|
+|*  subset   array[n]                                                         *|
+|*  cutoff   on return: chi-square cutoff threshold                           *|
+|*  maxiter  on entry: maximal no. of iterations, on return: effective no.    *|
+|*  verbose  0: quiet; 1: verbose                                             *|
+|*  version2 1: 'Version 2' init. of Billor et al. (2000); 0: 'Version 1'     *|
+|*  collect  on entry: parameter to specify the size of the intial subset     *|
+|*  success  on return: 1: successful; 0: failure                             *|
+\******************************************************************************/
+void wbacon(double *x, double *w, double *center, double *scatter, double *dist,
+	int *n, int *p, double *alpha, int *subset, double *cutoff,
+	int *maxiter, int *verbose, int *version2, int *collect, int *success)
+{
+	*success = 1;
+	wbacon_error_type err;
+
+	int *subset0 = (int*) Calloc(*n, int);
+	double *original_w = (double*) Calloc(*n, double);
+	Memcpy(original_w, w, *n);
+
+	// initialize and populate the struct 'wbdata'
+	wbdata data;
+	wbdata *dat = &data;
+
+	dat->n = *n;
+	dat->p = *p;
+	dat->x = x;
+	dat->w = w;
+	dat->dist = dist;
+
+	// initialize and populate the struct 'workarray'
+	workarray warray;
+	workarray *work = &warray;
+
+	int *iarray = (int*) Calloc(*n, int);
+	double *work_n = (double*) Calloc(*n, double);
+	double *work_np = (double*) Calloc(*n * *p, double);
+	double *work_pp = (double*) Calloc(*p * *p, double);
+	double *work_2n = (double*) Calloc(2 * *n, double);
+	work->iarray = iarray;
+	work->work_n = work_n;
+	work->work_np = work_np;
+	work->work_pp = work_pp;
+	work->work_2n = work_2n;
+
+	// STEP 0: establish initial subset
+	if (*version2) {
+		// center: coordinate-wise weighted median
+		double d_half = 0.5;
+		for (int j = 0; j < *p; j++)
+			wquantile_noalloc(x + *n * j, w, work_2n, n, &d_half, &center[j]);
+
+		// distance: Euclidean norm
+		euclidean_norm2(dat, work_np, center);
+	} else {
+		// Mahalanobis distances
+		err = mahalanobis(dat, work_np, work_pp, center, scatter);
+		if (err != WBACON_ERROR_OK) {
+			*success = 0;
+			PRINT_OUT("Error: covariance %s\n", wbacon_error(err));
+			goto clean_up;
+		}
+	}
+
+	// determine initial subset
+	int subsetsize;
+	err = initialsubset(dat, work, center, scatter, subset, &subsetsize,
+		verbose, collect);
+
+	if (err != WBACON_ERROR_OK) {
+		*success = 0;
+		PRINT_OUT("Error: %s (initial subset)\n", wbacon_error(err));
+		goto clean_up;
+	}
+
+	// STEP 1: update iteratively
+	double chi2 = sqrt(qchisq(*alpha / (double)*n , (double)(*p), 0, 0));
+	int iter = 1, is_different;
+	for (;;) {
+		if (*verbose)
+			verbose_message(subsetsize, *n, iter, *cutoff);
+
+		// location, scatter and the Mahalanobis distances
+		err = mahalanobis(dat, work_np, work_pp, center, scatter);
+		if (err != WBACON_ERROR_OK) {
+			*success = 0;
+			PRINT_OUT("Error: covariance %s (iterative updating)\n",
+				wbacon_error(err));
+			goto clean_up;
+		}
+
+		// check whether the subsets differ (XOR current with previous subset)
+		is_different = 0;
+		for (int i = 0; i < *n; i++) {
+			if (subset0[i] ^ subset[i]) {
+				is_different = 1;
+				break;
+			}
+		}
+		if (is_different == 0) {
+			*maxiter = iter;
+			break;
+		}
+
+		// chi-square cutoff value (quantile)
+		*cutoff = chi2 * cutoffval(*n, subsetsize, *p);
+
+		// generate new subset (based on updated Mahalanobis dist.)
+		Memcpy(subset0, subset, *n);
+		Memcpy(w, original_w, *n);
+
+		subsetsize = 0;
+		for (int i = 0; i < *n; i++) {
+			if (dist[i] < *cutoff) {
+				subset[i] = 1;
+				subsetsize += 1;
+			} else {
+				subset[i] = 0;
+				w[i] = 0.0;			// weight = 0 (if obs. is not in subset)
+			}
+		}
+
+		iter++;
+		if (iter > *maxiter) {
+			*success = 0;
+			break;
+		}
+	}
+
+clean_up:
+	Free(subset0); Free(original_w); Free(work_np); Free(work_pp);
+	Free(work_2n); Free(work_n); Free(iarray);
+}
+
+/******************************************************************************\
 |* cutoff for the chi-squared quantile                                        *|
 |*  k       size of subset                                                    *|
 |*  n, p    dimensions                                                        *|
@@ -108,9 +250,10 @@ static inline double cutoffval(int n, int k, int p)
 |*  subset     on return: initial subset                                      *|
 |*  subsetsize on return: size initial subset                                 *|
 |*  verbose    0: quiet; 1: verbose                                           *|
+|*  collect    parameter to specify the size of the intial subset             *|
 \******************************************************************************/
 wbacon_error_type initialsubset(wbdata *dat, workarray *work, double *center,
-	double *scatter, int *subset, int *subsetsize, int *verbose)
+	double *scatter, int *subset, int *subsetsize, int *verbose, int *collect)
 {
 	int n = dat->n, p = dat->p;
 	wbacon_error_type status = WBACON_ERROR_OK;
@@ -122,9 +265,7 @@ wbacon_error_type initialsubset(wbdata *dat, workarray *work, double *center,
 	psort_array(dat->dist, work->iarray, n, n);
 
 	// determine subset size
-	int m = (int)fmin(4.0 * (double)p, (double)n * 0.5);
-
-//FIXME: take out collect = 4.0 as a parameter
+	int m = (int)fmin((double)(*collect) * (double)p, (double)n * 0.5);
 
 	// set weights of observations (m+1):n to zero
 	for (int i = m; i < n; i++)
@@ -186,143 +327,6 @@ wbacon_error_type check_matrix_fullrank(double *x, int p, int decom)
 		return WBACON_ERROR_OK;
 	else
 		return WBACON_ERROR_RANK_DEFICIENT;
-}
-
-/******************************************************************************\
-|* weighted BACON                                                             *|
-|*  x        data, array[n, p]                                                *|
-|*  w        weights, array[n]                                                *|
-|*  center   on return: array[p]                                              *|
-|*  scatter  on return: array[p, p]                                           *|
-|*  dist     on return: array[n]                                              *|
-|*  n, p     dimensions                                                       *|
-|*  alpha    prob.                                                            *|
-|*  subset   array[n]                                                         *|
-|*  cutoff   on return: chi-square cutoff threshold                           *|
-|*  maxiter  on entry: maximal no. of iterations, on return: effective no.    *|
-|*  verbose  0: quiet; 1: verbose                                             *|
-|*  version2 1: 'Version 2' init. of Billor et al. (2000); 0: 'Version 1'     *|
-|*  success   on return: 1: successful; 0: failure                            *|
-\******************************************************************************/
-void wbacon(double *x, double *w, double *center, double *scatter, double *dist,
-	int *n, int *p, double *alpha, int *subset, double *cutoff,
-	int *maxiter, int *verbose, int *version2, int *success)
-{
-	*success = 1;
-	wbacon_error_type err;
-
-	int *subset0 = (int*) Calloc(*n, int);
-	double *original_w = (double*) Calloc(*n, double);
-	Memcpy(original_w, w, *n);
-
-	// initialize and populate the struct 'wbdata'
-	wbdata dat;
-	dat.n = *n;
-	dat.p = *p;
-	dat.x = x;
-	dat.w = w;
-	dat.dist = dist;
-
-	// initialize and populate the struct 'workarray'
-	workarray work;
-	int *iarray = (int*) Calloc(*n, int);
-	double *work_n = (double*) Calloc(*n, double);
-	double *work_np = (double*) Calloc(*n * *p, double);
-	double *work_pp = (double*) Calloc(*p * *p, double);
-	double *work_2n = (double*) Calloc(2 * *n, double);
-	work.iarray = iarray;
-	work.work_n = work_n;
-	work.work_np = work_np;
-	work.work_pp = work_pp;
-	work.work_2n = work_2n;
-
-	// STEP 0: establish initial subset
-	if (*version2) {
-		// center: coordinate-wise weighted median
-		double d_half = 0.5;
-		for (int j = 0; j < *p; j++)
-			wquantile_noalloc(x + *n * j, w, work_2n, n, &d_half, &center[j]);
-
-		// distance: Euclidean norm
-		euclidean_norm2(&dat, work_np, center);
-	} else {
-		// Mahalanobis distances
-		err = mahalanobis(&dat, work_np, work_pp, center, scatter);
-		if (err != WBACON_ERROR_OK) {
-			*success = 0;
-			PRINT_OUT("Error: covariance %s\n", wbacon_error(err));
-			goto clean_up;
-		}
-	}
-
-	// determine initial subset
-	int subsetsize;
-	err = initialsubset(&dat, &work, center, scatter, subset, &subsetsize,
-		verbose);
-
-	if (err != WBACON_ERROR_OK) {
-		*success = 0;
-		PRINT_OUT("Error: %s (initial subset)\n", wbacon_error(err));
-		goto clean_up;
-	}
-
-	// STEP 1: update iteratively
-	double chi2 = sqrt(qchisq(*alpha / (double)*n , (double)(*p), 0, 0));
-	int iter = 1, is_different;
-	for (;;) {
-		if (*verbose)
-			verbose_message(subsetsize, *n, iter, *cutoff);
-
-		// location, scatter and the Mahalanobis distances
-		err = mahalanobis(&dat, work_np, work_pp, center, scatter);
-		if (err != WBACON_ERROR_OK) {
-			*success = 0;
-			PRINT_OUT("Error: covariance %s (iterative updating)\n",
-				wbacon_error(err));
-			goto clean_up;
-		}
-
-		// check whether the subsets differ (XOR current with previous subset)
-		is_different = 0;
-		for (int i = 0; i < *n; i++) {
-			if (subset0[i] ^ subset[i]) {
-				is_different = 1;
-				break;
-			}
-		}
-		if (is_different == 0) {
-			*maxiter = iter;
-			break;
-		}
-
-		// chi-square cutoff value (quantile)
-		*cutoff = chi2 * cutoffval(*n, subsetsize, *p);
-
-		// generate new subset (based on updated Mahalanobis dist.)
-		Memcpy(subset0, subset, *n);
-		Memcpy(w, original_w, *n);
-
-		subsetsize = 0;
-		for (int i = 0; i < *n; i++) {
-			if (dist[i] < *cutoff) {
-				subset[i] = 1;
-				subsetsize += 1;
-			} else {
-				subset[i] = 0;
-				w[i] = 0.0;			// weight = 0 (if obs. is not in subset)
-			}
-		}
-
-		iter++;
-		if (iter > *maxiter) {
-			*success = 0;
-			break;
-		}
-	}
-
-clean_up:
-	Free(subset0); Free(original_w); Free(work_np); Free(work_pp);
-	Free(work_2n); Free(work_n); Free(iarray);
 }
 
 /******************************************************************************\

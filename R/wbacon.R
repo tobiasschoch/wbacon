@@ -1,8 +1,8 @@
-wBACON <- function(x, w = NULL, alpha = 0.95, version = c("V2", "V1"),
-	na.rm = FALSE, maxiter = 50, verbose = FALSE)
+wBACON <- function(x, w = NULL, alpha = 0.05, collect = 4,
+	version = c("V2", "V1"), na.rm = FALSE, maxiter = 50, verbose = FALSE)
 {
 	n <- nrow(x); p <- ncol(x)
-	stopifnot(n > p, p > 1,  0 < alpha, alpha < 1, maxiter > 0)
+	stopifnot(n > p, p > 1,  0 < alpha, alpha < 1, maxiter > 0, collect > 0)
 
 	if (version[1] == "V2")
 		vers <- 1
@@ -43,7 +43,7 @@ wBACON <- function(x, w = NULL, alpha = 0.95, version = c("V2", "V1"),
 		alpha = as.double(alpha), subset = as.integer(rep(0, n)),
 		cutoff = as.double(numeric(1)), maxiter = as.integer(abs(maxiter)),
 		verbose = as.integer(verbose), version = as.integer(vers),
-		success = as.integer(1),
+		collect = as.integer(collect), success = as.integer(1),
 		PACKAGE = "wbacon")
 
 	tmp$cov <- matrix(tmp$scatter, ncol = p)

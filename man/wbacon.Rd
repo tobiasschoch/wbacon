@@ -7,8 +7,8 @@
 \alias{center}
 \title{Weighted BACON Algorithm for Multivariate Outlier Detection}
 \usage{
-wBACON(x, w = NULL, alpha = 0.95, version = c("V2", "V1"), na.rm = FALSE,
-    maxiter = 50, verbose = TRUE)
+wBACON(x, w = NULL, alpha = 0.05, collect = 4, version = c("V2", "V1"),
+    na.rm = FALSE, maxiter = 50, verbose = TRUE)
 distance(object)
 \method{print}{robmv}(x, digits = max(3L, getOption("digits") - 3L), ...)
 \method{summary}{robmv}(object, ...)
@@ -18,8 +18,11 @@ center(object)
 \arguments{
 	\item{x}{\code{[matrix]} or \code{[data.frame]}.}
 	\item{w}{\code{[numeric]} sampling weight (default \code{w = NULL}).}
-	\item{alpha}{\code{[numeric]} tuning constant,
-		\eqn{0 < \alpha < 1}{0 < alpha < 1}; (default: \code{alpha = 0.95}).}
+	\item{alpha}{\code{[numeric]} tuning constant, level of significance,
+		\eqn{0 < \alpha < 1}{0 < alpha < 1}; (default: \code{alpha = 0.05}).}
+	\item{collect}{determines the size \eqn{m} of the initial subset to be
+		\eqn{m = collect \cdot p}{m = collect * p}, where \eqn{p} is the
+		number of variables, \code{[integer]}.}
 	\item{version}{\code{[character]} method of initialization; \code{"V1"}:
 		weighted Mahalanobis distances (not robust but affine equivariant);
 		\code{"V2"} (\code{default}): Euclidean norm of the data centered by
@@ -49,7 +52,7 @@ see Billor et al. (2000). The weighted Bacon algorithm is due to Béguin
 and Hulliger (2008).
 
 The threshold for the (squared) Mahalanobis distances is defined as
-the standardized chi-square \eqn{alpha}{alpha} quantile. All
+the standardized chi-square \eqn{1 - \alpha}{1 - alpha} quantile. All
 observations whose squared Mahalanobis distances is larger than
 the threshold are regarded as outliers.
 
@@ -80,6 +83,7 @@ An object of class \code{robmv} with slots
 	\item{cutoff}{see function arguments}
 	\item{maxiter}{number of iterations until convergence}
 	\item{version}{see functions arguments}
+	\item{collect}{see functions arguments}
 	\item{cov}{covariance matrix}
 	\item{converged}{logical that indicates whether the algorithm converged}
 	\item{call}{the matched call}

@@ -5,7 +5,7 @@
 \title{Robust Fitting Linear Regression Models by the BACON Algorithm}
 \usage{
 wBACON_reg(formula, weights = NULL, data, collect = 4, na.rm = FALSE,
-    alpha = 0.95, version = c("V2", "V1"), maxiter = 50, verbose = FALSE)
+    alpha = 0.05, version = c("V2", "V1"), maxiter = 50, verbose = FALSE)
 
 \method{print}{roblm}(x, digits = max(3L, getOption("digits") - 3L), ...)
 \method{summary}{roblm}(object, ...)
@@ -21,8 +21,8 @@ wBACON_reg(formula, weights = NULL, data, collect = 4, na.rm = FALSE,
 		number of variables, \code{[integer]}.}
 	\item{na.rm}{\code{[logical]} indicating whether \code{NA} values should
 		be removed before the computation proceeds (default: \code{FALSE}).}
-	\item{alpha}{\code{[numeric]} tuning constant,
-		\eqn{0 < \alpha < 1}{0 < alpha < 1}; (default: \code{alpha = 0.95}).}
+	\item{alpha}{\code{[numeric]} tuning constant, level of significance,
+		\eqn{0 < \alpha < 1}{0 < alpha < 1}; (default: \code{alpha = 0.05}).}
 	\item{version}{method to initialize the basic subset, \code{[character]}:
 		Version \code{"V1"} of Billor et al. (2000) yields affine
 		equivariant but \emph{not} robust estimators; Version \code{"V1"}
