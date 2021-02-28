@@ -5,6 +5,8 @@
 \usepackage{inputenc}
 \usepackage{times}
 
+\usepackage{amsmath}
+
 \usepackage{setspace}
 \setstretch{1.1}
 
@@ -358,6 +360,7 @@ Hyndman, R.J. and Y. Fan (1996). Sample Quantiles in Statistical Packages,
 
 
 %===============================================================================
+\clearpage
 \section{Error handling [\texttt{wbacon\_error.c}]}
 Error handling refers to the functions that operate on matrices, and which may
 fail (e.g., because of rank deficiency). These functions return a value of
@@ -402,6 +405,7 @@ Returns a string with a human readable error message.
 \end{Value}
 
 %===============================================================================
+\clearpage
 \section{wBACON [\texttt{wbacon.c}]}
 To offer functions with a clean interface, most of the functions use the
 typedef struct \code{\LinkA{wbdata}{wbdata}} and
@@ -558,8 +562,8 @@ On return, \code{scatter} is overwritten with the weighted scatter matrix.
 %---------------------------------------
 \HeaderB{euclidean\_norm2}{Internal function}{euclideannorm2}
 \begin{Description}
-Computes the squared Euclidean norm $\Vert x_i - c \Vert_2^2$, where $c$
-denotes the center.
+Computes the squared Euclidean norm $\Vert \bm x - \bm c \Vert_2^2$, where
+$\bm c$ denotes the center.
 \end{Description}
 \begin{Usage}
 \begin{verbatim}
@@ -573,9 +577,24 @@ void euclidean_norm2(wbdata *dat, double *work, double *center)
 		\CENTER
 	\end{ldescription}
 \end{Arguments}
+\begin{Details}
+The implementation follows closely S. Hammarling's \code{dnrm2} function in
+LAPACK, which uses a onepass algorithm. The algorithm incorporates some form
+of scaling to prevent underflows. Higham (2002, p. 507 and 571) shows that
+the return value of the function can only overflow if $\Vert \bm x\Vert_2$
+exceeds the largest storable double value. See also Hanson and Hopkins (2017).
+\end{Details}
 \begin{Value}
 On return, \code{dat->dist} is overwritten with the Euclidean norm.
 \end{Value}
+\begin{References}
+Hanson, R.J., and T. Hopkins (2017). Remark on Algorithm 539: A Modern
+Fortran Reference Implementation for Carefully Computing the Euclidean Norm,
+\emph{ACM Transactions on Mathematical Software} 44, Article 24.
+
+Higham, N.J. (2002). \emph{Accuracy and Stability of Numerical Algorithms},
+2nd ed., Philadelphia: Society for Industrial and Applied Mathematics.
+\end{References}
 
 %---------------------------------------
 \HeaderB{check\_matrix\_fullrank}{Internal function}{checkmatrixfullrank}
@@ -635,6 +654,7 @@ Returns the correction factor.
 
 
 %===============================================================================
+\clearpage
 \section{wBACON\_reg [\texttt{wbacon\_reg.c}]}
 To offer functions with a clean interface, most of the functions use the
 typedef structs \code{\LinkA{regdata}{regdata}} (see \code{regdata.h}),
@@ -1079,6 +1099,7 @@ On return, \code{L} is overwritten by its downdated value.
 
 
 %===============================================================================
+\clearpage
 \section{Weighted least squares [\texttt{fitwls.c}]}
 %---------------------------------------
 \HeaderA{fitwls}{Weighted least squares}{fitwls}
@@ -1133,6 +1154,7 @@ On return, the following slots are overwritten:
 \end{Value}
 
 %===============================================================================
+\clearpage
 \section{Weighted quantile [\texttt{wquantile.c}]}
 \label{ch:wquantile}
 The following functions are documented in this section:

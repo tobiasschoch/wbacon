@@ -403,18 +403,30 @@ void weightedscatter(wbdata *dat, double *work, double *center, double *scatter)
 |*  dat     data, typedef struct wbdata                                       *|
 |*  work    array[n, p]                                                       *|
 |*  center  array[p]                                                          *|
+|* NOTE: the algorithm follows S. Hammarling's implementaion of LAPACK:dnorm2 *|
 \******************************************************************************/
 void euclidean_norm2(wbdata *dat, double *work, double *center)
 {
 	int n = dat->n, p = dat->p;
-	Memcpy(work, dat->x, n * p);
+	double abs, scale, ssq;
 
+	Memcpy(work, dat->x, n * p);
 	for (int i = 0; i < n; i++) {
-		dat->dist[i] = 0.0;
+		ssq = 1.0;
+		scale = 0.0;
 		for (int j = 0; j < p; j++) {
-			work[n * j + i] -= center[j];
-			dat->dist[i] += _POWER2(work[n * j + i]);
+			work[n * j + i] -= center[j];		// center the data
+			abs = fabs(work[n * j + i]);
+			if (abs < DBL_EPSILON)
+				continue;
+			if (scale <= abs) {
+				ssq = 1.0 + ssq * _POWER2(scale / abs);
+				scale = abs;					// change the scaling factor
+			} else {
+				ssq += _POWER2(abs / scale);
+			}
 		}
+		dat->dist[i] = _POWER2(scale) * ssq;
 	}
 }
 
