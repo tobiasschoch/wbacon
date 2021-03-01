@@ -22,8 +22,8 @@
    Note:       The extension of the method to weighted problems is ours.
 */
 
-# define _medium_array 40	// switch from insertion sort to quickselect
-# define _large_array 50	// pivotal element determined by ninther
+# define _n_quickselect 40	// switch from insertion sort to quickselect
+# define _n_nither 50		// pivotal element determined by ninther
 # define DEBUG_MODE 0		// debug mode (0 = off; 1 = activated)
 
 #include "wquantile.h"
@@ -135,13 +135,13 @@ void wquant0(double *array, double *weights, double sum_w, int lo, int hi,
 			sum_w += weights[k];
 	}
 
-	// case: n <= _medium_array
-	if (hi - lo + 1 <= _medium_array) {
+	// case: n <= _n_quickselect
+	if (hi - lo + 1 <= _n_quickselect) {
 		*result = insertionselect(array, weights, lo, hi, prob);
 		return;
 	}
 
-	// case: n > _medium_array: weighted quickselect
+	// case: n > _n_quickselect: weighted quickselect
 	// Bentley-McIlroy's 3-way partitioning (weighted): the positions of the
 	// sentinels 'i' and 'j' are returned
 	int i, j;
@@ -263,7 +263,7 @@ void partition_3way(double *array, double *weights, int lo, int hi, int *i,
 }
 
 /******************************************************************************\
-|* choose pivotal element: for arrays of size < _large_array, the median of   *|
+|* choose pivotal element: for arrays of size < _n_nither, the median of      *|
 |* three is taken as pivotal element, otherwise we take Tukey's ninther       *|
 |*  array   array[lo..hi]                                                     *|
 |*  lo, hi  dimension                                                         *|
@@ -272,7 +272,7 @@ static inline int choose_pivot(double *array, int lo, int hi)
 {
 	int n = hi - lo + 1;
 	int mid = lo + n / 2;		// small array: median of three
-	if (n > _large_array) {		// large array: Tukey's ninther
+	if (n > _n_nither) {		// large array: Tukey's ninther
 		int eps = n / 8;
 		lo = med3(array, lo, lo + eps, lo + eps + eps);
 		mid = med3(array, mid - eps, mid, mid + eps);

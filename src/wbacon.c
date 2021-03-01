@@ -52,9 +52,9 @@ typedef struct workarray_struct {
 wbacon_error_type initialsubset(wbdata*, workarray*, double*, double*, int*,
 	int*, int*, int*);
 wbacon_error_type mahalanobis(wbdata*, double*, double*, double*, double*);
-wbacon_error_type check_matrix_fullrank(double*, int, int);
-void weightedmean(wbdata*, double*);
-void weightedscatter(wbdata*, double*, double*, double*);
+wbacon_error_type check_matrix_fullrank(double*, int);
+void mean_scatter_w(wbdata*, double*, double*, double*);
+void scatter_w(wbdata*, double*, double*, double*);
 void euclidean_norm2(wbdata*, double*, double*);
 void verbose_message(int, int, int, double);
 static inline double cutoffval(int, int, int) __attribute__((always_inline));
@@ -169,7 +169,7 @@ void wbacon(double *x, double *w, double *center, double *scatter, double *dist,
 	}
 
 	// STEP 1: update iteratively
-	double chi2 = sqrt(qchisq(*alpha / (double)*n , (double)(*p), 0, 0));
+	double chi2 = qchisq(*alpha / (double)*n , (double)(*p), 0, 0);
 	int iter = 1, is_different;
 	for (;;) {
 		if (*verbose)
@@ -222,6 +222,9 @@ void wbacon(double *x, double *w, double *center, double *scatter, double *dist,
 		}
 	}
 
+	for (int i = 0; i < *n; i++)	// Mahalanobis distances
+		dist[i] = sqrt(dist[i]);
+
 clean_up:
 	Free(subset0); Free(original_w); Free(work_np); Free(work_pp);
 	Free(work_2n); Free(work_n); Free(iarray);
@@ -238,7 +241,7 @@ static inline double cutoffval(int n, int k, int p)
 	double h = (dn + dp + 1.0) / 2.0;
 	double chr = fmax(0.0, (h - dk) / (h + dk));
 	double cnp = 1.0 + (dp + 1.0) / (dn - dp) + 2.0 / (dn - 1.0 - 3.0 * dp);
-	return cnp + chr;
+	return _POWER2(cnp + chr);
 }
 
 /******************************************************************************\
@@ -277,8 +280,8 @@ wbacon_error_type initialsubset(wbdata *dat, workarray *work, double *center,
 
 	// check if scatter matrix has full rank; if not, enlarge the subset
 	while (m < n) {
-		weightedscatter(dat, work->work_np, center, scatter);
-		status = check_matrix_fullrank(scatter, p, 1);
+		scatter_w(dat, work->work_np, center, scatter);
+		status = check_matrix_fullrank(scatter, p);
 		if (status == WBACON_ERROR_OK)
 			break;
 
@@ -299,24 +302,22 @@ wbacon_error_type initialsubset(wbdata *dat, workarray *work, double *center,
 |* check if a symmetric pos. def. matrix has full rank p (by Cholesky decomp.)*|
 |*  x       array[p, p]                                                       *|
 |*  p       dimension                                                         *|
-|*  decomp  1: chol. decomposition is computed; 0: x is the chol. decomp.     *|
 \******************************************************************************/
-wbacon_error_type check_matrix_fullrank(double *x, int p, int decom)
+wbacon_error_type check_matrix_fullrank(double *x, int p)
 {
 	int rank = 0;
-	if (decom) {
-		// check whether some variances are virtually zero
-		for (int i = 0; i < p; i++)
-			rank += x[i * (p + 1)] > _RANK_TOLERANCE ? 1 : 0;
-		if (rank != p)
-			return WBACON_ERROR_NOT_POSITIVE_DEFINITE;
 
-		// Cholesky decomposition
-		int info;
-		F77_CALL(dpotrf)("L", &p, x, &p, &info);
-		if (info != 0)
-			return WBACON_ERROR_NOT_POSITIVE_DEFINITE;
-	}
+	// check whether some variances are virtually zero
+	for (int i = 0; i < p; i++)
+		rank += x[i * (p + 1)] > _RANK_TOLERANCE ? 1 : 0;
+	if (rank != p)
+		return WBACON_ERROR_NOT_POSITIVE_DEFINITE;
+
+	// Cholesky decomposition
+	int info;
+	F77_CALL(dpotrf)("L", &p, x, &p, &info);
+	if (info != 0)
+		return WBACON_ERROR_NOT_POSITIVE_DEFINITE;
 
 	// check whether the diagonal elements of the Cholesky factor are > tol.
 	rank = 0;
@@ -347,55 +348,78 @@ void verbose_message(int subsetsize, int n, int iter, double cutoff)
 }
 
 /******************************************************************************\
-|* weighted mean (vector valued)                                              *|
-|*  dat     data, typedef struct wbdata                                       *|
-|*  center  on return: array[p]                                               *|
-\******************************************************************************/
-void weightedmean(wbdata *dat, double *center)
-{
-	for (int i = 0; i < dat->p; i++)
-		center[i] = 0.0;
-
-	double sum_w = 0.0;
-	for (int i = 0; i < dat->n; i++) {
-		sum_w += dat->w[i];
-		for (int j = 0; j < dat->p; j++)
-			center[j] += dat->x[dat->n * j + i] * dat->w[i];
-   	}
-
-	for (int j = 0; j < dat->p; j++)
-		center[j] /= sum_w;
-}
-
-/******************************************************************************\
 |* weighted covariance/ scatter matrix                                        *|
 |*  dat     data, typedef struct wbdata                                       *|
 |*  work    array[n, p]                                                       *|
 |*  center  array[p]                                                          *|
 |*  scatter on return: array[p, p]                                            *|
 \******************************************************************************/
-void weightedscatter(wbdata *dat, double *work, double *center, double *scatter)
+void scatter_w(wbdata *dat, double *work, double *center, double *scatter)
 {
 	int n = dat->n, p = dat->p;
-	Memcpy(work, dat->x, n * p);
 
-	// center the data and multiply by sqrt(w)
 	double sum_w = 0.0;
-	for (int i = 0; i < n; i++) {
+	for (int i = 0; i < n; i++)
 		sum_w += dat->w[i];
-		for (int j = 0; j < p; j++) {
+
+	// centered data
+	Memcpy(work, dat->x, n * p);
+	for (int j = 0; j < p; j++) {
+		for (int i = 0; i < n; i++) {
 			work[n * j + i] -= center[j];
 			work[n * j + i] *= sqrt(dat->w[i]);
 		}
 	}
 
-	// cross product: scatter matrix = t(work) %*% work;
+	// lower triangle of the scatter matrix
 	const double d_one = 1.0, d_zero = 0.0;
-	F77_CALL(dgemm)("T", "N", &p, &p, &n, &d_one, work, &n, work, &n, &d_zero,
-		scatter, &p);
+	F77_CALL(dsyrk)("L", "T", &p, &n, &d_one, work, &n, &d_zero, scatter, &p);
 
-	for (int i = 0; i < (p * p); i++)
-		scatter[i] /= (sum_w - 1.0);
+	double denom = 1.0 / (sum_w - 1.0);
+	for (int j = 0; j < p; j++)
+		for (int i = j; i < p; i++)
+			scatter[p * j + i] *= denom;
+}
+
+/******************************************************************************\
+|* weighted coordinate-wise mean and covariance/ scatter matrix               *|
+|*  dat     data, typedef struct wbdata                                       *|
+|*  work    array[n, p]                                                       *|
+|*  center  array[p]                                                          *|
+|*  scatter on return: array[p, p]                                            *|
+\******************************************************************************/
+void mean_scatter_w(wbdata *dat, double *work, double *center, double *scatter)
+{
+	int n = dat->n, p = dat->p;
+
+	double sum_w = 0.0;
+	for (int i = 0; i < n; i++)
+		sum_w += dat->w[i];
+
+	// coordinate-wise mean and centered data
+	Memcpy(work, dat->x, n * p);
+	for (int j = 0; j < p; j++) {
+		center[j] = 0.0;
+		for (int i = 0; i < n; i++)
+			center[j] += work[n * j + i] * dat->w[i];
+
+		center[j] /= sum_w;
+
+		// center the data and pre-multiply by sqrt(w[i])
+		for (int i = 0; i < n; i++) {
+			work[n * j + i] -= center[j];
+			work[n * j + i] *= sqrt(dat->w[i]);
+		}
+	}
+
+	// lower triangle of the scatter matrix
+	const double d_one = 1.0, d_zero = 0.0;
+	F77_CALL(dsyrk)("L", "T", &p, &n, &d_one, work, &n, &d_zero, scatter, &p);
+
+	double denom = 1.0 / (sum_w - 1.0);
+	for (int j = 0; j < p; j++)
+		for (int i = j; i < p; i++)
+			scatter[p * j + i] *= denom;
 }
 
 /******************************************************************************\
@@ -443,19 +467,17 @@ wbacon_error_type mahalanobis(wbdata *dat, double *work_np, double *work_pp,
 {
 	int n = dat->n, p = dat->p;
 
-	// center and scatter
-	weightedmean(dat, center);
-	weightedscatter(dat, work_np, center, scatter);
+	// coordinate-wise mean and scatter matrix
+	mean_scatter_w(dat, work_np, center, scatter);
 
 	Memcpy(work_np, dat->x, n * p);					// copy of 'x'
 
-	for (int i = 0; i < n; i++)
-		for (int j = 0; j < p; j++)
+	for (int j = 0; j < p; j++)
+		for (int i = 0; i < n; i++)
 			work_np[n * j + i] -= center[j];		// center the data
 
 	// Cholesky decomposition of scatter matrix
 	Memcpy(work_pp, scatter, p * p);
-
 	int info;
 	F77_CALL(dpotrf)("L", &p, work_pp, &p, &info);
 	if (info != 0)
@@ -466,14 +488,13 @@ wbacon_error_type mahalanobis(wbdata *dat, double *work_np, double *work_pp,
 	F77_CALL(dtrsm)("R", "L", "T", "N", &n, &p, &d_one, work_pp, &p, work_np,
 		&n);
 
-	// Mahalanobis distances (row sums)
-	for (int i = 0; i < n; i++) {
+	// squared Mahalanobis distances (row sums)
+	for (int i = 0; i < n; i++)
 		dat->dist[i] = 0.0;
-		for (int j = 0; j < p; j++)
-			dat->dist[i] += _POWER2(work_np[n * j + i]);
 
-		dat->dist[i] = sqrt(dat->dist[i]);
-	}
+	for (int j = 0; j < p; j++)
+		for (int i = 0; i < n; i++)
+			dat->dist[i] += _POWER2(work_np[n * j + i]);
 
 	return WBACON_ERROR_OK;
 }

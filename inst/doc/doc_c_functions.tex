@@ -197,22 +197,24 @@ See \code{methods.pdf} for more details.
 		\item[internal:]
 		\code{\LinkA{wquantile\_noalloc}{wquantilenoalloc}},
 		\code{\LinkA{euclidean\_norm2}{euclideannorm2}},
-		\code{\LinkA{weightedmean}{weightedmean}},
-		\code{\LinkA{weightedscatter}{weightedscatter}},
+		\code{\LinkA{scatter\_w}{scatterw}},
+		\code{\LinkA{mean\_scatter\_w}{meanscatterw}},
 		\code{\LinkA{mahalanobis}{mahalanobis}},
+
 		\code{\LinkA{initialsubset}{initialsubset}},
 		\code{\LinkA{cutoffval}{cutoffval}}, and
-		\code{\LinkA{wbacon\_error}{wbaconerror}}.
+		\code{\LinkA{wbacon\_error}{wbaconerror}}
 		%
 		\item[external:]
-		\code{Rmath.h::\LinkA{qchisq}{qchisq}}.
+		\code{Rmath.h::\LinkA{qchisq}{qchisq}}
 	\end{description}
 \end{Dependencies}
 \begin{Value}
 On return, the following slots are overwritten:
 	\begin{ldescription}
-		\item[\code{center}] estimated center
-		\item[\code{scatter}] estimated scatter matrix
+		\item[\code{center}] estimated weighted coordinate-wise center
+		\item[\code{scatter}] estimated lower triangular matrix of the
+			weighted scatter matrix
 		\item[\code{dist}] Mahalanobis distance
 		\item[\code{subset0}] subset of outlier-free observations
 		\item[\code{cutoff}] $1-\alpha$ quantile of the chi-squared
@@ -283,7 +285,7 @@ See \code{methods.pdf} for more details.
 \begin{Dependencies}
 	\code{\LinkA{initial\_reg}{initialreg}},
 	\code{\LinkA{algorithm\_4}{algorithm4}}, and
-	\code{\LinkA{algorithm\_5}{algorithm5}}.
+	\code{\LinkA{algorithm\_5}{algorithm5}}
 \end{Dependencies}
 \begin{Value}
 On return, the following slots are overwritten:
@@ -345,16 +347,17 @@ void wquantile(double *array, double *weights, int *n, double *prob,
 See \code{methods.pdf} for more details.
 \end{Details}
 \begin{Dependency}
-\code{\LinkA{wquantile\_noalloc}{wquantilenoalloc}}.
+\code{\LinkA{wquantile\_noalloc}{wquantilenoalloc}}
 \end{Dependency}
 \begin{Value}
 On return, \code{result} is overwritten with the weighted quantile.
 \end{Value}
 \begin{References}\relax
 Bentley, J.L. and D.M. McIlroy (1993). Engineering a Sort Function,
-	\textit{Software - Practice and Experience} 23, pp. 1249-1265.
+\textit{Software - Practice and Experience} 23, pp. 1249-1265.
+
 Hyndman, R.J. and Y. Fan (1996). Sample Quantiles in Statistical Packages,
-	\textit{The American Statistician 50}, pp. 361-365.
+\textit{The American Statistician 50}, pp. 361-365.
 \end{References}
 
 
@@ -461,6 +464,9 @@ wbacon_error_type initialsubset(wbdata *dat, workarray *work, double *center,
 		\COLLECT
 	\end{ldescription}
 \end{Arguments}
+\begin{Dependency}
+\code{\LinkA{scatter\_w}{scatterw}}
+\end{Dependency}
 \begin{Value}
 The function returns a \code{\LinkA{wbacon\_error\_type}{wbaconerrortype}}:
 the return value is either \code{WBACON\_ERROR\_OK} (i.e., no error) or the
@@ -500,9 +506,8 @@ wbacon_error_type mahalanobis(wbdata *dat, double *work_np, double *work_pp,
 \end{Arguments}
 \begin{Dependencies}
 	\begin{description}
-		\item[internal:] \code{\LinkA{weightedmean}{weightedmean}} and
-			\code{\LinkA{weightedscatter}{weightedscatter}}.
-		\item[external:] \code{LAPACK:dtrsm} and \code{LAPACK:dpotrf}.
+		\item[internal:] \code{\LinkA{mean\_scatter\_w}{meanscatterw}}
+		\item[external:] \code{LAPACK:dtrsm} and \code{LAPACK:dpotrf}
 	\end{description}
 \end{Dependencies}
 \begin{Value}
@@ -514,13 +519,13 @@ On return, \code{dat->dist} is overwritten with the Mahalanobis distance.
 \end{Value}
 
 %---------------------------------------
-\HeaderB{weightedmean}{Internal function}{weightedmean}
+\HeaderB{scatter\_w}{Internal function}{scatterw}
 \begin{Description}
-Computes the (component-wise) weighted mean.
+Computes the weighted scatter matrix.
 \end{Description}
 \begin{Usage}
 \begin{verbatim}
-void weightedmean(wbdata *dat, double *center)
+void scatter_w(wbdata *dat, double *work, double *center, double *scatter)
 \end{verbatim}
 \end{Usage}
 \begin{Arguments}
@@ -529,18 +534,26 @@ void weightedmean(wbdata *dat, double *center)
 		\CENTER
 	\end{ldescription}
 \end{Arguments}
+\begin{Details}
+The weighted \code{scatter} matrix is computed without (re-) computing the
+\code{center}.
+\end{Details}
+\begin{Dependency}
+\code{BLAS:dsyrk}
+\end{Dependency}
 \begin{Value}
-On return, \code{center} is overwritten with the weighted mean.
+On return, \code{scatter} is overwritten with the lower triangular matrix
+of the weighted scatter matrix.
 \end{Value}
 
 %---------------------------------------
-\HeaderB{weightedscatter}{Internal function}{weightedscatter}
+\HeaderB{mean\_scatter\_w}{Internal function}{meanscatterw}
 \begin{Description}
 Computes the weighted scatter matrix.
 \end{Description}
 \begin{Usage}
 \begin{verbatim}
-void weightedscatter(wbdata *dat, double *work, double *center,
+void mean_scatter_w(wbdata *dat, double *work, double *center,
     double *scatter)
 \end{verbatim}
 \end{Usage}
@@ -553,10 +566,12 @@ void weightedscatter(wbdata *dat, double *work, double *center,
 	\end{ldescription}
 \end{Arguments}
 \begin{Dependency}
-\code{BLAS:dgemm}.
+\code{BLAS:dsyrk}
 \end{Dependency}
 \begin{Value}
-On return, \code{scatter} is overwritten with the weighted scatter matrix.
+On return, \code{scatter} and \code{mean} are overwritten with, respectively,
+the lower triangular matrix of the weighted scatter matrix and the weighted
+coordinate-wise mean.
 \end{Value}
 
 %---------------------------------------
@@ -619,7 +634,7 @@ wbacon_error_type check_matrix_fullrank(double *x, int *p, int decom)
 See \code{methods.pdf} for the details.
 \end{Details}
 \begin{Dependency}
-	\code{LAPACK:dpotrf}.
+\code{LAPACK:dpotrf}
 \end{Dependency}
 \begin{Value}
 The function returns a instance of \code{\LinkA{wbacon\_error\_type}{wbaconerrortype}}:
@@ -742,7 +757,7 @@ See \code{methods.pdf} for more details.
 \begin{Dependencies}
 	\code{\LinkA{fitwls}{fitwls}},
 	\code{\LinkA{psort\_array}{psortarray}}, and
-	\code{\LinkA{compute\_ti}{computeti}}.
+	\code{\LinkA{compute\_ti}{computeti}}
 \end{Dependencies}
 \begin{Value}
 The function returns a \code{\LinkA{wbacon\_error\_type}{wbaconerrortype}}:
@@ -793,9 +808,9 @@ See \code{methods.pdf} for more details.
 		\code{\LinkA{update\_chol\_xty}{updatecholxty}},
 		\code{\LinkA{cholesky\_reg}{choleskyreg}},
 		\code{\LinkA{compute\_ti}{computeti}}, and
-		\code{\LinkA{select\_subset}{selectsubset}}.
+		\code{\LinkA{select\_subset}{selectsubset}}
 		\item[external:]
-		\code{BLAS:dgemv}.
+		\code{BLAS:dgemv}
 	\end{description}
 \end{Dependencies}
 \begin{Value}
@@ -850,9 +865,9 @@ See \code{methods.pdf} for more details.
 	\begin{description}
 		\item[internal:]
 		\code{\LinkA{fitwls}{fitwls}} and
-		\code{\LinkA{compute\_ti}{computeti}}.
+		\code{\LinkA{compute\_ti}{computeti}}
 		\item[external:]
-		\code{Rmath.h::\LinkA{qt}{qt}}.
+		\code{Rmath.h::\LinkA{qt}{qt}}
 	\end{description}
 \end{Dependencies}
 \begin{Value}
@@ -932,7 +947,7 @@ diagonal elements of the ``hat'' matrix and computes the regression scale.
 Then, it computes the $t_i$'s.
 \end{Details}
 \begin{Dependency}
-\code{\LinkA{hat\_matrix}{hatmatrix}}.
+\code{\LinkA{hat\_matrix}{hatmatrix}}
 \end{Dependency}
 \begin{Value}
 The function returns a \code{\LinkA{wbacon\_error\_type}{wbaconerrortype}}:
@@ -1139,7 +1154,7 @@ The regression coefficients are computed with the \code{LAPACK:dgels}
 subroutine using a QR factorization of the weighted design matrix.
 \end{Details}
 \begin{Dependencies}
-\code{LAPACK:dgels} and \code{BLAS:dgemv}.
+\code{LAPACK:dgels} and \code{BLAS:dgemv}
 \end{Dependencies}
 \begin{Value}
 On return, the following slots are overwritten:
@@ -1208,7 +1223,7 @@ void wquantile_noalloc(double *array, double *weights, double *work, int *n,
 See \code{\LinkA{wquantile}{wquantile}}.
 \end{Details}
 \begin{Dependencies}
-\code{\LinkA{wselect0}{wselect0}} and \code{\LinkA{wquant0}{wquant0}}.
+\code{\LinkA{wselect0}{wselect0}} and \code{\LinkA{wquant0}{wquant0}}
 \end{Dependencies}
 \begin{Value}
 On return, \code{result} is overwritten with the weighted quantile.
@@ -1240,7 +1255,7 @@ void wselect0(double *array, double *weights, int lo, int hi, int k)
 See \LinkA{wquantile}{wquantile}.
 \end{Details}
 \begin{Dependency}
-	\code{\LinkA{partition\_3way}{partition3}}.
+\code{\LinkA{partition\_3way}{partition3}}
 \end{Dependency}
 \begin{Value}
 On return, element \code{array[k]} is in its final sorted position;
@@ -1271,7 +1286,7 @@ double insertionselect(double *array, double *weights, int lo, int hi,
 	\end{ldescription}
 \end{Arguments}
 \begin{Dependency}
-\code{\LinkA{swap2}{swap2}}.
+\code{\LinkA{swap2}{swap2}}
 \end{Dependency}
 \begin{Value}
 On return, element \code{array[k]} is in its final sorted position;
@@ -1297,7 +1312,7 @@ void wquant0(double *array, double *weights, double sum_w, int lo, int hi,
 \end{Usage}
 \begin{Dependencies}
 	\code{\LinkA{insertionselect}{insertionselect}} and
-	\code{\LinkA{partition\_3way}{partition3way}}.
+	\code{\LinkA{partition\_3way}{partition3way}}
 \end{Dependencies}
 
 
@@ -1313,11 +1328,11 @@ void partition_3way(double *array, double *weights, int lo, int hi, int *i,
 \end{verbatim}
 \end{Usage}
 \begin{Dependency}
-	\code{\LinkA{swap2}{swap2}}.
+\code{\LinkA{swap2}{swap2}}
 \end{Dependency}
 \begin{References}
-	Bentley, J.L. and D.M. McIlroy (1993). Engineering a Sort Function,
-	\textit{Software - Practice and Experience} 23, pp. 1249-1265.
+Bentley, J.L. and D.M. McIlroy (1993). Engineering a Sort Function,
+\textit{Software - Practice and Experience} 23, pp. 1249-1265.
 \end{References}
 
 %---------------------------------------
@@ -1333,7 +1348,7 @@ static inline int choose_pivot(double *array, int lo, int hi)
 \end{verbatim}
 \end{Usage}
 \begin{Dependency}
-	\code{\LinkA{med3}{med3}}.
+\code{\LinkA{med3}{med3}}
 \end{Dependency}
 \begin{References}
 Bentley, J.L. and D.M. McIlroy (1993). Engineering a Sort Function,
@@ -1401,7 +1416,7 @@ The function takes care of generating the array \code{index}. The elements of
 this array will set up to be \code{0..(n - 1)}.
 \end{Details}
 \begin{Dependency}
-\code{\LinkA{partial\_sort\_with\_index}{partialsortwithindex}}.
+\code{\LinkA{partial\_sort\_with\_index}{partialsortwithindex}}
 \end{Dependency}
 \begin{Value}
 On return, the array \code{x[0..k]} is partially sorted in ascending order;

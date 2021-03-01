@@ -54,6 +54,7 @@ wBACON <- function(x, w = NULL, alpha = 0.05, collect = 4,
 		PACKAGE = "wbacon")
 
 	tmp$cov <- matrix(tmp$scatter, ncol = p)
+	tmp$cov <- tmp$cov + t(tmp$cov * lower.tri(tmp$cov))
 	tmp$verbose <- NULL
 	tmp$scatter <- NULL
 	tmp$converged <- tmp$success == 1
