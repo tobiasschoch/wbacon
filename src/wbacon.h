@@ -22,12 +22,12 @@
 #define _RANK_TOLERANCE 1.0e-8		// criterion to detect rank deficiency
 
 #if R_PACKAGE
-	#define PRINT_OUT(_f, ...) Rprintf((_f), ##__VA_ARGS__)
+    #define PRINT_OUT(_f, ...) Rprintf((_f), ##__VA_ARGS__)
 #else
-	#define PRINT_OUT(_f, ...) printf((_f), ##__VA_ARGS__)
+    #define PRINT_OUT(_f, ...) printf((_f), ##__VA_ARGS__)
 #endif
 
 // declarations
 void wbacon(double*, double*, double*, double*, double*, int*, int*, double*,
-	int*, double*, int*, int*, int*, int*, int*);
+    int*, double*, int*, int*, int*, int*, int*);
 #endif

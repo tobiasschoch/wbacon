@@ -32,34 +32,34 @@
 
 // data structure
 typedef struct wbdata_struct {
-	int n;
-	int p;
-	double *x;
-	double *w;
-	double *w_sqrt;
-	double *dist;
+    int n;
+    int p;
+    double *x;
+    double *w;
+    double *w_sqrt;
+    double *dist;
 } wbdata;
 
 // structure of working arrays
 typedef struct workarray_struct {
-	int *iarray;
-	double *work_n;
-	double *work_np;
-	double *work_pp;
-	double *work_2n;
+    int *iarray;
+    double *work_n;
+    double *work_np;
+    double *work_pp;
+    double *work_2n;
 } workarray;
 
 // declarations of local function
 static wbacon_error_type initialsubset(wbdata*, workarray*, double* restrict,
-	double* restrict, double* restrict, int* restrict, int* restrict, int*,
-	int*);
+    double* restrict, double* restrict, int* restrict, int* restrict, int*,
+    int*);
 static inline wbacon_error_type mahalanobis(wbdata*, workarray*,
-	double* restrict, double* restrict, double* restrict);
+    double* restrict, double* restrict, double* restrict);
 static wbacon_error_type check_matrix_fullrank(double* restrict, int);
 static inline void mean_scatter_w(wbdata*, double* restrict, double* restrict,
-	double* restrict, double* restrict, double* restrict);
+    double* restrict, double* restrict, double* restrict);
 static inline void scatter_w(wbdata*, double* restrict, double* restrict,
-	double* restrict, double* restrict);
+    double* restrict, double* restrict);
 static inline void euclidean_norm2(wbdata*, double* restrict, double* restrict);
 static void verbose_message(int, int, int, double);
 static inline double cutoffval(int, int, int) __attribute__((always_inline));
@@ -75,18 +75,18 @@ static inline double cutoffval(int, int, int) __attribute__((always_inline));
 #if 0
 static inline double qchisq2(double p, double df)
 {
-	const double c1 = 0.0740740740;
-	const double c2 = 2.8284271247;
-	const double c3 = 0.4714045207;
-	double xp, xp2, hv, sqrt_df, d_df, res;
-	xp = qnorm(p, 0.0, 1.0, 0, 0);
-	xp2 = xp * xp;
-	d_df = (double)df;
-	sqrt_df = sqrt(d_df);
-	hv = - c1 / d_df * (c2 * (xp2 - 1.0) / (3.0 * sqrt_df)
-		- (xp * xp2 - 3.0 * xp) / 4.0);
-	res = 1.0 - 2.0 / (9.0 * d_df) + (xp - hv) * c3 / sqrt_df;
-	return d_df * res * res * res;
+    const double c1 = 0.0740740740;
+    const double c2 = 2.8284271247;
+    const double c3 = 0.4714045207;
+    double xp, xp2, hv, sqrt_df, d_df, res;
+    xp = qnorm(p, 0.0, 1.0, 0, 0);
+    xp2 = xp * xp;
+    d_df = (double)df;
+    sqrt_df = sqrt(d_df);
+    hv = - c1 / d_df * (c2 * (xp2 - 1.0) / (3.0 * sqrt_df)
+        - (xp * xp2 - 3.0 * xp) / 4.0);
+    res = 1.0 - 2.0 / (9.0 * d_df) + (xp - hv) * c3 / sqrt_df;
+    return d_df * res * res * res;
 }
 #endif
 
@@ -108,140 +108,140 @@ static inline double qchisq2(double p, double df)
 |*  success  on return: 1: successful; 0: failure                             *|
 \******************************************************************************/
 void wbacon(double *x, double *w, double *center, double *scatter, double *dist,
-	int *n, int *p, double *alpha, int *subset, double *cutoff,
-	int *maxiter, int *verbose, int *version2, int *collect, int *success)
+    int *n, int *p, double *alpha, int *subset, double *cutoff,
+    int *maxiter, int *verbose, int *version2, int *collect, int *success)
 {
-	*success = 1;
-	wbacon_error_type err;
+    *success = 1;
+    wbacon_error_type err;
 
-	int* restrict subset0 = (int*) Calloc(*n, int);
-	double* select_weight = (double*) Calloc(*n, double);
+    int* restrict subset0 = (int*) Calloc(*n, int);
+    double* select_weight = (double*) Calloc(*n, double);
 
-	// square root of the weights
-	double* w_sqrt = (double*) Calloc(*n, double);
-	Memcpy(w_sqrt, w, *n);
-	for (int i = 0; i < *n; i++)
-		w_sqrt[i] = sqrt(w[i]);
+    // square root of the weights
+    double* w_sqrt = (double*) Calloc(*n, double);
+    Memcpy(w_sqrt, w, *n);
+    for (int i = 0; i < *n; i++)
+        w_sqrt[i] = sqrt(w[i]);
 
-	// initialize and populate the struct 'wbdata'
-	wbdata data;
-	wbdata *dat = &data;
+    // initialize and populate the struct 'wbdata'
+    wbdata data;
+    wbdata *dat = &data;
 
-	dat->n = *n;
-	dat->p = *p;
-	dat->x = x;
-	dat->w = w;
-	dat->w_sqrt = w_sqrt;
-	dat->dist = dist;
+    dat->n = *n;
+    dat->p = *p;
+    dat->x = x;
+    dat->w = w;
+    dat->w_sqrt = w_sqrt;
+    dat->dist = dist;
 
-	// initialize and populate the struct 'workarray'
-	workarray warray;
-	workarray *work = &warray;
+    // initialize and populate the struct 'workarray'
+    workarray warray;
+    workarray *work = &warray;
 
-	int *iarray = (int*) Calloc(*n, int);
-	double *work_n = (double*) Calloc(*n, double);
-	double *work_np = (double*) Calloc(*n * *p, double);
-	double *work_pp = (double*) Calloc(*p * *p, double);
-	double *work_2n = (double*) Calloc(2 * *n, double);
-	work->iarray = iarray;
-	work->work_n = work_n;
-	work->work_np = work_np;
-	work->work_pp = work_pp;
-	work->work_2n = work_2n;
+    int *iarray = (int*) Calloc(*n, int);
+    double *work_n = (double*) Calloc(*n, double);
+    double *work_np = (double*) Calloc(*n * *p, double);
+    double *work_pp = (double*) Calloc(*p * *p, double);
+    double *work_2n = (double*) Calloc(2 * *n, double);
+    work->iarray = iarray;
+    work->work_n = work_n;
+    work->work_np = work_np;
+    work->work_pp = work_pp;
+    work->work_2n = work_2n;
 
-	// STEP 0: establish initial subset
-	if (*version2) {
-		// center: coordinate-wise weighted median
-		double d_half = 0.5;
-		for (int j = 0; j < *p; j++)
-			wquantile_noalloc(x + *n * j, w, work_2n, n, &d_half, &center[j]);
+    // STEP 0: establish initial subset
+    if (*version2) {
+        // center: coordinate-wise weighted median
+        double d_half = 0.5;
+        for (int j = 0; j < *p; j++)
+            wquantile_noalloc(x + *n * j, w, work_2n, n, &d_half, &center[j]);
 
-		// distance: Euclidean norm
-		euclidean_norm2(dat, work_np, center);
-	} else {
-		// Mahalanobis distances
-		for (int i = 0; i < *n; i++)
-			select_weight[i] = 1.0;
-		err = mahalanobis(dat, work, select_weight, center, scatter);
-		if (err != WBACON_ERROR_OK) {
-			*success = 0;
-			PRINT_OUT("Error: covariance %s\n", wbacon_error(err));
-			goto clean_up;
-		}
-	}
+        // distance: Euclidean norm
+        euclidean_norm2(dat, work_np, center);
+    } else {
+        // Mahalanobis distances
+        for (int i = 0; i < *n; i++)
+            select_weight[i] = 1.0;
+        err = mahalanobis(dat, work, select_weight, center, scatter);
+    if (err != WBACON_ERROR_OK) {
+        *success = 0;
+        PRINT_OUT("Error: covariance %s\n", wbacon_error(err));
+        goto clean_up;
+        }
+    }
 
-	// determine initial subset
-	int subsetsize;
-	err = initialsubset(dat, work, select_weight, center, scatter, subset,
-		&subsetsize, verbose, collect);
+    // determine initial subset
+    int subsetsize;
+    err = initialsubset(dat, work, select_weight, center, scatter, subset,
+        &subsetsize, verbose, collect);
 
-	if (err != WBACON_ERROR_OK) {
-		*success = 0;
-		PRINT_OUT("Error: %s (initial subset)\n", wbacon_error(err));
-		goto clean_up;
-	}
+    if (err != WBACON_ERROR_OK) {
+        *success = 0;
+        PRINT_OUT("Error: %s (initial subset)\n", wbacon_error(err));
+        goto clean_up;
+    }
 
-	// STEP 1: update iteratively
-	double chi2 = qchisq(*alpha / (double)*n , (double)(*p), 0, 0);
-	int iter = 1, is_different;
-	for (;;) {
-		if (*verbose)
-			verbose_message(subsetsize, *n, iter, *cutoff);
+    // STEP 1: update iteratively
+    double chi2 = qchisq(*alpha / (double)*n , (double)(*p), 0, 0);
+    int iter = 1, is_different;
+    for (;;) {
+        if (*verbose)
+            verbose_message(subsetsize, *n, iter, *cutoff);
 
-		// location, scatter and the Mahalanobis distances
-		err = mahalanobis(dat, work, select_weight, center, scatter);
-		if (err != WBACON_ERROR_OK) {
-			*success = 0;
-			PRINT_OUT("Error: covariance %s (iterative updating)\n",
-				wbacon_error(err));
-			goto clean_up;
-		}
+        // location, scatter and the Mahalanobis distances
+        err = mahalanobis(dat, work, select_weight, center, scatter);
+        if (err != WBACON_ERROR_OK) {
+            *success = 0;
+            PRINT_OUT("Error: covariance %s (iterative updating)\n",
+                wbacon_error(err));
+            goto clean_up;
+        }
 
-		// check whether the subsets differ (XOR current with previous subset)
-		is_different = 0;
-		for (int i = 0; i < *n; i++) {
-			if (subset0[i] ^ subset[i]) {
-				is_different = 1;
-				break;
-			}
-		}
-		if (is_different == 0) {
-			*maxiter = iter;
-			break;
-		}
+        // check whether the subsets differ (XOR current with previous subset)
+        is_different = 0;
+        for (int i = 0; i < *n; i++) {
+            if (subset0[i] ^ subset[i]) {
+                is_different = 1;
+                break;
+            }
+        }
+        if (is_different == 0) {
+            *maxiter = iter;
+            break;
+        }
 
-		// chi-square cutoff value (quantile)
-		*cutoff = chi2 * cutoffval(*n, subsetsize, *p);
+        // chi-square cutoff value (quantile)
+        *cutoff = chi2 * cutoffval(*n, subsetsize, *p);
 
-		// generate new subset (based on updated Mahalanobis dist.)
-		Memcpy(subset0, subset, *n);
+        // generate new subset (based on updated Mahalanobis dist.)
+        Memcpy(subset0, subset, *n);
 
-		subsetsize = 0;
-		for (int i = 0; i < *n; i++) {
-			if (dist[i] < *cutoff) {		// obs. is in subset
-				subset[i] = 1;
-				select_weight[i] = 1.0;
-				subsetsize += 1;
-			} else {						// obs. is not in subset
-				subset[i] = 0;
-				select_weight[i] = 0.0;
-			}
-		}
+        subsetsize = 0;
+        for (int i = 0; i < *n; i++) {
+            if (dist[i] < *cutoff) {        // obs. is in subset
+                subset[i] = 1;
+                select_weight[i] = 1.0;
+                subsetsize += 1;
+        } else {                            // obs. is not in subset
+                subset[i] = 0;
+                select_weight[i] = 0.0;
+            }
+        }
 
-		iter++;
-		if (iter > *maxiter) {
-			*success = 0;
-			break;
-		}
-	}
+        iter++;
+        if (iter > *maxiter) {
+            *success = 0;
+            break;
+        }
+    }
 
-	for (int i = 0; i < *n; i++)			// Mahalanobis distances
-		dist[i] = sqrt(dist[i]);
+    for (int i = 0; i < *n; i++)            // Mahalanobis distances
+        dist[i] = sqrt(dist[i]);
 
 clean_up:
-	Free(subset0); Free(work_np); Free(work_pp);
-	Free(work_2n); Free(work_n); Free(iarray); Free(w_sqrt);
-	Free(select_weight);
+    Free(subset0); Free(work_np); Free(work_pp);
+    Free(work_2n); Free(work_n); Free(iarray); Free(w_sqrt);
+    Free(select_weight);
 }
 
 /******************************************************************************\
@@ -251,11 +251,11 @@ clean_up:
 \******************************************************************************/
 static inline double cutoffval(int n, int k, int p)
 {
-	double dn = (double)n, dp = (double)p, dk = (double)k;
-	double h = (dn + dp + 1.0) / 2.0;
-	double chr = fmax(0.0, (h - dk) / (h + dk));
-	double cnp = 1.0 + (dp + 1.0) / (dn - dp) + 2.0 / (dn - 1.0 - 3.0 * dp);
-	return _POWER2(cnp + chr);
+    double dn = (double)n, dp = (double)p, dk = (double)k;
+    double h = (dn + dp + 1.0) / 2.0;
+    double chr = fmax(0.0, (h - dk) / (h + dk));
+    double cnp = 1.0 + (dp + 1.0) / (dn - dp) + 2.0 / (dn - 1.0 - 3.0 * dp);
+    return _POWER2(cnp + chr);
 }
 
 /******************************************************************************\
@@ -271,52 +271,52 @@ static inline double cutoffval(int n, int k, int p)
 |*  collect       parameter to specify the size of the intial subset          *|
 \******************************************************************************/
 static wbacon_error_type initialsubset(wbdata *dat, workarray *work,
-	double* restrict select_weight, double* restrict center,
-	double* restrict scatter, int* restrict subset,
-	int* restrict subsetsize, int *verbose, int *collect)
+    double* restrict select_weight, double* restrict center,
+    double* restrict scatter, int* restrict subset,
+    int* restrict subsetsize, int *verbose, int *collect)
 {
-	int n = dat->n, p = dat->p;
-	int* restrict iarray = work->iarray;
-	double* restrict work_np = work->work_np;
-	wbacon_error_type status = WBACON_ERROR_OK;
+    int n = dat->n, p = dat->p;
+    int* restrict iarray = work->iarray;
+    double* restrict work_np = work->work_np;
+    wbacon_error_type status = WBACON_ERROR_OK;
 
-	// determine subset size
-	int m = (int)fmin((double)(*collect) * (double)p, (double)n * 0.5);
+    // determine subset size
+    int m = (int)fmin((double)(*collect) * (double)p, (double)n * 0.5);
 
-	// (partially) sort the Mahalanobis distances
-	psort_array(dat->dist, iarray, n, m);
+    // (partially) sort the Mahalanobis distances
+    psort_array(dat->dist, iarray, n, m);
 
-	// set weights of observations (m+1):n to zero
-	for (int i = 0; i < n; i++)
-		select_weight[i] = 0.0;
+    // set weights of observations (m+1):n to zero
+    for (int i = 0; i < n; i++)
+        select_weight[i] = 0.0;
 
-	// set subset = 1 for the first 1:m elements
-	int at;
-	for (int i = 0; i < m; i++) {
-		at = iarray[i];
-		select_weight[at] = 1.0;
-		subset[at] = 1;
-	}
+    // set subset = 1 for the first 1:m elements
+    int at;
+    for (int i = 0; i < m; i++) {
+        at = iarray[i];
+        select_weight[at] = 1.0;
+        subset[at] = 1;
+    }
 
-	// check if scatter matrix has full rank; if not, enlarge the subset
-	int next_obs;
-	while (m < n) {
-		scatter_w(dat, work_np, select_weight, center, scatter);
-		status = check_matrix_fullrank(scatter, p);
-		if (status == WBACON_ERROR_OK)
-			break;
+    // check if scatter matrix has full rank; if not, enlarge the subset
+    int next_obs;
+    while (m < n) {
+        scatter_w(dat, work_np, select_weight, center, scatter);
+        status = check_matrix_fullrank(scatter, p);
+        if (status == WBACON_ERROR_OK)
+            break;
 
-		if (*verbose)
-			PRINT_OUT("Initial subset: scatter is rank deficient\n");
+        if (*verbose)
+        PRINT_OUT("Initial subset: scatter is rank deficient\n");
 
-		m++;
-		next_obs = iarray[m - 1];
-		select_weight[next_obs] = 1.0;
-		subset[next_obs] = 1;
-	}
+        m++;
+        next_obs = iarray[m - 1];
+        select_weight[next_obs] = 1.0;
+        subset[next_obs] = 1;
+    }
 
-	*subsetsize = m;
-	return status;
+    *subsetsize = m;
+    return status;
 }
 
 /******************************************************************************\
@@ -326,29 +326,29 @@ static wbacon_error_type initialsubset(wbdata *dat, workarray *work,
 \******************************************************************************/
 static wbacon_error_type check_matrix_fullrank(double* restrict x, int p)
 {
-	int rank = 0;
+    int rank = 0;
 
-	// check whether some variances are virtually zero
-	for (int i = 0; i < p; i++)
-		rank += x[i * (p + 1)] > _RANK_TOLERANCE ? 1 : 0;
-	if (rank != p)
-		return WBACON_ERROR_NOT_POSITIVE_DEFINITE;
+    // check whether some variances are virtually zero
+    for (int i = 0; i < p; i++)
+        rank += x[i * (p + 1)] > _RANK_TOLERANCE ? 1 : 0;
+    if (rank != p)
+        return WBACON_ERROR_NOT_POSITIVE_DEFINITE;
 
-	// Cholesky decomposition
-	int info;
-	F77_CALL(dpotrf)("L", &p, x, &p, &info);
-	if (info != 0)
-		return WBACON_ERROR_NOT_POSITIVE_DEFINITE;
+    // Cholesky decomposition
+    int info;
+    F77_CALL(dpotrf)("L", &p, x, &p, &info);
+    if (info != 0)
+        return WBACON_ERROR_NOT_POSITIVE_DEFINITE;
 
-	// check whether the diagonal elements of the Cholesky factor are > tol.
-	rank = 0;
-	for (int i = 0; i < p; i++)
-		rank += x[i * (p + 1)] > _RANK_TOLERANCE ? 1 : 0;
+    // check whether the diagonal elements of the Cholesky factor are > tol.
+    rank = 0;
+    for (int i = 0; i < p; i++)
+        rank += x[i * (p + 1)] > _RANK_TOLERANCE ? 1 : 0;
 
-	if (rank == p)
-		return WBACON_ERROR_OK;
-	else
-		return WBACON_ERROR_RANK_DEFICIENT;
+    if (rank == p)
+        return WBACON_ERROR_OK;
+    else
+        return WBACON_ERROR_RANK_DEFICIENT;
 }
 
 /******************************************************************************\
@@ -360,12 +360,12 @@ static wbacon_error_type check_matrix_fullrank(double* restrict x, int p)
 \******************************************************************************/
 static void verbose_message(int subsetsize, int n, int iter, double cutoff)
 {
-	double percentage = 100.0 * (double)subsetsize / (double)n;
-	if (iter > 1)
-		PRINT_OUT("Subset %d: n = %d (%.1f%%); cutoff: %.2f\n", iter,
-			subsetsize, percentage, cutoff);
-	else
-		PRINT_OUT("Subset %d: n = %d (%.1f%%)\n", iter, subsetsize, percentage);
+    double percentage = 100.0 * (double)subsetsize / (double)n;
+    if (iter > 1)
+        PRINT_OUT("Subset %d: n = %d (%.1f%%); cutoff: %.2f\n", iter,
+            subsetsize, percentage, cutoff);
+    else
+        PRINT_OUT("Subset %d: n = %d (%.1f%%)\n", iter, subsetsize, percentage);
 }
 
 /******************************************************************************\
@@ -377,36 +377,36 @@ static void verbose_message(int subsetsize, int n, int iter, double cutoff)
 |*  scatter       on return: array[p, p]                                      *|
 \******************************************************************************/
 static inline void scatter_w(wbdata *dat, double* restrict work_np,
-	double* restrict select_weight, double* restrict center,
-	double* restrict scatter)
+    double* restrict select_weight, double* restrict center,
+    double* restrict scatter)
 {
-	int n = dat->n, p = dat->p;
-	double* restrict w = dat->w;
-	double* restrict w_sqrt = dat->w_sqrt;
+    int n = dat->n, p = dat->p;
+    double* restrict w = dat->w;
+    double* restrict w_sqrt = dat->w_sqrt;
 
-	Memcpy(work_np, dat->x, n * p);
+    Memcpy(work_np, dat->x, n * p);
 
-	double sum_w = 0.0;
-	for (int i = 0; i < n; i++)
-		sum_w += w[i] * select_weight[i];
+    double sum_w = 0.0;
+    for (int i = 0; i < n; i++)
+        sum_w += w[i] * select_weight[i];
 
-	// centered data
-	for (int j = 0; j < p; j++) {
-		for (int i = 0; i < n; i++) {
-			work_np[n * j + i] -= center[j];
-			work_np[n * j + i] *= w_sqrt[i] * select_weight[i];
-		}
-	}
+    // centered data
+    for (int j = 0; j < p; j++) {
+        for (int i = 0; i < n; i++) {
+            work_np[n * j + i] -= center[j];
+            work_np[n * j + i] *= w_sqrt[i] * select_weight[i];
+        }
+    }
 
-	// lower triangle of the scatter matrix
-	const double d_one = 1.0, d_zero = 0.0;
-	F77_CALL(dsyrk)("L", "T", &p, &n, &d_one, work_np, &n, &d_zero, scatter,
-		&p);
+    // lower triangle of the scatter matrix
+    const double d_one = 1.0, d_zero = 0.0;
+    F77_CALL(dsyrk)("L", "T", &p, &n, &d_one, work_np, &n, &d_zero, scatter,
+        &p);
 
-	double denom = 1.0 / (sum_w - 1.0);
-	for (int j = 0; j < p; j++)
-		for (int i = j; i < p; i++)
-			scatter[p * j + i] *= denom;
+    double denom = 1.0 / (sum_w - 1.0);
+    for (int j = 0; j < p; j++)
+        for (int i = j; i < p; i++)
+            scatter[p * j + i] *= denom;
 }
 
 /******************************************************************************\
@@ -419,47 +419,47 @@ static inline void scatter_w(wbdata *dat, double* restrict work_np,
 |*  scatter       on return: array[p, p]                                      *|
 \******************************************************************************/
 static inline void mean_scatter_w(wbdata *dat, double* restrict select_weight,
-	double* restrict work_n, double* restrict work_np, double* restrict center,
-	double* restrict scatter)
+    double* restrict work_n, double* restrict work_np, double* restrict center,
+    double* restrict scatter)
 {
-	int n = dat->n, p = dat->p;
-	double* restrict w = dat->w;
-	double* restrict w_sqrt = dat->w_sqrt;
+    int n = dat->n, p = dat->p;
+    double* restrict w = dat->w;
+    double* restrict w_sqrt = dat->w_sqrt;
 
-	// sum(w[in subset]) and let work_n[i] = w[i] if in subset, otherwise 0
-	double sum_w = 0.0, tmp;
-	for (int i = 0; i < n; i++) {
-		tmp = select_weight[i] * w[i];
-		work_n[i] = tmp;
-		sum_w += tmp;
-	}
+    // sum(w[in subset]) and let work_n[i] = w[i] if in subset, otherwise 0
+    double sum_w = 0.0, tmp;
+    for (int i = 0; i < n; i++) {
+        tmp = select_weight[i] * w[i];
+        work_n[i] = tmp;
+        sum_w += tmp;
+    }
 
-	// coordinate-wise mean and centered data
-	Memcpy(work_np, dat->x, n * p);
+    // coordinate-wise mean and centered data
+    Memcpy(work_np, dat->x, n * p);
 
-	for (int j = 0; j < p; j++) {
-		center[j] = 0.0;
-		for (int i = 0; i < n; i++)
-			center[j] += work_np[n * j + i] * work_n[i];
+    for (int j = 0; j < p; j++) {
+        center[j] = 0.0;
+        for (int i = 0; i < n; i++)
+            center[j] += work_np[n * j + i] * work_n[i];
 
-		center[j] /= sum_w;
+        center[j] /= sum_w;
 
-		// center the data and pre-multiply by sqrt(w[i])
-		for (int i = 0; i < n; i++) {
-			work_np[n * j + i] -= center[j];
-			work_np[n * j + i] *= w_sqrt[i] * select_weight[i];
-		}
-	}
+        // center the data and pre-multiply by sqrt(w[i])
+        for (int i = 0; i < n; i++) {
+            work_np[n * j + i] -= center[j];
+            work_np[n * j + i] *= w_sqrt[i] * select_weight[i];
+        }
+    }
 
-	// lower triangle of the scatter matrix
-	const double d_one = 1.0, d_zero = 0.0;
-	F77_CALL(dsyrk)("L", "T", &p, &n, &d_one, work_np, &n, &d_zero, scatter,
-		&p);
+    // lower triangle of the scatter matrix
+    const double d_one = 1.0, d_zero = 0.0;
+    F77_CALL(dsyrk)("L", "T", &p, &n, &d_one, work_np, &n, &d_zero, scatter,
+        &p);
 
-	double denom = 1.0 / (sum_w - 1.0);
-	for (int j = 0; j < p; j++)
-		for (int i = j; i < p; i++)
-			scatter[p * j + i] *= denom;
+    double denom = 1.0 / (sum_w - 1.0);
+    for (int j = 0; j < p; j++)
+        for (int i = j; i < p; i++)
+            scatter[p * j + i] *= denom;
 }
 
 /******************************************************************************\
@@ -470,30 +470,30 @@ static inline void mean_scatter_w(wbdata *dat, double* restrict select_weight,
 |* NOTE: the algorithm follows S. Hammarling's implementaion of LAPACK:dnorm2 *|
 \******************************************************************************/
 static inline void euclidean_norm2(wbdata *dat, double* restrict work_np,
-	double* restrict center)
+    double* restrict center)
 {
-	int n = dat->n, p = dat->p;
-	double abs, scale, ssq;
-	double* restrict dist = dat->dist;
+    int n = dat->n, p = dat->p;
+    double abs, scale, ssq;
+    double* restrict dist = dat->dist;
 
-	Memcpy(work_np, dat->x, n * p);
-	for (int i = 0; i < n; i++) {
-		ssq = 1.0;
-		scale = 0.0;
-		for (int j = 0; j < p; j++) {
-			work_np[n * j + i] -= center[j];	// center the data
-			abs = fabs(work_np[n * j + i]);
-			if (abs < DBL_EPSILON)
-				continue;
-			if (scale <= abs) {
-				ssq = 1.0 + ssq * _POWER2(scale / abs);
-				scale = abs;					// change the scaling factor
-			} else {
-				ssq += _POWER2(abs / scale);
-			}
-		}
-		dist[i] = _POWER2(scale) * ssq;
-	}
+    Memcpy(work_np, dat->x, n * p);
+    for (int i = 0; i < n; i++) {
+        ssq = 1.0;
+        scale = 0.0;
+        for (int j = 0; j < p; j++) {
+            work_np[n * j + i] -= center[j];    // center the data
+            abs = fabs(work_np[n * j + i]);
+            if (abs < DBL_EPSILON)
+                continue;
+            if (scale <= abs) {
+                ssq = 1.0 + ssq * _POWER2(scale / abs);
+                scale = abs;                    // change the scaling factor
+            } else {
+                ssq += _POWER2(abs / scale);
+            }
+        }
+        dist[i] = _POWER2(scale) * ssq;
+    }
 }
 
 /******************************************************************************\
@@ -506,44 +506,44 @@ static inline void euclidean_norm2(wbdata *dat, double* restrict work_np,
 |* NOTE: on return: dat->dist                                                 *|
 \******************************************************************************/
 static inline wbacon_error_type mahalanobis(wbdata *dat, workarray *work,
-	double* restrict select_weight, double* restrict center,
-	double* restrict scatter)
+    double* restrict select_weight, double* restrict center,
+    double* restrict scatter)
 {
-	int n = dat->n, p = dat->p;
-	double* restrict dist = dat->dist;
-	double* restrict work_np = work->work_np;
-	double* restrict work_pp = work->work_pp;
-	double* restrict work_n = work->work_n;
+    int n = dat->n, p = dat->p;
+    double* restrict dist = dat->dist;
+    double* restrict work_np = work->work_np;
+    double* restrict work_pp = work->work_pp;
+    double* restrict work_n = work->work_n;
 
-	// coordinate-wise mean and scatter matrix
-	mean_scatter_w(dat, select_weight, work_n, work_np, center, scatter);
+    // coordinate-wise mean and scatter matrix
+    mean_scatter_w(dat, select_weight, work_n, work_np, center, scatter);
 
-	Memcpy(work_np, dat->x, n * p);					// copy of 'x'
+    Memcpy(work_np, dat->x, n * p);                 // copy of 'x'
 
-	for (int j = 0; j < p; j++)
-		for (int i = 0; i < n; i++)
-			work_np[n * j + i] -= center[j];		// center the data
+    for (int j = 0; j < p; j++)
+        for (int i = 0; i < n; i++)
+            work_np[n * j + i] -= center[j];        // center the data
 
-	// Cholesky decomposition of scatter matrix
-	Memcpy(work_pp, scatter, p * p);
-	int info;
-	F77_CALL(dpotrf)("L", &p, work_pp, &p, &info);
-	if (info != 0)
-		return WBACON_ERROR_RANK_DEFICIENT;
+    // Cholesky decomposition of scatter matrix
+    Memcpy(work_pp, scatter, p * p);
+    int info;
+    F77_CALL(dpotrf)("L", &p, work_pp, &p, &info);
+    if (info != 0)
+        return WBACON_ERROR_RANK_DEFICIENT;
 
-	// Solve for y in A * y = B by forward substitution (A = Cholesky factor)
-	const double d_one = 1.0;
-	F77_CALL(dtrsm)("R", "L", "T", "N", &n, &p, &d_one, work_pp, &p, work_np,
-		&n);
+    // Solve for y in A * y = B by forward substitution (A = Cholesky factor)
+    const double d_one = 1.0;
+    F77_CALL(dtrsm)("R", "L", "T", "N", &n, &p, &d_one, work_pp, &p, work_np,
+        &n);
 
-	// squared Mahalanobis distances (row sums)
-	for (int i = 0; i < n; i++)
-		dist[i] = 0.0;
+    // squared Mahalanobis distances (row sums)
+    for (int i = 0; i < n; i++)
+        dist[i] = 0.0;
 
-	for (int j = 0; j < p; j++)
-		for (int i = 0; i < n; i++)
-			dist[i] += _POWER2(work_np[n * j + i]);
+    for (int j = 0; j < p; j++)
+        for (int i = 0; i < n; i++)
+            dist[i] += _POWER2(work_np[n * j + i]);
 
-	return WBACON_ERROR_OK;
+    return WBACON_ERROR_OK;
 }
 #undef _POWER2

@@ -23,17 +23,17 @@
 
 #include "partial_sort.h"
 
-# define _large_array 50	// pivotal element determined by ninther
+# define _large_array 50    // pivotal element determined by ninther
 
 static inline void swap2_indx(double*, int*, int, int)
-	__attribute__((always_inline));
+    __attribute__((always_inline));
 static inline double med3(double*, int, int, int)
-	__attribute__((always_inline));
+    __attribute__((always_inline));
 static inline int choose_pivot(double*, int, int)
-	__attribute__((always_inline));
+    __attribute__((always_inline));
 static inline int is_equal(double, double) __attribute__((always_inline));
 static inline void partition_3way_indx(double*, int*, int*, int*, int*, int*)
-	__attribute__((always_inline));
+    __attribute__((always_inline));
 void partial_sort_with_index(double*, int*, int*, int*, int*);
 
 /******************************************************************************\
@@ -46,10 +46,10 @@ void partial_sort_with_index(double*, int*, int*, int*, int*);
 \******************************************************************************/
 void psort_array(double *x, int *index, int n, int k)
 {
-	for (int i = 0; i < n; i++)
-		index[i] = i;
-	int zero = 0, n_minus_one = n - 1, k_minus_one = k - 1;
-	partial_sort_with_index(x, index, &zero, &n_minus_one, &k_minus_one);
+    for (int i = 0; i < n; i++)
+        index[i] = i;
+    int zero = 0, n_minus_one = n - 1, k_minus_one = k - 1;
+    partial_sort_with_index(x, index, &zero, &n_minus_one, &k_minus_one);
 }
 
 /******************************************************************************\
@@ -64,20 +64,20 @@ void psort_array(double *x, int *index, int n, int k)
 \******************************************************************************/
 void partial_sort_with_index(double *x, int *index, int *lo, int *hi, int *k)
 {
-	if (*hi <= *lo) 	// case: n = 1
-		return;
+    if (*hi <= *lo)     // case: n = 1
+        return;
 
 //FIXME: insertion sort for small arrays
 
-	// Bentley-McIlroy's 3-way partitioning: the positions of the sentinels 'i'
-	// and 'j' are returned
-	int i, j;
-	partition_3way_indx(x, index, lo, hi, &i, &j);
+    // Bentley-McIlroy's 3-way partitioning: the positions of the sentinels 'i'
+    // and 'j' are returned
+    int i, j;
+    partition_3way_indx(x, index, lo, hi, &i, &j);
 
-	// sort all elements that are smaller than the k-th value
-	partial_sort_with_index(x, index, lo, &j, k);
-	if (*k >= i)
-		partial_sort_with_index(x, index, &i, hi, k);
+    // sort all elements that are smaller than the k-th value
+    partial_sort_with_index(x, index, lo, &j, k);
+    if (*k >= i)
+        partial_sort_with_index(x, index, &i, hi, k);
 }
 
 /******************************************************************************\
@@ -88,52 +88,52 @@ void partial_sort_with_index(double *x, int *index, int *lo, int *hi, int *k)
 |*  i, j    sentinels scanning up and down                                    *|
 \******************************************************************************/
 static inline void partition_3way_indx(double *array, int *index, int *lo,
-	int *hi, int *i, int *j)
+    int *hi, int *i, int *j)
 {
-	// determine pivot and swap it into position 'lo' (i.e., position 0)
-	swap2_indx(array, index, choose_pivot(array, *lo, *hi), *lo);
-	double pivot = array[*lo];
+    // determine pivot and swap it into position 'lo' (i.e., position 0)
+    swap2_indx(array, index, choose_pivot(array, *lo, *hi), *lo);
+    double pivot = array[*lo];
 
-	// Bentley-McIlroy's 3-way partitioning with sentinels i and j,
-	// respectively, scanning up and down until they cross; elements equal to
-	// the pivot are swapped to the far left and right,
+    // Bentley-McIlroy's 3-way partitioning with sentinels i and j,
+    // respectively, scanning up and down until they cross; elements equal to
+    // the pivot are swapped to the far left and right,
 
-	int p = *lo, q = *hi + 1;
-	*i = *lo; *j = *hi + 1;				// initialize the sentinels
+    int p = *lo, q = *hi + 1;
+    *i = *lo; *j = *hi + 1;             // initialize the sentinels
 
-	for (;;) {
-		while (array[++(*i)] < pivot)
-		if (*i == *hi)
-			break;
+    for (;;) {
+        while (array[++(*i)] < pivot)
+        if (*i == *hi)
+            break;
 
-		while (pivot < array[--(*j)])
+        while (pivot < array[--(*j)])
 
-		if (*j == *lo)
-			break;
+        if (*j == *lo)
+            break;
 
-		if (*i == *j && is_equal(array[*i], pivot))
-			swap2_indx(array, index, ++p, *i);
+        if (*i == *j && is_equal(array[*i], pivot))
+        swap2_indx(array, index, ++p, *i);
 
-		if (*i >= *j)					// check if sentinels cross
-			break;
+        if (*i >= *j)                   // check if sentinels cross
+            break;
 
-		swap2_indx(array, index, *i, *j);
+        swap2_indx(array, index, *i, *j);
 
-		// swap equal elements to the far left and right, respectively
-		if (is_equal(array[*i], pivot))
-			swap2_indx(array, index, ++p, *i);
+        // swap equal elements to the far left and right, respectively
+        if (is_equal(array[*i], pivot))
+            swap2_indx(array, index, ++p, *i);
 
-		if (is_equal(array[*j], pivot))
-			swap2_indx(array, index, --q, *j);
-	}
+        if (is_equal(array[*j], pivot))
+            swap2_indx(array, index, --q, *j);
+    }
 
-	// swap equal elements from the borders back to the center
-	*i = *j + 1;
-	for (int k = *lo; k <= p; k++)
-		swap2_indx(array, index, k, (*j)--);
+    // swap equal elements from the borders back to the center
+    *i = *j + 1;
+    for (int k = *lo; k <= p; k++)
+        swap2_indx(array, index, k, (*j)--);
 
-	for (int k = *hi; k >= q; k--)
-		swap2_indx(array, index, k, (*i)++);
+    for (int k = *hi; k >= q; k--)
+        swap2_indx(array, index, k, (*i)++);
 }
 
 /******************************************************************************\
@@ -144,15 +144,15 @@ static inline void partition_3way_indx(double *array, int *index, int *lo,
 \******************************************************************************/
 static inline int choose_pivot(double *array, int lo, int hi)
 {
-	int n = hi - lo + 1;
-	int mid = lo + n / 2;		// small array: median of three
-	if (n > _large_array) {		// large array: Tukey's ninther
-		int eps = n / 8;
-		lo = med3(array, lo, lo + eps, lo + eps + eps);
-		mid = med3(array, mid - eps, mid, mid + eps);
-		hi = med3(array, hi - eps - eps, hi - eps, hi);
-	}
-	return med3(array, lo, mid, hi);
+    int n = hi - lo + 1;
+    int mid = lo + n / 2;       // small array: median of three
+    if (n > _large_array) {     // large array: Tukey's ninther
+        int eps = n / 8;
+        lo = med3(array, lo, lo + eps, lo + eps + eps);
+        mid = med3(array, mid - eps, mid, mid + eps);
+        hi = med3(array, hi - eps - eps, hi - eps, hi);
+    }
+    return med3(array, lo, mid, hi);
 }
 
 /******************************************************************************\
@@ -163,8 +163,8 @@ static inline int choose_pivot(double *array, int lo, int hi)
 \******************************************************************************/
 static inline void swap2_indx(double *array, int *index, int i, int j)
 {
-	double tmp0 = array[i]; array[i] = array[j]; array[j] = tmp0;
-	int tmp1 = index[i]; index[i] = index[j]; index[j] = tmp1;
+    double tmp0 = array[i]; array[i] = array[j]; array[j] = tmp0;
+    int tmp1 = index[i]; index[i] = index[j]; index[j] = tmp1;
 }
 
 /******************************************************************************\
@@ -173,8 +173,8 @@ static inline void swap2_indx(double *array, int *index, int i, int j)
 \******************************************************************************/
 static inline int is_equal(double a, double b)
 {
-	return fabs(a - b) <= ( (fabs(a) > fabs(b) ? fabs(b) :
-		fabs(a)) * DBL_EPSILON);
+    return fabs(a - b) <= ( (fabs(a) > fabs(b) ? fabs(b) :
+        fabs(a)) * DBL_EPSILON);
 }
 
 /******************************************************************************\
@@ -182,7 +182,7 @@ static inline int is_equal(double a, double b)
 \******************************************************************************/
 static inline double med3(double *array, int i, int j, int k)
 {
-	return array[i] < array[j] ?
-			(array[j] < array[k] ? j : array[i] < array[k] ? k : i)
-		:	(array[j] > array[k] ? j : array[i] > array[k] ? k : i);
+    return array[i] < array[j] ?
+        (array[j] < array[k] ? j : array[i] < array[k] ? k : i)
+        :   (array[j] > array[k] ? j : array[i] > array[k] ? k : i);
 }
