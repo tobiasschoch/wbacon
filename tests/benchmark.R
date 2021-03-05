@@ -6,6 +6,7 @@
 #===============================================================================
 library(wbacon)
 library(microbenchmark)
+VERS <- "V2"
 #-------------------------------------------------------------------------------
 cat("----------------------------------------------------------\n")
 cat("negative: faster; positive: slower\n")
@@ -18,7 +19,7 @@ set.seed(1)
 good_obs <- matrix(rnorm(p * floor(n * (1 - epsilon)), 0, 1), ncol = p)
 bad_obs <- matrix(rnorm(p * floor(n * epsilon), 4, 1), ncol = p)
 all <- rbind(bad_obs, good_obs)
-res <- microbenchmark(wBACON(all, alpha = 0.95), times = 100)
+res <- microbenchmark(wBACON(all, alpha = 0.95, version = VERS), times = 100)
 avg <- mean(res$time / 1e6)
 med <- median(res$time / 1e6)
 ref_avg <- 12.446
@@ -36,7 +37,7 @@ set.seed(1)
 good_obs <- matrix(rnorm(p * floor(n * (1 - epsilon)), 0, 1), ncol = p)
 bad_obs <- matrix(rnorm(p * floor(n * epsilon), 4, 1), ncol = p)
 all <- rbind(bad_obs, good_obs)
-res <- microbenchmark(wBACON(all, alpha = 0.95), times = 10)
+res <- microbenchmark(wBACON(all, alpha = 0.95, version = VERS), times = 10)
 avg <- mean(res$time / 1e6)
 med <- median(res$time / 1e6)
 ref_avg <- 324.580
@@ -54,7 +55,7 @@ set.seed(1)
 good_obs <- matrix(rnorm(p * floor(n * (1 - epsilon)), 0, 1), ncol = p)
 bad_obs <- matrix(rnorm(p * floor(n * epsilon), 4, 1), ncol = p)
 all <- rbind(bad_obs, good_obs)
-res <- microbenchmark(wBACON(all, alpha = 0.95), times = 10)
+res <- microbenchmark(wBACON(all, alpha = 0.95, version = VERS), times = 10)
 avg <- mean(res$time / 1e6)
 med <- median(res$time / 1e6)
 ref_avg <- 1393.797
@@ -72,7 +73,7 @@ set.seed(1)
 good_obs <- matrix(rnorm(p * floor(n * (1 - epsilon)), 0, 1), ncol = p)
 bad_obs <- matrix(rnorm(p * floor(n * epsilon), 4, 1), ncol = p)
 all <- rbind(bad_obs, good_obs)
-res <- microbenchmark(wBACON(all, alpha = 0.95), times = 10)
+res <- microbenchmark(wBACON(all, alpha = 0.95, version = VERS), times = 10)
 avg <- mean(res$time / 1e6)
 med <- median(res$time / 1e6)
 ref_avg <- 4269.193
