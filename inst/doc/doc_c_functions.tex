@@ -448,8 +448,9 @@ et al. (2000).
 \end{Description}
 \begin{Usage}
 \begin{verbatim}
-wbacon_error_type initialsubset(wbdata *dat, workarray *work, double *center,
-    double *scatter, int *subset, int *subsetsize, int *verbose, int* collect)
+static wbacon_error_type initialsubset(wbdata *dat, workarray *work,
+    double *center, double *scatter, int *subset, int *subsetsize,
+    int *verbose, int* collect)
 \end{verbatim}
 \end{Usage}
 \begin{Arguments}
@@ -491,8 +492,8 @@ the details.
 \end{Description}
 \begin{Usage}
 \begin{verbatim}
-wbacon_error_type mahalanobis(wbdata *dat, double *work_np, double *work_pp,
-    double *center, double *scatter)
+static inline wbacon_error_type mahalanobis(wbdata *dat, double *work_np,
+    double *work_pp, double *center, double *scatter)
 \end{verbatim}
 \end{Usage}
 \begin{Arguments}
@@ -525,7 +526,8 @@ Computes the weighted scatter matrix.
 \end{Description}
 \begin{Usage}
 \begin{verbatim}
-void scatter_w(wbdata *dat, double *work, double *center, double *scatter)
+static inline void scatter_w(wbdata *dat, double *work, double *center,
+    double *scatter)
 \end{verbatim}
 \end{Usage}
 \begin{Arguments}
@@ -553,7 +555,7 @@ Computes the weighted scatter matrix.
 \end{Description}
 \begin{Usage}
 \begin{verbatim}
-void mean_scatter_w(wbdata *dat, double *work, double *center,
+static inline void mean_scatter_w(wbdata *dat, double *work, double *center,
     double *scatter)
 \end{verbatim}
 \end{Usage}
@@ -582,7 +584,7 @@ $\bm c$ denotes the center.
 \end{Description}
 \begin{Usage}
 \begin{verbatim}
-void euclidean_norm2(wbdata *dat, double *work, double *center)
+static inline void euclidean_norm2(wbdata *dat, double *work, double *center)
 \end{verbatim}
 \end{Usage}
 \begin{Arguments}
