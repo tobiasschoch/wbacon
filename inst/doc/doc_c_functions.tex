@@ -80,6 +80,11 @@
 \def\IARRAY#1#2{
 	\item[\code{iarray}] #1, \code{int array[#2].}
 }
+\def\SELECTWEIGHT{
+	\item[\code{select\_weight}] weight that indicates membership of
+		an observation in the sample (=1.0), otherwise 0.0, \code{array[n]}.
+}
+
 
 % ==============================================================================
 % Document
@@ -394,7 +399,7 @@ Returns a human readable error string.
 \end{Description}
 \begin{Usage}
 \begin{verbatim}
-	const char* wbacon_error(wbacon_error_type err)
+const char* wbacon_error(wbacon_error_type err)
 \end{verbatim}
 \end{Usage}
 \begin{Arguments}
@@ -449,14 +454,16 @@ et al. (2000).
 \begin{Usage}
 \begin{verbatim}
 static wbacon_error_type initialsubset(wbdata *dat, workarray *work,
-    double *center, double *scatter, int *subset, int *subsetsize,
-    int *verbose, int* collect)
+    double* restrict select_weight, double* restrict center,
+    double* restrict scatter, int* restrict subset,
+    int* restrict subsetsize, int *verbose, int *collect)
 \end{verbatim}
 \end{Usage}
 \begin{Arguments}
 	\begin{ldescription}
 		\WBDATA
 		\WORKwb
+		\SELECTWEIGHT
 		\CENTER
 		\SCATTER
 		\SUBSET{}
@@ -492,15 +499,16 @@ the details.
 \end{Description}
 \begin{Usage}
 \begin{verbatim}
-static inline wbacon_error_type mahalanobis(wbdata *dat, double *work_np,
-    double *work_pp, double *center, double *scatter)
+static inline wbacon_error_type mahalanobis(wbdata *dat, workarray *work,
+    double* restrict select_weight, double* restrict center,
+    double* restrict scatter)
 \end{verbatim}
 \end{Usage}
 \begin{Arguments}
 	\begin{ldescription}
 		\WBDATA
-		\WORKARRAY{\_np}{work array}{n, p}
-		\WORKARRAY{\_pp}{work array}{p, p}
+		\WORKwb
+		\SELECTWEIGHT
 		\CENTER
 		\SCATTER
 	\end{ldescription}
@@ -526,14 +534,18 @@ Computes the weighted scatter matrix.
 \end{Description}
 \begin{Usage}
 \begin{verbatim}
-static inline void scatter_w(wbdata *dat, double *work, double *center,
-    double *scatter)
+static inline void scatter_w(wbdata *dat, double* restrict work,
+    double* restrict select_weight, double* restrict center,
+    double* restrict scatter)
 \end{verbatim}
 \end{Usage}
 \begin{Arguments}
 	\begin{ldescription}
 		\WBDATA
+		\WORKARRAY{\_np}{work array}{n, p}
+		\SELECTWEIGHT
 		\CENTER
+		\SCATTER
 	\end{ldescription}
 \end{Arguments}
 \begin{Details}
@@ -555,14 +567,17 @@ Computes the weighted scatter matrix.
 \end{Description}
 \begin{Usage}
 \begin{verbatim}
-static inline void mean_scatter_w(wbdata *dat, double *work, double *center,
-    double *scatter)
+static inline void mean_scatter_w(wbdata *dat, double* restrict select_weight,
+    double* restrict work_n, double* restrict work_np, double* restrict center,
+    double* restrict scatter)
 \end{verbatim}
 \end{Usage}
 \begin{Arguments}
 	\begin{ldescription}
 		\WBDATA
-		\WORKARRAY{}{work array}{n, p}
+		\SELECTWEIGHT
+		\WORKARRAY{\_n}{work array}{n}
+		\WORKARRAY{\_np}{work array}{n, p}
 		\CENTER
 		\SCATTER
 	\end{ldescription}
@@ -584,13 +599,14 @@ $\bm c$ denotes the center.
 \end{Description}
 \begin{Usage}
 \begin{verbatim}
-static inline void euclidean_norm2(wbdata *dat, double *work, double *center)
+static inline void euclidean_norm2(wbdata *dat, double* restrict work_np,
+    double* restrict center)
 \end{verbatim}
 \end{Usage}
 \begin{Arguments}
 	\begin{ldescription}
 		\WBDATA
-		\item[\code{work}] work array, \code{double array[n, p]}.
+		\WORKARRAY{\_np}{work array}{n, p}
 		\CENTER
 	\end{ldescription}
 \end{Arguments}
@@ -620,16 +636,13 @@ Check whether the array/ matrix \code{x} has full rank.
 \end{Description}
 \begin{Usage}
 \begin{verbatim}
-wbacon_error_type check_matrix_fullrank(double *x, int *p, int decom)
+static wbacon_error_type check_matrix_fullrank(double* restrict x, int p)
 \end{verbatim}
 \end{Usage}
 \begin{Arguments}
 	\begin{ldescription}
 		\DATA{x}{data}{p, p}
 		\item[\code{p}] dimension, \code{[int]}.
-		\item[\code{decom}] toggle, \code{[int]}; \code{1}: the Cholesky
-			decomposition of \code{x} is computed, \code{0}: the array/ matrix
-			\code{x} is taken as is (and is supposed to be a Cholesky factor).
 	\end{ldescription}
 \end{Arguments}
 \begin{Details}
@@ -639,7 +652,8 @@ See \code{methods.pdf} for the details.
 \code{LAPACK:dpotrf}
 \end{Dependency}
 \begin{Value}
-The function returns a instance of \code{\LinkA{wbacon\_error\_type}{wbaconerrortype}}:
+The function returns a instance of \code{\LinkA{wbacon\_error\_type}
+	{wbaconerrortype}}:
 \begin{itemize}
 	\item \code{WBACON\_ERROR\_OK} (i.e., no error),
 	\item \code{WBACON\_ERROR\_NOT\_POSITIVE\_DEFINITE} or

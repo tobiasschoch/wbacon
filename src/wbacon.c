@@ -260,14 +260,15 @@ static inline double cutoffval(int n, int k, int p)
 
 /******************************************************************************\
 |* initialsubset                                                              *|
-|*  dat        data, typedef struct wbdata                                    *|
-|*  work       work arrays, typedef struct workarray                          *|
-|*  center     array[p]                                                       *|
-|*  scatter    array[p, p]                                                    *|
-|*  subset     on return: initial subset                                      *|
-|*  subsetsize on return: size initial subset                                 *|
-|*  verbose    0: quiet; 1: verbose                                           *|
-|*  collect    parameter to specify the size of the intial subset             *|
+|*  dat           data, typedef struct wbdata                                 *|
+|*  work          work arrays, typedef struct workarray                       *|
+|*  select_weight weight = 1.0 if obs. in subset, otherwise 0.0, array[n]     *|
+|*  center        array[p]                                                    *|
+|*  scatter       array[p, p]                                                 *|
+|*  subset        on return: initial subset                                   *|
+|*  subsetsize    on return: size initial subset                              *|
+|*  verbose       0: quiet; 1: verbose                                        *|
+|*  collect       parameter to specify the size of the intial subset          *|
 \******************************************************************************/
 static wbacon_error_type initialsubset(wbdata *dat, workarray *work,
 	double* restrict select_weight, double* restrict center,
@@ -369,12 +370,13 @@ static void verbose_message(int subsetsize, int n, int iter, double cutoff)
 
 /******************************************************************************\
 |* weighted covariance/ scatter matrix                                        *|
-|*  dat     data, typedef struct wbdata                                       *|
-|*  work    array[n, p]                                                       *|
-|*  center  array[p]                                                          *|
-|*  scatter on return: array[p, p]                                            *|
+|*  dat           data, typedef struct wbdata                                 *|
+|*  work_np       array[n, p]                                                 *|
+|*  select_weight weight = 1.0 if obs. in subset, otherwise 0.0, array[n]     *|
+|*  center        array[p]                                                    *|
+|*  scatter       on return: array[p, p]                                      *|
 \******************************************************************************/
-static inline void scatter_w(wbdata *dat, double* restrict work,
+static inline void scatter_w(wbdata *dat, double* restrict work_np,
 	double* restrict select_weight, double* restrict center,
 	double* restrict scatter)
 {
@@ -382,7 +384,7 @@ static inline void scatter_w(wbdata *dat, double* restrict work,
 	double* restrict w = dat->w;
 	double* restrict w_sqrt = dat->w_sqrt;
 
-	Memcpy(work, dat->x, n * p);
+	Memcpy(work_np, dat->x, n * p);
 
 	double sum_w = 0.0;
 	for (int i = 0; i < n; i++)
@@ -391,14 +393,15 @@ static inline void scatter_w(wbdata *dat, double* restrict work,
 	// centered data
 	for (int j = 0; j < p; j++) {
 		for (int i = 0; i < n; i++) {
-			work[n * j + i] -= center[j];
-			work[n * j + i] *= w_sqrt[i] * select_weight[i];
+			work_np[n * j + i] -= center[j];
+			work_np[n * j + i] *= w_sqrt[i] * select_weight[i];
 		}
 	}
 
 	// lower triangle of the scatter matrix
 	const double d_one = 1.0, d_zero = 0.0;
-	F77_CALL(dsyrk)("L", "T", &p, &n, &d_one, work, &n, &d_zero, scatter, &p);
+	F77_CALL(dsyrk)("L", "T", &p, &n, &d_one, work_np, &n, &d_zero, scatter,
+		&p);
 
 	double denom = 1.0 / (sum_w - 1.0);
 	for (int j = 0; j < p; j++)
@@ -408,10 +411,12 @@ static inline void scatter_w(wbdata *dat, double* restrict work,
 
 /******************************************************************************\
 |* weighted coordinate-wise mean and covariance/ scatter matrix               *|
-|*  dat     data, typedef struct wbdata                                       *|
-|*  work    array[n, p]                                                       *|
-|*  center  array[p]                                                          *|
-|*  scatter on return: array[p, p]                                            *|
+|*  dat           data, typedef struct wbdata                                 *|
+|*  select_weight weight = 1.0 if obs. in subset, otherwise 0.0, array[n]     *|
+|*  work_n        array[n]                                                    *|
+|*  work_np       array[n, p]                                                 *|
+|*  center        on return: array[p]                                         *|
+|*  scatter       on return: array[p, p]                                      *|
 \******************************************************************************/
 static inline void mean_scatter_w(wbdata *dat, double* restrict select_weight,
 	double* restrict work_n, double* restrict work_np, double* restrict center,
@@ -448,7 +453,8 @@ static inline void mean_scatter_w(wbdata *dat, double* restrict select_weight,
 
 	// lower triangle of the scatter matrix
 	const double d_one = 1.0, d_zero = 0.0;
-	F77_CALL(dsyrk)("L", "T", &p, &n, &d_one, work_np, &n, &d_zero, scatter, &p);
+	F77_CALL(dsyrk)("L", "T", &p, &n, &d_one, work_np, &n, &d_zero, scatter,
+		&p);
 
 	double denom = 1.0 / (sum_w - 1.0);
 	for (int j = 0; j < p; j++)
@@ -459,24 +465,24 @@ static inline void mean_scatter_w(wbdata *dat, double* restrict select_weight,
 /******************************************************************************\
 |* squared Euclidean norm of an array[n, p]                                   *|
 |*  dat     data, typedef struct wbdata                                       *|
-|*  work    array[n, p]                                                       *|
+|*  work_np array[n, p]                                                       *|
 |*  center  array[p]                                                          *|
 |* NOTE: the algorithm follows S. Hammarling's implementaion of LAPACK:dnorm2 *|
 \******************************************************************************/
-static inline void euclidean_norm2(wbdata *dat, double* restrict work,
+static inline void euclidean_norm2(wbdata *dat, double* restrict work_np,
 	double* restrict center)
 {
 	int n = dat->n, p = dat->p;
 	double abs, scale, ssq;
 	double* restrict dist = dat->dist;
 
-	Memcpy(work, dat->x, n * p);
+	Memcpy(work_np, dat->x, n * p);
 	for (int i = 0; i < n; i++) {
 		ssq = 1.0;
 		scale = 0.0;
 		for (int j = 0; j < p; j++) {
-			work[n * j + i] -= center[j];		// center the data
-			abs = fabs(work[n * j + i]);
+			work_np[n * j + i] -= center[j];	// center the data
+			abs = fabs(work_np[n * j + i]);
 			if (abs < DBL_EPSILON)
 				continue;
 			if (scale <= abs) {
@@ -492,11 +498,12 @@ static inline void euclidean_norm2(wbdata *dat, double* restrict work,
 
 /******************************************************************************\
 |* Mahalanobis distances                                                      *|
-|*  dat      data, typedef struct wbdata                                      *|
-|*  work_np  work array[n, p]                                                 *|
-|*  work_pp  work array[p, p]                                                 *|
-|*  center   array[p]                                                         *|
-|*  scatter  array[p, p]                                                      *|
+|*  dat           data, typedef struct wbdata                                 *|
+|*  work          work array, typedef struct work                             *|
+|*  select_weight weight = 1.0 if obs. in subset, otherwise 0.0, array[n]     *|
+|*  center        array[p]                                                    *|
+|*  scatter       array[p, p]                                                 *|
+|* NOTE: on return: dat->dist                                                 *|
 \******************************************************************************/
 static inline wbacon_error_type mahalanobis(wbdata *dat, workarray *work,
 	double* restrict select_weight, double* restrict center,
