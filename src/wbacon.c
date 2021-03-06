@@ -530,7 +530,7 @@ static inline wbacon_error_type mahalanobis(wbdata *dat, workarray *work,
 
     Memcpy(work_np, dat->x, n * p);                 // copy of 'x'
 
-    #pragma omp parallel for if(p * n * 10 > OMP_MIN_SIZE)
+    #pragma omp parallel for if(p * n > 10 * OMP_MIN_SIZE)
     for (int j = 0; j < p; j++) {
         #pragma omp simd
         for (int i = 0; i < n; i++)

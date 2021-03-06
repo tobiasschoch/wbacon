@@ -8,7 +8,6 @@
 \usepackage{amsmath}
 
 \usepackage{setspace}
-\setstretch{1.1}
 
 \setlength\parindent{24pt}
 
@@ -84,7 +83,9 @@
 	\item[\code{select\_weight}] weight that indicates membership of
 		an observation in the sample (=1.0), otherwise 0.0, \code{array[n]}.
 }
-
+\def\OMPMINSIZE{
+    \code{OMP\_MIN\_SIZE} is of size 100\,000
+}
 
 % ==============================================================================
 % Document
@@ -106,6 +107,8 @@
 \date{{\small \today, version 0.2}}
 \maketitle
 
+\setstretch{0.8}
+
 \vspace{1em}
 \hrule
 \vspace{-0.5em}
@@ -114,6 +117,8 @@
 \vspace{0.5em}
 \hrule
 \vspace{1em}
+
+\setstretch{1.1}
 
 %===============================================================================
 \section{Introduction}
@@ -142,6 +147,9 @@ R. C. Whaley, J. Demmel, J. Dongarra, I. Duff, S. Hammerling, G. Henry,
 M. Heroux, L. Kaufman, and A. Lumsdaine (2002). An updated set of basic linear
 algebra subprograms (BLAS), \textit{ACM Transactions on Mathematical Software},
 28, 135--151.
+    \item[\small{OpenMP}:] OpenMP Architecture Review Board (2018).
+        \emph{OpenMP Application Program Interface Version 5.0}, URL
+        \href{https://https://www.openmp.org}{https://https://www.openmp.org}.
 \end{description}
 
 
@@ -513,6 +521,17 @@ static inline wbacon_error_type mahalanobis(wbdata *dat, workarray *work,
 		\SCATTER
 	\end{ldescription}
 \end{Arguments}
+\begin{Details}
+The function's loop over the columns of the data matrix is parallelized
+using the OpenMP preprocessor directive
+\begin{verbatim}
+#pragma omp parallel for if(p * n > OMP_MIN_SIZE)
+\end{verbatim}
+\noindent where \OMPMINSIZE, and \code{n} and \code{p} are, respectively,
+the number of rows and columns. The inner loop over the \code{n}
+rows is equipped with the directive \code{\#pragma omp simd} to tell the
+compiler that we demand SIMD vectorization.
+\end{Details}
 \begin{Dependencies}
 	\begin{description}
 		\item[internal:] \code{\LinkA{mean\_scatter\_w}{meanscatterw}}
@@ -551,6 +570,18 @@ static inline void scatter_w(wbdata *dat, double* restrict work,
 \begin{Details}
 The weighted \code{scatter} matrix is computed without (re-) computing the
 \code{center}.
+
+The function's loop over the columns of the data matrix is parallelized
+using the OpenMP preprocessor directive
+\begin{verbatim}
+#pragma omp parallel for if(p * n > 10 * OMP_MIN_SIZE)
+\end{verbatim}
+\noindent where \OMPMINSIZE, and \code{n} and \code{p} are, respectively,
+the number of rows and columns. It is not efficient to use the parallelization
+on rather small arrays; therefore, we have pre-multiplied
+\code{OMP\_MIN\_SIZE} by a factor of 10. The inner loop over the \code{n}
+rows is equipped with the directive \code{\#pragma omp simd} to tell the
+compiler that we demand SIMD vectorization.
 \end{Details}
 \begin{Dependency}
 \code{BLAS:dsyrk}
@@ -582,6 +613,17 @@ static inline void mean_scatter_w(wbdata *dat, double* restrict select_weight,
 		\SCATTER
 	\end{ldescription}
 \end{Arguments}
+\begin{Details}
+The function's loop over the columns of the data matrix is parallelized
+using the OpenMP preprocessor directive
+\begin{verbatim}
+#pragma omp parallel for if(p * n > OMP_MIN_SIZE)
+\end{verbatim}
+\noindent where \OMPMINSIZE, and \code{n} and \code{p} are, respectively,
+the number of rows and columns. The inner loop over the \code{n}
+rows is equipped with the directive \code{\#pragma omp simd} to tell the
+compiler that we demand SIMD vectorization.
+\end{Details}
 \begin{Dependency}
 \code{BLAS:dsyrk}
 \end{Dependency}

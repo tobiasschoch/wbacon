@@ -1,7 +1,7 @@
-# `wbacon`: Weighted BACON algorithm for multivariate outlier detection and robust linear regression
+# wbacon: Weighted BACON algorithms for multivariate outlier nomination (detection) and robust linear regression
 
 [Billor et al](#References) (2000) proposed the BACON
-algorithms for multivariate outlier detection and robust linear
+algorithms for multivariate outlier nomination and robust linear
 regression. [Béguin and Hulliger](#References) (2008) extended the
 outlier detection method to weighted and incomplete data problems.
 Both methods are implemented in the R statistical software
@@ -10,7 +10,8 @@ respectively, `robustX` ([Mächler et al.](#References), 2021) and
 `modi` ([Hulliger and Sterchi](#References), 2020).
 
 Our package offers a computationally efficient implementation in the C
-language. Efficiency is achieved by using a weighted quantile based on the
+language with [OpenMP](#References) support for parallelization.
+Efficiency is achieved by using a weighted quantile based on the
 Quicksort algorithm, partial sorting in place of full sorting, reuse
 of computed estimates, and most importantly an up-/downdating scheme
 for the Cholesky and QR factorizations. The computational costs of
@@ -19,10 +20,38 @@ repeatedly.
 
 ## Available methods
 
-* `wBACON()` is for multivariate outlier detection and robust estimation of
+* `wBACON()` is for multivariate outlier nomination and robust estimation of
 location/ center and covariance matrix
 * `wBACON_reg()` is for robust linear regression (the method is robust
 against outliers in the response variable and the model's design matrix)
+
+### Assumptions
+The BACON algorithms assume that the underlying model is an appropriate
+description of the non-outlying observations; see [Billor et al](#References)
+(2000). More precisely,
+
+* the regression method assumes that the non-outlying ("good") data are
+described by a linear (homoscedastic) regression model;
+* the outlier nomination method assumes that the "good" data have (roughly)
+an elliptically contoured distribution (this includes the Gaussian
+distribution as a special case).
+
+> "Although the algorithms will often do something reasonable even
+> when these assumptions are violated, it is hard to say what the
+> results mean." [Billor et al](#References) (2000, p. 289)
+
+It is strongly recommended that the structure of the data be examined
+and whether the assumptions made about the "good" observations are reasonable.
+
+### The role of the data analyst
+In line with [Billor et al](#References) (2000, p. 290), use the term
+outlier "nomination" rather than "detection" to highlight that algorithms
+should not go beyond nominating observations as *potential* outliers;
+see also [Béguin and Hulliger](#References) (2008). It is left to the analyst
+to finally label outlying observations as such.
+
+The software provides the analyst with tools and measures to study potentially
+outlying observations. It is strongly recommended to use the tools.
 
 ## Installation
 Make sure that the R package `devtools` is installed. Then, the `wbacon`
@@ -75,6 +104,10 @@ Mächler, M., W. A. Stahel, R. Turner, U. Oetliker, and T. Schoch (2021).
 robustX: ’eXtra’ / ’eXperimental’ Functionality for Robust Statistics,
 R package version 1.2-5. URL
 [https://CRAN.R-project.org/package=robustX)](https://CRAN.R-project.org/package=robustX)
+
+OpenMP Architecture Review Board (2018).
+OpenMP Application Program Interface Version 5.0, URL
+[https://https://www.openmp.org](https://https://www.openmp.org)
 
 R Core Team (2021). R. A language and environment for statistical computing.
 R Foundation for Statistical Computing, Vienna, Austria.
