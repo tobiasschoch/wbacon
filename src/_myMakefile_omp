@@ -22,8 +22,9 @@ endif
 # link
 ifneq (, $(findstring mingw, $(SYS)))
 # Windows MinGW
+#XXX -fopenmp
 wbacon: wbacon.o wbacon_error.o wbacon_reg.o wquantile.o fitwls.o partial_sort.o
-	$(CC) -shared -o $@.dll $@.o $(DLL_BLAS) $(DLL_LAPACK) $(DLL_R) \
+	$(CC) -fopenmp -shared -o $@.dll $@.o $(DLL_BLAS) $(DLL_LAPACK) $(DLL_R) \
 	wbacon_error.o wquantile.o wbacon_reg.o fitwls.o partial_sort.o
 else
 # Linux
@@ -34,8 +35,9 @@ wbacon: wbacon.o wbacon_reg.o wbacon_error.o wquantile.o fitwls.o partial_sort.o
 endif
 
 # compile
+#XXX -fopenmp
 wbacon.o: wbacon.c
-	$(CC) -Wall -pedantic -I $(R_C_HEADER) -c $*.c $(CFLAGS)
+	$(CC) -fopenmp -Wall -pedantic -I $(R_C_HEADER) -c $*.c $(CFLAGS)
 
 # compile (with -fpic flag for position independent code, otherwise
 # 'CBACON_ERROR_STRINGS' is not relocatable)

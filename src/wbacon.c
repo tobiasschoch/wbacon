@@ -28,6 +28,9 @@
 
 #include "wbacon.h"
 
+#include <omp.h>
+#define OMP_MIN_SIZE 100000
+
 #define _POWER2(_x) ((_x) * (_x))
 
 // data structure
@@ -162,11 +165,12 @@ void wbacon(double *x, double *w, double *center, double *scatter, double *dist,
         // Mahalanobis distances
         for (int i = 0; i < *n; i++)
             select_weight[i] = 1.0;
+
         err = mahalanobis(dat, work, select_weight, center, scatter);
-    if (err != WBACON_ERROR_OK) {
-        *success = 0;
-        PRINT_OUT("Error: covariance %s\n", wbacon_error(err));
-        goto clean_up;
+        if (err != WBACON_ERROR_OK) {
+            *success = 0;
+            PRINT_OUT("Error: covariance %s\n", wbacon_error(err));
+            goto clean_up;
         }
     }
 
@@ -391,7 +395,9 @@ static inline void scatter_w(wbdata *dat, double* restrict work_np,
         sum_w += w[i] * select_weight[i];
 
     // centered data
+    #pragma omp parallel for if(p * n * 100 > OMP_MIN_SIZE)
     for (int j = 0; j < p; j++) {
+        #pragma omp simd
         for (int i = 0; i < n; i++) {
             work_np[n * j + i] -= center[j];
             work_np[n * j + i] *= w_sqrt[i] * select_weight[i];
@@ -427,24 +433,28 @@ static inline void mean_scatter_w(wbdata *dat, double* restrict select_weight,
     double* restrict w_sqrt = dat->w_sqrt;
 
     // sum(w[in subset]) and let work_n[i] = w[i] if in subset, otherwise 0
-    double sum_w = 0.0, tmp;
+    double sum_w = 0.0, tmp, denom;
     for (int i = 0; i < n; i++) {
         tmp = select_weight[i] * w[i];
         work_n[i] = tmp;
         sum_w += tmp;
     }
+    denom = 1.0 / sum_w;
 
     // coordinate-wise mean and centered data
     Memcpy(work_np, dat->x, n * p);
 
+    #pragma omp parallel for if(p * n > OMP_MIN_SIZE)
     for (int j = 0; j < p; j++) {
         center[j] = 0.0;
+        #pragma omp simd
         for (int i = 0; i < n; i++)
             center[j] += work_np[n * j + i] * work_n[i];
 
-        center[j] /= sum_w;
+        center[j] *= denom;
 
         // center the data and pre-multiply by sqrt(w[i])
+        #pragma omp simd
         for (int i = 0; i < n; i++) {
             work_np[n * j + i] -= center[j];
             work_np[n * j + i] *= w_sqrt[i] * select_weight[i];
@@ -456,7 +466,7 @@ static inline void mean_scatter_w(wbdata *dat, double* restrict select_weight,
     F77_CALL(dsyrk)("L", "T", &p, &n, &d_one, work_np, &n, &d_zero, scatter,
         &p);
 
-    double denom = 1.0 / (sum_w - 1.0);
+    denom = 1.0 / (sum_w - 1.0);
     for (int j = 0; j < p; j++)
         for (int i = j; i < p; i++)
             scatter[p * j + i] *= denom;
@@ -520,9 +530,12 @@ static inline wbacon_error_type mahalanobis(wbdata *dat, workarray *work,
 
     Memcpy(work_np, dat->x, n * p);                 // copy of 'x'
 
-    for (int j = 0; j < p; j++)
+    #pragma omp parallel for if(p * n * 10 > OMP_MIN_SIZE)
+    for (int j = 0; j < p; j++) {
+        #pragma omp simd
         for (int i = 0; i < n; i++)
             work_np[n * j + i] -= center[j];        // center the data
+    }
 
     // Cholesky decomposition of scatter matrix
     Memcpy(work_pp, scatter, p * p);
