@@ -87,11 +87,11 @@ wBACON_reg <- function(formula, weights = NULL, data, collect = 4,
 			dist = tmp$dist),
 		mv = list(center = wb$center, cov = wb$cov, dist = wb$dist))
 	names(res$coefficients) <- colnames(x)
-	class(res) <- "roblm"
+	class(res) <- "wbaconlm"
 	res
 }
 
-print.roblm <- function(x, digits = max(3L, getOption("digits") - 3L), ...)
+print.wbaconlm <- function(x, digits = max(3L, getOption("digits") - 3L), ...)
 {
 	if (x$reg$converged){
 		n <- length(x$residuals)
@@ -110,7 +110,7 @@ print.roblm <- function(x, digits = max(3L, getOption("digits") - 3L), ...)
 	invisible(x)
 }
 
-summary.roblm <- function(object, ...)
+summary.wbaconlm <- function(object, ...)
 {
 	# on the subset, the weighted BACON regression works like a lm model
 	in_subset <- object$subset == 1

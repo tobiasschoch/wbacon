@@ -1,8 +1,8 @@
-\name{predict.roblm}
-\alias{predict.roblm}
+\name{predict.wbaconlm}
+\alias{predict.wbaconlm}
 \title{Predicted Values Based on the Weighted BACON Linear Regression}
 \usage{
-predict.roblm(object, newdata, se.fit = FALSE, scale = NULL, df = Inf,
+predict.wbaconlm(object, newdata, se.fit = FALSE, scale = NULL, df = Inf,
     interval = c("none", "confidence", "prediction"), level = 0.95,
     type = c("response", "terms"), terms = NULL, na.action = na.pass,
     pred.var = res.var/weights, weights = 1, ...)
@@ -38,7 +38,7 @@ the linear model \code{lm}; see \code{\link[=predict.lm]{predict.lm}} for
 more details.
 }
 \value{
-	\code{predict.roblm} produces a vector of predictions or a matrix of
+	\code{predict.wbaconlm} produces a vector of predictions or a matrix of
 	predictions and bounds with column names \code{fit}, \code{lwr}, and
 	\code{upr} if \code{interval} is set.  For \code{type = "terms"} this
 	is a matrix with a column per term and may have an attribute

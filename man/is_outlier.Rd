@@ -1,14 +1,14 @@
 \name{is_outlier}
-\alias{is_outlier.roblm}
-\alias{is_outlier.robmv}
+\alias{is_outlier.wbaconlm}
+\alias{is_outlier.wbaconmv}
 \title{Flag Outliers}
 \usage{
 is_outlier(object, ...)
-\method{is_outlier}{roblm}(object, ...)
-\method{is_outlier}{robmv}(object, ...)
+\method{is_outlier}{wbaconlm}(object, ...)
+\method{is_outlier}{wbaconmv}(object, ...)
 }
 \arguments{
-	\item{object}{object of class \code{roblm} or \code{robmv}.}
+	\item{object}{object of class \code{wbaconmv} or \code{wbaconlm}.}
 	\item{...}{additional arguments passed to the method.}
 }
 \description{

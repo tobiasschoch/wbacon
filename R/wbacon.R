@@ -63,11 +63,11 @@ wBACON <- function(x, w = NULL, alpha = 0.05, collect = 4,
 	names(tmp$center) <- colnames(x)
 	colnames(tmp$cov) <- colnames(x)
 	rownames(tmp$cov) <- colnames(x)
-	class(tmp) <- "robmv"
+	class(tmp) <- "wbaconmv"
 	tmp
 }
 
-print.robmv <- function(x, digits = max(3L, getOption("digits") - 3L), ...)
+print.wbaconmv <- function(x, digits = max(3L, getOption("digits") - 3L), ...)
 {
 	cat("\nWeighted BACON: Robust location, covariance, and distances\n")
 	if (x$converged) {
@@ -79,7 +79,7 @@ print.robmv <- function(x, digits = max(3L, getOption("digits") - 3L), ...)
 			" iterations!\n\n"))
 }
 
-summary.robmv <- function(object, ...)
+summary.wbaconmv <- function(object, ...)
 {
 	digits <- max(3L, getOption("digits") - 3L)
 	cat("\nWeighted BACON: Robust location, covariance, and distances\n")
@@ -108,13 +108,13 @@ summary.robmv <- function(object, ...)
 
 distance <- function(x)
 {
-	if (!inherits(x, "robmv"))
+	if (!inherits(x, "wbaconmv"))
 		cat("not defined for this type of argument\n")
 	else
 		x$dist
 }
 
-vcov.robmv <- function(object, ...)
+vcov.wbaconmv<- function(object, ...)
 {
 	object$cov
 }
@@ -123,5 +123,3 @@ center <- function(object)
 {
 	object$center
 }
-
-

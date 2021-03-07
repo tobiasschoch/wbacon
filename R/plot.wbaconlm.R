@@ -1,4 +1,4 @@
-plot.roblm <- function (x, which = c(1, 2, 3, 4),
+plot.wbaconlm <- function (x, which = c(1, 2, 3, 4),
 	caption = c("Residuals vs Fitted", "Normal Q-Q", "Scale-Location",
 		"Standardized Residuals vs Robust Mahalanobis Distance"),
 	panel = if (add.smooth) function(x, y, ...)
@@ -163,4 +163,4 @@ plot.roblm <- function (x, which = c(1, 2, 3, 4),
     if (!one.fig && par("oma")[3L] >= 1)
         mtext(sub.caption, outer = TRUE, cex = cex.oma.main)
     invisible()
-} 
+}

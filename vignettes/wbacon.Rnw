@@ -425,7 +425,7 @@ reg
 @
 \setstretch{1.1}
 
-\noindent The instance \code{reg} is an object of the class \code{roblm}.
+\noindent The instance \code{reg} is an object of the class \code{wbaconlm}.
 The printed output of \code{wBACON\_reg} is identical with the one
 of the \code{lm} function. In addition, we are told the size of the
 subset on which the regression has been computed. The observations not
@@ -491,7 +491,7 @@ the first three \code{plot} types (\code{which \%in\% 1:3}), that is
 \end{enumerate}
 
 \noindent The plot types \code{4:6} of \code{plot.lm} are not implemented
-for objects of the class \code{roblm} because it is not sensible to study
+for objects of the class \code{wbaconlm} because it is not sensible to study
 the standard regression influence diagnostics in the presence of outliers
 in the model's design space. Instead, type four (\code{which = 4}) plots
 the robust Mahalanobis distances with respect to the non-constant

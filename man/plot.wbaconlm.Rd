@@ -1,8 +1,8 @@
-\name{plot.roblm}
-\alias{plot.roblm}
-\title{Plot Diagnostics for an Object of Class \code{roblm}}
+\name{plot.wbaconlm}
+\alias{plot.wbaconlm}
+\title{Plot Diagnostics for an Object of Class \code{wbaconlm}}
 \usage{
-\method{plot}{roblm}(x, which = c(1, 2, 3, 4),
+\method{plot}{wbaconlm}(x, which = c(1, 2, 3, 4),
 	caption = c("Residuals vs Fitted", "Normal Q-Q", "Scale-Location",
 		"Standardized Residuals vs Robust Mahalanobis Distance"),
 	panel = if (add.smooth) function(x, y, ...)
@@ -16,7 +16,7 @@
 	label.pos = c(4, 2), cex.caption = 1, cex.oma.main = 1.25)
 }
 \arguments{
-	\item{x}{object of class \code{roblm}.}
+	\item{x}{object of class \code{wbaconlm}.}
 	\item{which}{if a subset of the plots is required, specify a subset of
 		the numbers \code{1:4}, \code{[integer]}.}
 	\item{caption}{captions to appear above the plots;
@@ -56,7 +56,7 @@
 }
 \description{
 Four plots (selectable by \code{which}) are available for an object of
-class \code{roblm} (see \code{\link{wBACON_reg}}): A plot
+class \code{wbaconlm} (see \code{\link{wBACON_reg}}): A plot
 of residuals against fitted values, a scale-location plot of
 \eqn{\sqrt{| residuals |}}{sqrt(| residuals |)} against fitted values,
 a Normal Q-Q plot, and a plot of the standardized residuals versus the

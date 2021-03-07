@@ -1,14 +1,14 @@
 \name{wBACON_reg}
 \alias{wBACON_reg}
-\alias{print.roblm}
-\alias{summary.roblm}
+\alias{print.wbaconlm}
+\alias{summary.wbaconlm}
 \title{Robust Fitting Linear Regression Models by the BACON Algorithm}
 \usage{
 wBACON_reg(formula, weights = NULL, data, collect = 4, na.rm = FALSE,
     alpha = 0.05, version = c("V2", "V1"), maxiter = 50, verbose = FALSE)
 
-\method{print}{roblm}(x, digits = max(3L, getOption("digits") - 3L), ...)
-\method{summary}{roblm}(object, ...)
+\method{print}{wbaconlm}(x, digits = max(3L, getOption("digits") - 3L), ...)
+\method{summary}{wbaconlm}(object, ...)
 }
 \arguments{
 	\item{formula}{an object of class \code{formula}: a symbolic description
@@ -33,7 +33,7 @@ wBACON_reg(formula, weights = NULL, data, collect = 4, na.rm = FALSE,
 	\item{verbose}{\code{[logical]} indicating whether additional information
 		is printed to the console (default: \code{TRUE}).}
 	\item{digits}{\code{[integer]} minimal number of significant digits.}
-	\item{object}{object of class \code{roblm}.}
+	\item{object}{object of class \code{wbaconlm}.}
 	\item{...}{additional arguments passed to the method.}
 }
 \description{
@@ -89,7 +89,7 @@ Additional utility functions are listed in the \emph{See also} section below.
 }
 }
 \value{
-An object of class \code{roblm} with slots
+An object of class \code{wbaconlm} with slots
 
 	\item{coefficients}{a named vector of coefficients}
 	\item{residuals}{the residuals (for all observations in the data.frame
@@ -116,16 +116,16 @@ Billor N., Hadi A.S., Vellemann P.F. (2000). BACON: Blocked Adaptive
 	Statistics and Data Analysis} 34, pp. 279-298.
 }
 \seealso{
-The generic functions \code{\link[=coef.roblm]{coef}},
-\code{\link[=fitted.roblm]{fitted}},
-\code{\link[=residuals.roblm]{residuals}},
-and \code{\link[=vcov.roblm]{vcov}} extract the estimate coefficients,
+The generic functions \code{\link[=coef.wbaconlm]{coef}},
+\code{\link[=fitted.wbaconlm]{fitted}},
+\code{\link[=residuals.wbaconlm]{residuals}},
+and \code{\link[=vcov.wbaconlm]{vcov}} extract the estimate coefficients,
 fitted values, residuals, and the covariance matrix of the estimated
 coefficients.
 
-\code{\link[=plot.roblm]{plot}} gives diagnostic plots for an \code{roblm}
-object.
+\code{\link[=plot.wbaconlm]{plot}} gives diagnostic plots for an
+\code{wbaconlm} object.
 
-\code{\link[=predict.roblm]{predict}} is used for prediction (incl.
+\code{\link[=predict.wbaconlm]{predict}} is used for prediction (incl.
 confidence and prediction intervals).
 }

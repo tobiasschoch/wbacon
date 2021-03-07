@@ -1,8 +1,8 @@
 \name{wBACON}
 \alias{wBACON}
-\alias{print.robmv}
-\alias{summary.robmv}
-\alias{vcov.robmv}
+\alias{print.wbaconmv}
+\alias{summary.wbaconmv}
+\alias{vcov.wbaconmv}
 \alias{distance}
 \alias{center}
 \title{Weighted BACON Algorithm for Multivariate Outlier Detection}
@@ -10,10 +10,10 @@
 wBACON(x, w = NULL, alpha = 0.05, collect = 4, version = c("V2", "V1"),
     na.rm = FALSE, maxiter = 50, verbose = TRUE)
 distance(object)
-\method{print}{robmv}(x, digits = max(3L, getOption("digits") - 3L), ...)
-\method{summary}{robmv}(object, ...)
+\method{print}{wbaconmv}(x, digits = max(3L, getOption("digits") - 3L), ...)
+\method{summary}{wbaconmv}(object, ...)
 center(object)
-\method{vcov}{robmv}(object, ...)
+\method{vcov}{wbaconmv}(object, ...)
 }
 \arguments{
 	\item{x}{\code{[matrix]} or \code{[data.frame]}.}
@@ -35,7 +35,7 @@ center(object)
 		is printed to the console (default: \code{TRUE}).}
 	\item{digits}{\code{[integer]} minimal number of significant digits.}
 	\item{...}{additional arguments passed to the method.}
-	\item{object}{object of class \code{robmv}.}
+	\item{object}{object of class \code{wbaconmv}.}
 }
 \description{
 \code{wBACON} is an iterative method for the computation of multivariate
@@ -89,12 +89,12 @@ estimated center/location and covariance matrix.
 
 The \code{distance} method returns the robust Mahalanobis distances.
 
-The function \link[=is_outlier.robmv]{is_outlier} returns a vector of
+The function \link[=is_outlier.wbaconmv]{is_outlier} returns a vector of
 logicals that flags the nominated outliers.
 }
 }
 \value{
-An object of class \code{robmv} with slots
+An object of class \code{wbaconmv} with slots
 
 	\item{x}{see function arguments}
 	\item{w}{see function arguments}
@@ -122,5 +122,5 @@ Béguin C., Hulliger B. (2008). The BACON-EEM Algorithm for Multivariate
 	34, pp. 91-103.
 }
 \seealso{
-\link[=is_outlier.robmv]{is_outlier}
+\link[=is_outlier.wbaconmv]{is_outlier}
 }
