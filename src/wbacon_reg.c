@@ -48,21 +48,24 @@ typedef struct estimate_struct {
 } estimate;
 
 // declarations of local function
-wbacon_error_type initial_reg(regdata*, workarray*, estimate*, int*, int*,
-    int*);
-wbacon_error_type algorithm_4(regdata*, workarray*, estimate*, int*, int*, int*,
+static wbacon_error_type initial_reg(regdata*, workarray*, estimate*,
+    int* restrict, int*, int*);
+static wbacon_error_type algorithm_4(regdata*, workarray*, estimate*,
+    int* restrict, int* restrict, int*, int*, int*);
+static wbacon_error_type algorithm_5(regdata*, workarray*, estimate*,
+    int* restrict, int* restrict, double*, int*, int*, int*);
+static wbacon_error_type compute_ti(regdata*, workarray*, estimate*,
+    int* restrict, int*, double* restrict);
+static wbacon_error_type update_chol_xty(regdata*, workarray*, estimate*,
+    int* restrict, int* restrict, int*);
+static inline wbacon_error_type chol_downdate(double* restrict,
+    double* restrict, int);
+static inline wbacon_error_type hat_matrix(regdata*, workarray*,
+    double* restrict, double* restrict);
+static void select_subset(double* restrict, int* restrict, int* restrict,
     int*, int*);
-wbacon_error_type algorithm_5(regdata*, workarray*, estimate*, int*, int*,
-    double*, int*, int*, int*);
-wbacon_error_type compute_ti(regdata*, workarray*, estimate*, int*, int*,
-    double*);
-wbacon_error_type update_chol_xty(regdata*, workarray*, estimate*, int*, int*,
-    int*);
-wbacon_error_type chol_downdate(double*, double*, int);
-wbacon_error_type hat_matrix(regdata*, workarray*, double*, double*);
-void select_subset(double*, int*, int*, int*, int*);
-void cholesky_reg(double*, double*, double*, double*, int*, int*);
-void chol_update(double*, double*, int);
+static inline void cholesky_reg(double*, double*, double*, double*, int*, int*);
+static inline void chol_update(double* restrict, double* restrict, int);
 
 /******************************************************************************\
 |* BACON regression estimator                                                 *|
@@ -187,22 +190,28 @@ clean_up:
 |*           0: quiet                                                         *|
 |* On return, dat->wx is overwritten with the R matrix of the QR factorization*|
 \******************************************************************************/
-wbacon_error_type initial_reg(regdata *dat, workarray *work, estimate *est,
-    int *subset, int *m, int *verbose)
+static wbacon_error_type initial_reg(regdata *dat, workarray *work,
+    estimate *est, int* restrict subset, int *m, int *verbose)
 {
     int info, n = dat->n, p = dat->p;
+    int* restrict iarray = work->iarray;
+    double* restrict weight = est->weight;
+    double* restrict weight_original = dat->w;
+    double* restrict L = est->L;
+    double* restrict xty = est->xty;
+    double* restrict x = dat->x;
+    double* restrict y = dat->y;
+    double* restrict wx = dat->wx;
     wbacon_error_type status = WBACON_ERROR_OK;
 
     // 3) set weight = w if obs. is in subset (otherwise weight = 0)
-    Memcpy(est->weight, dat->w, n);
     for (int i = 0; i < n; i++)
-        if (subset[i] == 0)
-            est->weight[i] = 0.0;
+        weight[i] = (double)subset[i] * weight_original[i];
 
     // 4) compute regression estimate (on return, dat->wx is overwritten by the
     // R matrix of the QR factorization (R will be used by the caller of
     // initial_reg)
-    info = fitwls(dat, est->weight, work->dgels_work, work->lwork, est->beta,
+    info = fitwls(dat, weight, work->dgels_work, work->lwork, est->beta,
         est->resid);
 
     // if the design matrix dat->x on the subset is rank deficient, we enlarge
@@ -210,20 +219,20 @@ wbacon_error_type initial_reg(regdata *dat, workarray *work, estimate *est,
     if (info) {
         status = WBACON_ERROR_RANK_DEFICIENT;
         // sort the dist[i]'s in ascending order
-        psort_array(est->dist, work->iarray, n, n);
+        psort_array(est->dist, iarray, n, n);
 
         // add obs. to the subset until x has full rank
         while (*m < n) {
             (*m)++;
             // select obs. with smallest dist (among those obs. not in the
             // subset); and set its weight to the original weight (i.e., not 0)
-            int at = work->iarray[*m - 1];
+            int at = iarray[*m - 1];
             subset[at] = 1;
-            est->weight[at] = dat->w[at];
+            weight[at] = weight_original[at];
 
             // re-do regression and check rank
-            info = fitwls(dat, est->weight, work->dgels_work, work->lwork,
-            est->beta, est->resid);
+            info = fitwls(dat, weight, work->dgels_work, work->lwork,
+                est->beta, est->resid);
             if (info == 0) {
                 status = WBACON_ERROR_OK;
                 break;
@@ -236,13 +245,13 @@ wbacon_error_type initial_reg(regdata *dat, workarray *work, estimate *est,
     // extract R matrix (as a lower triangular matrix: L) from dat->wx
     for (int i = 0; i < p; i++)
         for (int j = i; j < p; j++)
-            est->L[j + i * p] = dat->wx[i + j * n];
+            L[j + i * p] = wx[i + j * n];
 
     // compute xty (weighted)
     for (int i = 0; i < p; i++)
         for (int j = 0; j < n; j++)
             if (subset[j])
-                est->xty[i] += dat->w[j] * dat->x[j + i * n] * dat->y[j];
+                xty[i] += weight_original[j] * x[j + i * n] * y[j];
 
     // compute t[i]'s
     status = compute_ti(dat, work, est, subset, m, est->dist);
@@ -262,10 +271,12 @@ wbacon_error_type initial_reg(regdata *dat, workarray *work, estimate *est,
 |*           0: quiet                                                         *|
 |*  collect  defines size of initial subset: m = collect * p                  *|
 \******************************************************************************/
-wbacon_error_type algorithm_4(regdata *dat, workarray *work, estimate *est,
-    int *subset0, int *subset1, int *m, int *verbose, int *collect)
+static wbacon_error_type algorithm_4(regdata *dat, workarray *work,
+    estimate *est, int* restrict subset0, int* restrict subset1, int *m,
+    int *verbose, int *collect)
 {
     int n = dat->n, p = dat->p;
+    int* restrict iarray = work->iarray;
     wbacon_error_type err;
 
     if (*verbose)
@@ -284,7 +295,7 @@ wbacon_error_type algorithm_4(regdata *dat, workarray *work, estimate *est,
         if (err != WBACON_ERROR_OK) {
             for (;;) {
                 (*m)++;
-                subset1[work->iarray[*m - 1]] = 1;
+                subset1[iarray[*m - 1]] = 1;
 
                 if (*verbose)
                     PRINT_OUT("  m = %d", *m);
@@ -319,7 +330,7 @@ wbacon_error_type algorithm_4(regdata *dat, workarray *work, estimate *est,
 
         // select the m obs. with the smallest t[i]'s
         (*m)++;
-        select_subset(est->dist, work->iarray, subset1, m, &n);
+        select_subset(est->dist, iarray, subset1, m, &n);
     }
     return WBACON_ERROR_OK;
 }
@@ -338,12 +349,17 @@ wbacon_error_type algorithm_4(regdata *dat, workarray *work, estimate *est,
 |*  verbose  toggle: 1: additional information is printed to the console;     *|
 |*           0: quiet                                                         *|
 \******************************************************************************/
-wbacon_error_type algorithm_5(regdata *dat, workarray *work, estimate *est,
-    int *subset0, int *subset1, double *alpha, int *m, int *maxiter,
-    int *verbose)
+static wbacon_error_type algorithm_5(regdata *dat, workarray *work,
+    estimate *est, int* restrict subset0, int* restrict subset1, double *alpha,
+    int *m, int *maxiter, int *verbose)
 {
     int n = dat->n, p = dat->p, iter = 1, info, i;
     double cutoff;
+    double* restrict L = est->L;
+    double* restrict wx = dat->wx;
+    double* restrict weight = est->weight;
+    double* restrict weight_original = dat->w;
+    double* restrict dist = est->dist;
     wbacon_error_type err;
 
     if (*verbose)
@@ -352,20 +368,20 @@ wbacon_error_type algorithm_5(regdata *dat, workarray *work, estimate *est,
     Memcpy(subset0, subset1, n);
     while (iter <= *maxiter) {
 
-        // weighted least squares (on return, dat->wx is overwritten by the
+        // weighted least squares (on return, wx is overwritten by the
         // QR factorization)
-        info = fitwls(dat, est->weight, work->dgels_work, work->lwork,
-        est->beta, est->resid);
+        info = fitwls(dat, weight, work->dgels_work, work->lwork,
+            est->beta, est->resid);
         if (info)
             return WBACON_ERROR_RANK_DEFICIENT;
 
         // extract L
         for (int i = 0; i < p; i++)
             for (int j = i; j < p; j++)
-                est->L[j + i * p] = dat->wx[i + j * n];
+                L[j + i * p] = wx[i + j * n];
 
-        // compute t[i]'s (est->dist)
-        err = compute_ti(dat, work, est, subset0, m, est->dist);
+        // compute t[i]'s (dist)
+        err = compute_ti(dat, work, est, subset0, m, dist);
         if (err != WBACON_ERROR_OK)
             return err;
 
@@ -373,15 +389,15 @@ wbacon_error_type algorithm_5(regdata *dat, workarray *work, estimate *est,
         cutoff = qt(*alpha / (double)(2 * (*m + 1)), *m - p, 0, 0);
 
         // generate new subset that includes all obs. with t[i] < cutoff
-        Memcpy(est->weight, dat->w, n);
         *m = 0;
         for (int i = 0; i < n; i++) {
-            if (est->dist[i] < cutoff) {
+            if (dist[i] < cutoff) {
+                weight[i] = weight_original[i];
                 subset1[i] = 1;
             (*m)++;
             } else {
                 subset1[i] = 0;
-                est->weight[i] = 0.0;       // weight = 0 if not in subset
+                weight[i] = 0.0;           // weight = 0 if not in subset
             }
         }
 
@@ -414,7 +430,8 @@ wbacon_error_type algorithm_5(regdata *dat, workarray *work, estimate *est,
 |*  m       size of the subset                                                *|
 |*  n       dimension                                                         *|
 \******************************************************************************/
-void select_subset(double *x, int *iarray, int *subset, int *m, int *n)
+static void select_subset(double* restrict x, int* restrict iarray,
+    int* restrict subset, int *m, int *n)
 {
     // sort the x[i]'s in ascending order
     psort_array(x, iarray, *n, *m);
@@ -437,25 +454,30 @@ void select_subset(double *x, int *iarray, int *subset, int *m, int *n)
 |*  verbose  toggle: 1: additional information is printed to the console;     *|
 |*           0: quiet                                                         *|
 \******************************************************************************/
-wbacon_error_type update_chol_xty(regdata *dat, workarray *work, estimate *est,
-    int *subset0, int *subset1, int *verbose)
+static wbacon_error_type update_chol_xty(regdata *dat, workarray *work,
+    estimate *est, int* restrict subset0, int* restrict subset1, int *verbose)
 {
     int n = dat->n, p = dat->p;
+    double* restrict xtx_update = work->work_p;
+    double* restrict xty = est->xty;
+    double* restrict x = dat->x;
+    double* restrict y = dat->y;
+    double* restrict weight = dat->w;
     wbacon_error_type err;
 
     // make copies of L and xty (to restore the arrays if the updating fails)
     Memcpy(work->work_pp, est->L, p * p);
-    Memcpy(work->work_np, est->xty, p);
+    Memcpy(work->work_np, xty, p);
 
     // first pass: make updates to L and xty (if required)
     int n_update = 0;
     for (int i = 0; i < n; i++) {
         if (subset1[i] > subset0[i]) {
             for (int j = 0; j < p; j++) {
-                work->work_p[j] = dat->x[i + j * n] * sqrt(dat->w[i]);
-                est->xty[j] += dat->x[i + j * n] * dat->y[i] * dat->w[i];
+                xtx_update[j] = x[i + j * n] * sqrt(weight[i]);
+                xty[j] += x[i + j * n] * y[i] * weight[i];
             }
-            chol_update(est->L, work->work_p, p);
+            chol_update(est->L, xtx_update, p);
             n_update++;
         }
     }
@@ -466,14 +488,14 @@ wbacon_error_type update_chol_xty(regdata *dat, workarray *work, estimate *est,
     for (int i = 0; i < n; i++) {
         if (subset1[i] < subset0[i]) {
             for (int j = 0; j < p; j++) {
-                work->work_p[j] = dat->x[i + j * n] * sqrt(dat->w[i]);
-                est->xty[j] -= dat->x[i + j * n] * dat->y[i] * dat->w[i];
+                xtx_update[j] = x[i + j * n] * sqrt(weight[i]);
+                xty[j] -= x[i + j * n] * y[i] * weight[i];
             }
-            err = chol_downdate(est->L, work->work_p, p);
+            err = chol_downdate(est->L, xtx_update, p);
             if (err != WBACON_ERROR_OK) {
                 // updating failed: restore the original arrays
                 Memcpy(est->L, work->work_pp, p * p);
-                Memcpy(est->xty, work->work_np, p);
+                Memcpy(xty, work->work_np, p);
                 if (*verbose)
                     PRINT_OUT(" (downdate failed, subset is increased)\n");
                 return err;
@@ -496,7 +518,7 @@ wbacon_error_type update_chol_xty(regdata *dat, workarray *work, estimate *est,
 |* Golub, G.H, and Van Loan, C.F. (1996). Matrix Computations, 3rd. ed.,      *|
 |* Baltimore: The Johns Hopkins University Press, ch. 12.5                    *|
 \******************************************************************************/
-void chol_update(double *L, double *u, int p)
+static inline void chol_update(double* restrict L, double* restrict u, int p)
 {
     double a, b, c, tmp;
     for (int i = 0; i < p - 1; i++) {
@@ -525,7 +547,8 @@ void chol_update(double *L, double *u, int p)
 |* Golub, G.H, and Van Loan, C.F. (1996). Matrix Computations, 3rd. ed.,      *|
 |* Baltimore: The Johns Hopkins University Press, ch. 12.5                    *|
 \******************************************************************************/
-wbacon_error_type chol_downdate(double *L, double *u, int p)
+static inline wbacon_error_type chol_downdate(double* restrict L,
+    double* restrict u, int p)
 {
     double a, b, c, tmp;
     for (int i = 0; i < p - 1; i++) {
@@ -562,34 +585,35 @@ wbacon_error_type chol_downdate(double *L, double *u, int p)
 |*  m        number of obs. in subset                                         *|
 |*  tis      on entry: work array[n]; on return: t[i]'s                       *|
 \******************************************************************************/
-wbacon_error_type compute_ti(regdata *dat, workarray *work, estimate *est,
-    int *subset, int *m, double* tis)
+static wbacon_error_type compute_ti(regdata *dat, workarray *work,
+    estimate *est, int* restrict subset, int *m, double* restrict tis)
 {
     int n = dat->n, p = dat->p;
+    double* restrict weight = est->weight;
+    double* restrict resid = est->resid;
+    double* restrict hat = work->work_n;
 
     // regression scale
     double sigma = 0.0, total_w = 0.0;
     for (int i = 0; i < n; i++) {
-        total_w += est->weight[i];
-        sigma += est->weight[i] * _POWER2(est->resid[i]);
+        total_w += weight[i];
+        sigma += weight[i] * _POWER2(resid[i]);
     }
     sigma /= total_w - (double)p;
     est->sigma = sqrt(sigma);
 
-    // compute the diag. of the 'hat' matrix (work->work_n)
-    wbacon_error_type err = hat_matrix(dat, work, est->L, work->work_n);
+    // compute the diag. of the 'hat' matrix
+    wbacon_error_type err = hat_matrix(dat, work, est->L, hat);
     if (err != WBACON_ERROR_OK)
         return err;
 
-    // compute t[i]'s
+    // compute t[i]'s (branchless)
+    double tmp;
     for (int i = 0; i < n; i++) {
-        if (subset[i])
-            tis[i] = fabs(est->resid[i]) /
-                (est->sigma * sqrt(1.0 - work->work_n[i]));
-        else
-            tis[i] = fabs(est->resid[i]) /
-                (est->sigma * sqrt(1.0 + work->work_n[i]));
+        tmp = 1 + (double)(1 - 2 * subset[i]) * hat[i];
+        tis[i] = fabs(resid[i]) / (est->sigma * sqrt(tmp));
     }
+
     return WBACON_ERROR_OK;
 }
 
@@ -601,8 +625,8 @@ wbacon_error_type compute_ti(regdata *dat, workarray *work, estimate *est,
 |*  beta  on return: regression coefficients, array[p]                        *|
 |*  n, p  dimension                                                           *|
 \******************************************************************************/
-void cholesky_reg(double *L, double *x, double *xty, double *beta, int *n,
-    int *p)
+static inline void cholesky_reg(double *L, double *x, double *xty, double *beta,
+    int *n, int *p)
 {
     const int int_one = 1;
     double const d_one = 1.0;
@@ -622,10 +646,13 @@ void cholesky_reg(double *L, double *x, double *xty, double *beta, int *n,
 |*  L        Cholesky factor (lower triangular), array[p, p]                  *|
 |*  hat      diagonal elements of the 'hat' matrix                            *|
 \******************************************************************************/
-wbacon_error_type hat_matrix(regdata *dat, workarray *work, double *L,
-    double *hat)
+static inline wbacon_error_type hat_matrix(regdata *dat, workarray *work,
+    double* restrict L, double* restrict hat)
 {
     int n = dat->n, p = dat->p;
+    double* restrict weight = dat->w;
+    double* restrict work_np = work->work_np;
+
     // invert the cholesky factor L
     int info;
     Memcpy(work->work_pp, L, p * p);
@@ -635,18 +662,21 @@ wbacon_error_type hat_matrix(regdata *dat, workarray *work, double *L,
 
     // triangular matrix multiplication x * L^{-T}
     const double d_one = 1.0;
-    Memcpy(work->work_np, dat->x, n * p);
+    Memcpy(work_np, dat->x, n * p);
     F77_CALL(dtrmm)("R", "L", "T", "N", &n, &p, &d_one, work->work_pp, &p,
-        work->work_np, &n);
+        work_np, &n);
 
     // diagonal elements of hat matrix = row sums of (x * L^{-T})^2
-    double tmp;
-    for (int i = 0; i < n; i++) {
-        tmp = 0.0;
-        for (int j = 0; j < p; j++)
-        tmp += _POWER2(work->work_np[i + j * n]);
-        hat[i] = tmp * dat->w[i];
-    }
+    for (int i = 0; i < n; i++)
+        hat[i] = _POWER2(work_np[i]);
+
+    for (int j = 1; j < p; j++)
+        for (int i = 0; i < n; i++)
+            hat[i] += _POWER2(work_np[i + j * n]);
+
+    for (int i = 0; i < n; i++)
+        hat[i] *= weight[i];
+
     return WBACON_ERROR_OK;
 }
 #undef _POWER2

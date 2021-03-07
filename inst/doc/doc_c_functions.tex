@@ -795,8 +795,8 @@ Initializes the least squares estimate.
 \end{Description}
 \begin{Usage}
 \begin{verbatim}
-wbacon_error_type initial_reg(regdata *dat, workarray *work, estimate *est,
-    int *subset, int *m, int *verbose)
+static wbacon_error_type initial_reg(regdata *dat, workarray *work,
+    estimate *est, int* restrict subset, int *m, int *verbose)
 \end{verbatim}
 \end{Usage}
 \begin{Arguments}
@@ -841,8 +841,9 @@ Computes a weighted variant of Algorithm 4 of Billor et al. (2000).
 \end{Description}
 \begin{Usage}
 \begin{verbatim}
-wbacon_error_type algorithm_4(regdata *dat, workarray *work, estimate *est,
-    int *subset0, int *subset1, int *m, int *verbose, int *collect)
+static wbacon_error_type algorithm_4(regdata *dat, workarray *work,
+    estimate *est, int* restrict subset0, int* restrict subset1, int *m,
+    int *verbose, int *collect)
 \end{verbatim}
 \end{Usage}
 \begin{Arguments}
@@ -897,9 +898,9 @@ Computes a weighted variant of Algorithm 5 of Billor et al. (2000).
 \end{Description}
 \begin{Usage}
 \begin{verbatim}
-wbacon_error_type algorithm_5(regdata *dat, workarray *work, estimate *est,
-    int *subset0, int *subset1, double *alpha, int *m, int *maxiter,
-    int *verbose)
+static wbacon_error_type algorithm_5(regdata *dat, workarray *work,
+    estimate *est, int* restrict subset0, int* restrict subset1,
+    double *alpha, int *m, int *maxiter, int *verbose)
 \end{verbatim}
 \end{Usage}
 \begin{Arguments}
@@ -958,7 +959,8 @@ Selects the smallest \code{1..m} observations in \code{x} into the
 \end{Description}
 \begin{Usage}
 \begin{verbatim}
-void select_subset(double *c, int *iarray, int *subset, int *m, int *n)
+static void select_subset(double* restrict x, int* restrict iarray,
+    int* restrict subset, int *m, int *n)
 \end{verbatim}
 \end{Usage}
 \begin{Arguments}
@@ -985,8 +987,8 @@ Compute the $t_i$'s (\code{tis}) of Billor et al. (2000, p. 288).
 \end{Description}
 \begin{Usage}
 \begin{verbatim}
-wbacon_error_type compute_ti(regdata *dat, workarray *work, estimate *est,
-    int *subset, int *m, double* tis)
+static wbacon_error_type compute_ti(regdata *dat, workarray *work,
+    estimate *est, int* restrict subset, int *m, double* restrict tis)
 \end{verbatim}
 \end{Usage}
 \begin{Arguments}
@@ -1023,8 +1025,8 @@ matrix $X^Ty.$
 \end{Description}
 \begin{Usage}
 \begin{verbatim}
-void cholesky_reg(double *L, double *x, double *xty, double *beta, int *n,
-    int *p)
+static inline void cholesky_reg(double *L, double *x, double *xty,
+    double *beta, int *n, int *p)
 \end{verbatim}
 \end{Usage}
 \begin{Arguments}
@@ -1048,8 +1050,8 @@ Computes the diagonal elements of the extended ``hat'' matrix.
 \end{Description}
 \begin{Usage}
 \begin{verbatim}
-wbacon_error_type hat_matrix(regdata *dat, workarray *work, double *L,
-    double *hat)
+static inline wbacon_error_type hat_matrix(regdata *dat, workarray *work,
+    double* restrict L, double* restrict hat)
 \end{verbatim}
 \end{Usage}
 \begin{Arguments}
@@ -1084,8 +1086,8 @@ by comparing the two sets \code{subset0} and \code{subset1}.
 \end{Description}
 \begin{Usage}
 \begin{verbatim}
-wbacon_error_type update_chol_xty(regdata *dat, workarray *work, estimate *est,
-    int *subset0, int *subset1, int *verbose)
+static wbacon_error_type update_chol_xty(regdata *dat, workarray *work,
+    estimate *est, int* restrict subset0, int* restrict subset1, int *verbose)
 \end{verbatim}
 \end{Usage}
 \begin{Arguments}
@@ -1121,7 +1123,7 @@ Rank-one update of the Cholesky factor.
 \end{Description}
 \begin{Usage}
 \begin{verbatim}
-void chol_update(double *L, double *u, int *p)
+static inline void chol_update(double* restrict L, double* restrict u, int p)
 \end{verbatim}
 \end{Usage}
 \begin{Arguments}
@@ -1146,7 +1148,8 @@ Rank-one downdate of the Cholesky factor.
 \end{Description}
 \begin{Usage}
 \begin{verbatim}
-wbacon_error_type chol_downdate(double *L, double *u, int *p)
+static inline wbacon_error_type chol_downdate(double* restrict L,
+    double* restrict u, int p)
 \end{verbatim}
 \end{Usage}
 \begin{Arguments}
@@ -1182,29 +1185,20 @@ On return, \code{L} is overwritten by its downdated value.
 \end{Description}
 \begin{Usage}
 \begin{verbatim}
-void fitwls(double *x, double *work_x, double *y, double *work_y, double *w,
-    double *resid, double *beta0, int *n, int *p, double *work, int *lwork,
-    int *info)
+int fitwls(regdata *dat, double* restrict weight, double* restrict work_dgels,
+    int lwork, double* restrict beta, double* restrict resid)
 \end{verbatim}
 \end{Usage}
 
 \begin{Arguments}
 	\begin{ldescription}
-		\item[\code{x}] design matrix, \code{double array[n, p]}.
-		\WORKARRAY{\_x}{work array}{n, p}
-		\item[\code{y}] response variable, \code{double array[n]}.
-		\WORKARRAY{\_y}{work array}{n}
-		\WEIGHTS{w}
-		\item[\code{resid}] residuals, \code{double array[n]}.
-		\item[\code{beta0}] coefficients, \code{double array[p]}.
-		\item[\code{n, p}] dimensions, \code{[int]}.
-		\item[\code{work}] work array used in \code{LAPACK:dgels}, which is
-			of size \code{double array[lwork]}.
+		\REGDATA
+		\WEIGHTS{weight}
+		\WORKARRAY{\_dgels}{work array}{lwork}
 		\item[\code{lwork}] dimension of array \code{work}, \code{[int]}; if
 			\code{lwork<1}, the function determines and returns the optimal
-			size of \code{lwork}.
-		\item[\code{info}] status, \code{[int]}; if successful, \code{info=0};
-			otherwise \code{info}$\neq$\code{0}.
+		\item[\code{beta}] coefficients, \code{double array[p]}.
+		\item[\code{resid}] residuals, \code{double array[n]}.
 	\end{ldescription}
 \end{Arguments}
 \begin{Details}
@@ -1217,9 +1211,9 @@ subroutine using a QR factorization of the weighted design matrix.
 \begin{Value}
 On return, the following slots are overwritten:
 	\begin{ldescription}
-		\item[\code{beta0}] regression coefficients
+		\item[\code{beta}] regression coefficients
 		\item[\code{resid}] residuals
-		\item[\code{work\_x}] the QR factorization as returned by the
+		\item[\code{dat->wx}] the QR factorization as returned by the
 			subroutine \code{LAPACK:dgeqrf}
 		\item[\code{info}] status; if successful, \code{info=0}; otherwise
 		the computation failed

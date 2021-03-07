@@ -25,16 +25,17 @@
 
 # define _large_array 50    // pivotal element determined by ninther
 
-static inline void swap2_indx(double*, int*, int, int)
+static inline void swap2_indx(double* restrict, int* restrict, int, int)
     __attribute__((always_inline));
-static inline double med3(double*, int, int, int)
+static inline double med3(double* restrict, int, int, int)
     __attribute__((always_inline));
-static inline int choose_pivot(double*, int, int)
+static inline int choose_pivot(double* restrict, int, int)
     __attribute__((always_inline));
 static inline int is_equal(double, double) __attribute__((always_inline));
-static inline void partition_3way_indx(double*, int*, int*, int*, int*, int*)
+static inline void partition_3way_indx(double* restrict, int* restrict, int*,
+    int*, int*, int*)
     __attribute__((always_inline));
-void partial_sort_with_index(double*, int*, int*, int*, int*);
+void partial_sort_with_index(double* restrict, int* restrict, int*, int*, int*);
 
 /******************************************************************************\
 |* partially sorts an array with index                                        *|
@@ -62,7 +63,8 @@ void psort_array(double *x, int *index, int n, int k)
 |*  k       integer in 0..(n - 1); determines the k-th largest element up to  *|
 |*          which x is to be sorted                                           *|
 \******************************************************************************/
-void partial_sort_with_index(double *x, int *index, int *lo, int *hi, int *k)
+void partial_sort_with_index(double* restrict x, int* restrict index,
+    int *lo, int *hi, int *k)
 {
     if (*hi <= *lo)     // case: n = 1
         return;
@@ -87,8 +89,8 @@ void partial_sort_with_index(double *x, int *index, int *lo, int *hi, int *k)
 |*  lo, hi  dimensions                                                        *|
 |*  i, j    sentinels scanning up and down                                    *|
 \******************************************************************************/
-static inline void partition_3way_indx(double *array, int *index, int *lo,
-    int *hi, int *i, int *j)
+static inline void partition_3way_indx(double* restrict array,
+    int* restrict index, int *lo, int *hi, int *i, int *j)
 {
     // determine pivot and swap it into position 'lo' (i.e., position 0)
     swap2_indx(array, index, choose_pivot(array, *lo, *hi), *lo);
@@ -142,7 +144,7 @@ static inline void partition_3way_indx(double *array, int *index, int *lo,
 |*  array   array[lo..hi]                                                     *|
 |*  lo, hi  dimension                                                         *|
 \******************************************************************************/
-static inline int choose_pivot(double *array, int lo, int hi)
+static inline int choose_pivot(double* restrict array, int lo, int hi)
 {
     int n = hi - lo + 1;
     int mid = lo + n / 2;       // small array: median of three
@@ -161,7 +163,8 @@ static inline int choose_pivot(double *array, int lo, int hi)
 |*  index  array[n]                                                           *|
 |*  i, j   elements to be swapped                                             *|
 \******************************************************************************/
-static inline void swap2_indx(double *array, int *index, int i, int j)
+static inline void swap2_indx(double* restrict array, int* restrict index,
+    int i, int j)
 {
     double tmp0 = array[i]; array[i] = array[j]; array[j] = tmp0;
     int tmp1 = index[i]; index[i] = index[j]; index[j] = tmp1;
@@ -180,7 +183,7 @@ static inline int is_equal(double a, double b)
 /******************************************************************************\
 |* median-of-three (without swaps)                                            *|
 \******************************************************************************/
-static inline double med3(double *array, int i, int j, int k)
+static inline double med3(double* restrict array, int i, int j, int k)
 {
     return array[i] < array[j] ?
         (array[j] < array[k] ? j : array[i] < array[k] ? k : i)
