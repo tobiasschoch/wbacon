@@ -1,6 +1,7 @@
 # wbacon: Weighted BACON algorithms for multivariate outlier nomination (detection) and robust linear regression
 
-[Billor et al](#References) (2000) proposed the BACON
+[Billor et al.](#References) (2000) proposed the BACON
+(blocked adaptive computationally-efficient outlier nominators)
 algorithms for multivariate outlier nomination and robust linear
 regression. [Béguin and Hulliger](#References) (2008) extended the
 outlier detection method to weighted and incomplete data problems.
@@ -27,31 +28,36 @@ against outliers in the response variable and the model's design matrix)
 
 ### Assumptions
 The BACON algorithms assume that the underlying model is an appropriate
-description of the non-outlying observations; see [Billor et al](#References)
+description of the non-outlying observations; see [Billor et al.](#References)
 (2000). More precisely,
 
-* the regression method assumes that the non-outlying ("good") data are
-described by a linear (homoscedastic) regression model;
 * the outlier nomination method assumes that the "good" data have (roughly)
 an elliptically contoured distribution (this includes the Gaussian
-distribution as a special case).
+distribution as a special case);
+* the regression method assumes that the non-outlying ("good") data are
+described by a linear (homoscedastic) regression model and that the
+independent variables (having removed the regression intercept/constant,
+if there is a constant) follow (roughly) an elliptically contoured
+distribution.
 
 > "Although the algorithms will often do something reasonable even
 > when these assumptions are violated, it is hard to say what the
-> results mean." [Billor et al](#References) (2000, p. 289)
+> results mean." [Billor et al.](#References) (2000, p. 289)
 
 It is strongly recommended that the structure of the data be examined
 and whether the assumptions made about the "good" observations are reasonable.
 
 ### The role of the data analyst
-In line with [Billor et al](#References) (2000, p. 290), use the term
+In line with [Billor et al.](#References) (2000, p. 290), we use the term
 outlier "nomination" rather than "detection" to highlight that algorithms
 should not go beyond nominating observations as *potential* outliers;
 see also [Béguin and Hulliger](#References) (2008). It is left to the analyst
 to finally label outlying observations as such.
 
 The software provides the analyst with tools and measures to study potentially
-outlying observations. It is strongly recommended to use the tools.
+outlying observations. It is strongly recommended to use the tools. See
+the package folders `vignettes` and `inst/doc` for a vignette (guide) and
+further documentation.
 
 ## Installation
 Make sure that the R package `devtools` is installed. Then, the `wbacon`

@@ -38,9 +38,17 @@ wBACON_reg(formula, weights = NULL, data, collect = 4, na.rm = FALSE,
 }
 \description{
 The weighted BACON algorithm is a robust method to fit weighted linear
-regression models.
+regression models. The method is robust against outlier in the response
+variable and the design matrix (leverage observation).
 }
 \details{
+First, the \code{\link{wBACON}} method is applied to the model's design
+matrix (having removed the regression intercept/constant, if there is
+a constant) to establish a subset of observations which is supposed to
+be free of outliers. Second, the so generated subset is regressed onto
+the corresponding subset of response variables. The subset is iteratively
+enlarged to include as many ``good'' observations as possible.
+
 Models for \code{wBACON_reg} are specified symbolically. A typical model
 has the form \code{response ~ terms}, where \code{response} is the
 (numeric) response vector and \code{terms} is a series of terms
@@ -53,10 +61,32 @@ or \code{\link{lm}} for for more details.
 The \code{weights} argument can be used to specify sampling weights or
 case weights.
 
-It is not possible to fit multiple response variables (on the r.h.s.
+It is \emph{not} possible to fit multiple response variables (on the r.h.s.
 of the formula, i.e. multivariate models) in one call.
 
+The method \emph{cannot} deal with missing values. If the argument
+\code{na.rm} is set to \code{TRUE} the method behaves like
+\code{\link{na.omit}}.
+
+\subsection{Assumptions}{
+The algorithm \emph{assumes} that the non-outlying data follow
+a \emph{linear} (homoscedastic) regression model and that the independent
+variables have (roughly) an elliptically contoured distribution. ``Although
+the algorithms will often do something reasonable even when these
+assumptions are violated, it is hard to say what the results mean.''
+(Billor et al., 2000, p. 289)
+
+In line with Billor et al. (2000, p. 290), we use the term
+outlier ``nomination'' rather than ``detection'' to highlight that algorithms
+should not go beyond nominating observations as \emph{potential} outliers.
+It is left to the analyst to finally label outlying observations as such.
+}
+
+\subsection{Utility functions and tools}{
 The generic function \code{summary} summarizes the estimated model.
+
+Additional utility functions are listed in the \emph{See also} section below.
+}
 }
 \value{
 An object of class \code{roblm} with slots

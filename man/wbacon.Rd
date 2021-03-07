@@ -56,18 +56,42 @@ the standardized chi-square \eqn{1 - \alpha}{1 - alpha} quantile. All
 observations whose squared Mahalanobis distances is larger than
 the threshold are regarded as outliers.
 
-The \code{wBACON} cannot deal with missing values. In contrast,
+If the sampling weights \code{w} are not explicitly specified (i.e.,
+\code{w = NULL}), they are taken to be 1.0.
+
+\subsection{Incomplete/missing data}{
+The \code{wBACON} \emph{cannot} deal with missing values. In contrast,
 function \code{\link[modi]{BEM}} in package \pkg{modi} implements
 the BACON-EEM algorithm of Béguin and Hulliger (2008), which
 is tailored to work with outlying and missing values.
 
-If the sampling weights \code{w} are not explicitly specified (i.e.,
-\code{w = NULL}), they are taken to be 1.0.
+If the argument \code{na.rm} is set to \code{TRUE} the method behaves
+like \code{\link{na.omit}}.
+}
 
+\subsection{Assumptions}{
+The BACON algorithm \emph{assumes} that the non-outlying data have (roughly)
+an elliptically contoured distribution (this includes the Gaussian
+distribution as a special case). "Although the algorithms will often
+do something reasonable even when these assumptions are violated, it
+is hard to say what the results mean." (Billor et al., 2000, p. 289)
+
+In line with Billor et al. (2000, p. 290), we use the term
+outlier "nomination" rather than "detection" to highlight that algorithms
+should not go beyond nominating observations as \emph{potential} outliers;
+see also Béguin and Hulliger (2008). It is left to the analyst
+to finally label outlying observations as such.
+}
+
+\subsection{Utility functions and tools}{
 The method \code{center} and \code{vcov} return, respectively, the
 estimated center/location and covariance matrix.
 
 The \code{distance} method returns the robust Mahalanobis distances.
+
+The function \link[=is_outlier.robmv]{is_outlier} returns a vector of
+logicals that flags the nominated outliers.
+}
 }
 \value{
 An object of class \code{robmv} with slots

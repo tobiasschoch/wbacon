@@ -20,6 +20,8 @@
 \usepackage{SweaveCOLOR}
 \setkeys{Gin}{width = 0.8\textwidth}
 
+\usepackage{framed} % leftbar
+
 \usepackage{setspace}
 \usepackage[longnamesfirst]{natbib}
 \usepackage{enumerate}
@@ -58,11 +60,60 @@
 \section{Introduction}\label{sec:introduction}
 \setstretch{1.1}
 
-The package \code{wbacon} implements a weighted variant of the BACON algorithms
-\citep{billor_hadi_etal_2000} for multivariate outlier detection and robust
-linear regression. The extension of the BACON algorithm for outlier detection
-to allow for weighting is due to \citet{beguin_hulliger_2008}.
+The package \code{wbacon} implements a weighted variant of the BACON
+(blocked adaptive compu\-ta\-tion\-al\-ly-efficient outlier nominators)
+algorithms \citep{billor_hadi_etal_2000} for multivariate outlier detection
+and robust linear regression. The extension of the BACON algorithm for
+outlier detection to allow for weighting is due to
+\citet{beguin_hulliger_2008}.
 
+\subsection*{Available methods}
+
+\begin{description}
+    \item[\code{wBACON()}] is for multivariate outlier nomination and
+        robust estimation of location/ center and covariance matrix
+    \item[\code{wBACON\_reg()}] is for robust linear regression (the
+        method is robust against outliers in the response variable and
+        the model's design matrix)
+\end{description}
+
+\subsubsection*{Assumptions}
+The BACON algorithms assume that the underlying model is an appropriate
+description of the non-outlying observations; \citet{billor_hadi_etal_2000}.
+More precisely,
+
+\begin{itemize}
+\item the outlier nomination method assumes that the ``good'' data have
+        (roughly) an \emph{elliptically contoured} distribution (this
+        includes the Gaussian distribution as a special case);
+    \item the regression method assumes that the non-outlying (``good'') data
+        are described by a \emph{linear} (homoscedastic) regression model
+        and that the independent variables (having removed the regression
+        intercept/constant, if there is a constant) follow (roughly) an
+        elliptically contoured distribution.
+\end{itemize}
+
+\begin{leftbar}
+\noindent{\slshape ``Although the algorithms will often do something
+reasonable even when these assumptions are violated, it is hard to say
+what the results mean.''}\citep[][p. 290]{billor_hadi_etal_2000}
+\end{leftbar}
+
+\noindent It is strongly recommended that the structure of the data be
+examined and whether the assumptions made about the ``good'' observations
+are reasonable.
+
+\subsubsection*{The role of the data analyst}
+In line with \citet[][p. 290]{billor_hadi_etal_2000}, we use the term
+outlier ``nomination'' rather than ``detection'' to highlight that algorithms
+should not go beyond nominating observations as \emph{potential} outliers;
+see also \citet{beguin_hulliger_2008}. It is left to the analyst
+to finally label outlying observations as such.
+
+The software provides the analyst with tools and measures to study potentially
+outlying observations. It is strongly recommended to use the tools.
+
+\subsubsection*{Additional information}
 Additional information on the BACON algorithms and the inplementation can be
 found in the documents:
 \begin{itemize}
