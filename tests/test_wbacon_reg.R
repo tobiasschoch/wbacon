@@ -16,15 +16,17 @@ ERR <- 0
 data(hbk, package = "robustbase")
 m <- wBACON_reg(Y ~ ., data = hbk, alpha = 0.95)
 
-ref_beta <- c(-0.18046162865083981, 0.08137871068818925, 0.03990181252317023,
-	-0.05166557707657377)
-if (!all.equal(coef(m), ref_beta, check.attributes = FALSE)) {
+ref_beta <- c(-0.1804616286, 0.0813787106, 0.0399018125, -0.0516655770)
+tmp <- all.equal(coef(m), ref_beta, check.attributes = FALSE)
+if (is.character(tmp)) {
 	ERR <- ERR + 1
 	cat("hbk: coefficients differ\n")
+    print(tmp)
 }
 
-ref_is_outlier <- 1:10
-if (!all(which(is_outlier(m)) == ref_is_outlier)) {
+ref_is_outlier <- 1L:10L
+tmp <- all.equal(which(is_outlier(m)), ref_is_outlier)
+if (is.character(tmp)) {
 	ERR <- ERR + 1
 	cat("hbk: identified outliers differ\n")
 }
@@ -33,69 +35,83 @@ if (!all(which(is_outlier(m)) == ref_is_outlier)) {
 data(aircraft, package = "robustbase")
 m <- wBACON_reg(Y ~ ., collect = 3, data = aircraft, alpha = 0.95)
 
-ref_beta <- c(9.50074034620055308, -3.04879688663568649, 1.21003298781689805,
-	0.00138096419402889, -0.00055485757094962)
-if (!all.equal(coef(m), ref_beta, check.attributes = FALSE)) {
+ref_beta <- c(14.25805560, -5.02245065, 1.87011709, 0.00197066, -0.00116736)
+tmp <- all.equal(coef(m), ref_beta, check.attributes = FALSE)
+if (is.character(tmp)) {
 	ERR <- ERR + 1
 	cat("aircraft: coefficients differ\n")
+    print(tmp)
 }
 
-ref_is_outlier <- c(16, 22)
-if (!all(which(is_outlier(m)) == ref_is_outlier)) {
+ref_is_outlier <- c(1L, 2L, 3L, 4L, 12L, 16L, 19L, 22L)
+tmp <- all.equal(which(is_outlier(m)), ref_is_outlier)
+if (is.character(tmp)) {
 	ERR <- ERR + 1
 	cat("aircraft: identified outliers differ\n")
+    print(tmp)
 }
 
 #-------------------------------------------------------------------------------
 data(education, package = "robustbase")
 m <- wBACON_reg(Y ~ Region + X1 + X2 + X2, data = education, alpha = 0.95)
 
-ref_beta <- c(20.8925307788478278, 9.6910657876150736, 0.0614905565468016,
-	0.0408586963725780)
-if (!all.equal(coef(m), ref_beta, check.attributes = FALSE)) {
+ref_beta <- c(7.7854265771, 18.0872441054, 0.0437458151, 0.038913849)
+tmp <- all.equal(coef(m), ref_beta, check.attributes = FALSE)
+if (is.character(tmp)) {
 	ERR <- ERR + 1
 	cat("education: coefficients differ\n")
+    print(tmp)
 }
 
-ref_is_outlier <- c(15, 50)
-if (!all(which(is_outlier(m)) == ref_is_outlier)) {
+ref_is_outlier <- c(1L, 3L, 5L, 6L, 7L, 9L, 10L, 13L, 14L, 15L, 16L, 17L, 21L,
+    22L, 23L, 24L, 25L, 29L, 30L, 31L, 32L, 36L, 38L, 40L, 42L, 43L, 44L, 45L,
+    47L, 49L, 50L)
+tmp <- all.equal(which(is_outlier(m)), ref_is_outlier)
+if (is.character(tmp)) {
 	ERR <- ERR + 1
 	cat("education: identified outliers differ\n")
+    print(tmp)
 }
 
 #-------------------------------------------------------------------------------
 data(heart, package = "robustbase")
 m <- wBACON_reg(clength ~ ., collect = 3, data = heart, alpha = 0.95)
 
-ref_beta <- c(31.0708746739284010, -0.1896775299044007, 0.3425817244946800)
-if (!all.equal(coef(m), ref_beta, check.attributes = FALSE)) {
+ref_beta <- c(31.0708746739, -0.1896775299, 0.3425817244)
+tmp <- all.equal(coef(m), ref_beta, check.attributes = FALSE)
+if (is.character(tmp)) {
 	ERR <- ERR + 1
 	cat("heart: coefficients differ\n")
+    print(tmp)
 }
 
-ref_is_outlier <- c(8, 11)
-if (!all(which(is_outlier(m)) == ref_is_outlier)) {
+ref_is_outlier <- c(8L, 11L)
+tmp <- all.equal(which(is_outlier(m)), ref_is_outlier)
+if (is.character(tmp)) {
 	ERR <- ERR + 1
 	cat("heart: identified outliers differ\n")
+    print(tmp)
 }
 
 #-------------------------------------------------------------------------------
 data(pulpfiber, package = "robustbase")
-m <- wBACON_reg(Y1 ~ X1 + X2 + X3, data = pulpfiber, alpha = 0.95)
-
-ref_beta <- c(5.1075264612314788, 2.1740952964309233, 0.3177965854148064,
-	0.1433700922951207)
-if (!all.equal(coef(m), ref_beta, check.attributes = FALSE)) {
+m <- wBACON_reg(Y1 ~ X1 + X2 + X3, data = pulpfiber, alpha = 0.95,
+    collect = 12)
+ref_beta <- c(6.2632015426, 2.7453578623, 0.3046841523, 0.1283534872)
+tmp <- all.equal(coef(m), ref_beta, check.attributes = FALSE)
+if (is.character(tmp)) {
 	ERR <- ERR + 1
 	cat("pulpfiber: coefficients differ\n")
+    print(tmp)
 }
 
-ref_is_outlier <- c(56, 60, 61, 62)
-if (!all(which(is_outlier(m)) == ref_is_outlier)) {
+ref_is_outlier <- c(22L, 51L, 52L, 56L, 60L, 61L, 62L)
+tmp <- all.equal(which(is_outlier(m)), ref_is_outlier)
+if (is.character(tmp)) {
 	ERR <- ERR + 1
 	cat("pulpfiber: identified outliers differ\n")
+    print(tmp)
 }
 #-------------------------------------------------------------------------------
 if (ERR == 0)
 	cat("\nno errors\n")
-
