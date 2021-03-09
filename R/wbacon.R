@@ -2,7 +2,7 @@ wBACON <- function(x, w = NULL, alpha = 0.05, collect = 4,
 	version = c("V2", "V1"), na.rm = FALSE, maxiter = 50, verbose = FALSE)
 {
 	n <- nrow(x); p <- ncol(x)
-	stopifnot(n > p, p > 1,  0 < alpha, alpha < 1, maxiter > 0, collect > 0)
+	stopifnot(n > p, p > 1,  0 < alpha, alpha < 1, maxiter > 0, collect > 1)
 
 	if (version[1] == "V2")
 		vers <- 1

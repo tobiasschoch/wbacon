@@ -283,7 +283,7 @@ static wbacon_error_type algorithm_4(regdata *dat, workarray *work,
         PRINT_OUT("Step 1 (Algorithm 4):\n");
 
     // STEP 1 (Algorithm 4)
-    while (*m <= p * *collect) {
+    for (;;) {
         if (*verbose)
             PRINT_OUT("  m = %d", *m);
 
@@ -305,7 +305,7 @@ static wbacon_error_type algorithm_4(regdata *dat, workarray *work,
                 verbose);
                 if (err == WBACON_ERROR_OK)
                     break;
-                if (*m == p * 4)
+                if (*m == p * *collect)
                     return err;
             }
         }
@@ -330,8 +330,13 @@ static wbacon_error_type algorithm_4(regdata *dat, workarray *work,
 
         // select the m obs. with the smallest t[i]'s
         (*m)++;
+
+        if (*m == p * *collect + 1)
+            break;
+
         select_subset(est->dist, iarray, subset1, m, &n);
     }
+
     return WBACON_ERROR_OK;
 }
 
@@ -364,6 +369,10 @@ static wbacon_error_type algorithm_5(regdata *dat, workarray *work,
 
     if (*verbose)
     PRINT_OUT("Step 2 (Algorithm 5):\n");
+
+    // set the weights
+    for (int i = 0; i < n; i++)
+        weight[i] = (double)subset1[i] * weight_original[i];
 
     Memcpy(subset0, subset1, n);
     while (iter <= *maxiter) {

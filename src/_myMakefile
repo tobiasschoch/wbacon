@@ -28,7 +28,7 @@ wbacon: wbacon.o wbacon_error.o wbacon_reg.o wquantile.o fitwls.o partial_sort.o
 else
 # Linux
 wbacon: wbacon.o wbacon_reg.o wbacon_error.o wquantile.o fitwls.o partial_sort.o
-	$(CC) -fopenmp -shared -L $(DLL_BLAS) $(DLL_LAPACK) $(DLL_R) -o $@.so $@.o \
+	$(CC) -shared -L $(DLL_BLAS) $(DLL_LAPACK) $(DLL_R) -o $@.so $@.o \
 	wbacon_error.o wquantile.o wbacon_reg.o fitwls.o partial_sort.o \
 	-lm -lblas -llapack -lR
 endif

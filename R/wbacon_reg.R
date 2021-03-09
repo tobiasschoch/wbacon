@@ -30,13 +30,6 @@ wBACON_reg <- function(formula, weights = NULL, data, collect = 4,
 	}
 	n <- nrow(x); p <- ncol(x)
 
-	# check if collect is corretly specified
-	if (collect >= n / p)
-		stop("Argument 'collect' must be an integer smaller than ",
-			floor(n / p), "\n")
-	if (collect * p / n > 0.6)
-		cat("Note: init. reg. subset > 60% (use a smaller value for 'collect')\n")
-
 	# check if any element is not finite
 	if (sum(is.finite(c(x, y, w))) != (2 + p) * n)
 		stop("Some observations are not finite\n", call. = FALSE)
