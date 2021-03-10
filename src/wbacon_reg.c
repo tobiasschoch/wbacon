@@ -23,6 +23,7 @@
 */
 
 #include "wbacon_reg.h"
+#include "utils.h"
 #define _POWER2(_x) ((_x) * (_x))
 
 // structure of working arrays
@@ -376,6 +377,9 @@ static wbacon_error_type algorithm_5(regdata *dat, workarray *work,
 
     Memcpy(subset0, subset1, n);
     while (iter <= *maxiter) {
+
+    print_magic_number(subset1, *m);
+
 
         // weighted least squares (on return, wx is overwritten by the
         // QR factorization)
