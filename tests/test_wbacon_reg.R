@@ -11,6 +11,7 @@ library(wbacon)
 #===============================================================================
 # We test the implementation on 5 well known data sets.
 ERR <- 0
+NEWLINE <- TRUE
 
 #-------------------------------------------------------------------------------
 data(hbk, package = "robustbase")
@@ -30,6 +31,8 @@ if (is.character(tmp)) {
 	ERR <- ERR + 1
 	cat("hbk: identified outliers differ\n")
 }
+if (NEWLINE)
+    cat("\n")
 
 #-------------------------------------------------------------------------------
 data(aircraft, package = "robustbase")
@@ -50,6 +53,8 @@ if (is.character(tmp)) {
 	cat("aircraft: identified outliers differ\n")
     print(tmp)
 }
+if (NEWLINE)
+    cat("\n")
 
 #-------------------------------------------------------------------------------
 data(education, package = "robustbase")
@@ -72,6 +77,8 @@ if (is.character(tmp)) {
 	cat("education: identified outliers differ\n")
     print(tmp)
 }
+if (NEWLINE)
+    cat("\n")
 
 #-------------------------------------------------------------------------------
 data(heart, package = "robustbase")
@@ -92,6 +99,8 @@ if (is.character(tmp)) {
 	cat("heart: identified outliers differ\n")
     print(tmp)
 }
+if (NEWLINE)
+    cat("\n")
 
 #-------------------------------------------------------------------------------
 data(pulpfiber, package = "robustbase")
@@ -112,6 +121,9 @@ if (is.character(tmp)) {
 	cat("pulpfiber: identified outliers differ\n")
     print(tmp)
 }
+if (NEWLINE)
+    cat("\n")
+
 #-------------------------------------------------------------------------------
 if (ERR == 0)
 	cat("\nno errors\n")
