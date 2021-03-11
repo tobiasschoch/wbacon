@@ -744,6 +744,8 @@ typedef structs \code{\LinkA{regdata}{regdata}} (see \code{regdata.h}),
 	\item[\code{y}] pointer to the response, \code{double array[n]}.
 	\item[\code{wy}] pointer to a copy of the response, \code{double array[n]}.
 	\item[\code{w}] pointer to the sampling weights, \code{double array[n]}.
+	\item[\code{w\_sqrt}] pointer to the square root of sampling weights,
+        \code{double array[n]}.
 \end{ldescription}
 
 \noindent \textbf{\sffamily Note.} All slots of the instances of the typedef
@@ -1181,24 +1183,24 @@ On return, \code{L} is overwritten by its downdated value.
 \HeaderA{fitwls}{Weighted least squares}{fitwls}
 \begin{Description}
 	Returns the least squares estimate, the matrices Q and R of the QR
-	factorization, and the residuals of a weighted linear regression.
+	factorization, the estimate of regression scale, and the residuals of
+    a weighted linear regression.
 \end{Description}
 \begin{Usage}
 \begin{verbatim}
-int fitwls(regdata *dat, double* restrict weight, double* restrict work_dgels,
-    int lwork, double* restrict beta, double* restrict resid)
+int fitwls(regdata *dat, estimate* est, int* restrict subset,
+    double* restrict work_dgels, int lwork)
 \end{verbatim}
 \end{Usage}
 
 \begin{Arguments}
 	\begin{ldescription}
 		\REGDATA
-		\WEIGHTS{weight}
+        \EST
+        \SUBSET{}
 		\WORKARRAY{\_dgels}{work array}{lwork}
 		\item[\code{lwork}] dimension of array \code{work}, \code{[int]}; if
 			\code{lwork<1}, the function determines and returns the optimal
-		\item[\code{beta}] coefficients, \code{double array[p]}.
-		\item[\code{resid}] residuals, \code{double array[n]}.
 	\end{ldescription}
 \end{Arguments}
 \begin{Details}
@@ -1209,14 +1211,18 @@ subroutine using a QR factorization of the weighted design matrix.
 \code{LAPACK:dgels} and \code{BLAS:dgemv}
 \end{Dependencies}
 \begin{Value}
-On return, the following slots are overwritten:
+The function \code{fitwls} returns its status \code{info}; if successful,
+\code{info=0}; otherwise the computation failed. On return, the
+following slots of \code{struct estimate est} are overwritten:
 	\begin{ldescription}
 		\item[\code{beta}] regression coefficients
+        \item[\code{sigma}] regression scale
 		\item[\code{resid}] residuals
-		\item[\code{dat->wx}] the QR factorization as returned by the
+	\end{ldescription}
+and, the following slots of \code{struct regdata dat} are overwritten:
+	\begin{ldescription}
+		\item[\code{wx}] the QR factorization as returned by the
 			subroutine \code{LAPACK:dgeqrf}
-		\item[\code{info}] status; if successful, \code{info=0}; otherwise
-		the computation failed
 	\end{ldescription}
 \end{Value}
 

@@ -23,8 +23,13 @@
 */
 
 #include "wbacon_reg.h"
-#include "utils.h"
+
 #define _POWER2(_x) ((_x) * (_x))
+#define _debug_mode 0               // 0: default; 1: debug mode
+
+#if _debug_mode
+#include "utils.h"
+#endif
 
 // structure of working arrays
 typedef struct workarray_struct {
@@ -99,12 +104,15 @@ int *subset1 = (int*) Calloc(*n, int);
     dat->wy = wy;
     double *wx = (double*) Calloc(*n * *p, double);
     dat->wx = wx;
+    // sqrt(w) is computed once and then shared
+    double *w_sqrt = (double*) Calloc(*n, double);
+    for (int i = 0; i < *n; i++)
+        w_sqrt[i] = sqrt(w[i]);
+    dat->w_sqrt = w_sqrt;
 
     // initialize and populate 'est' which is a estimate struct
     estimate the_estimate;
     estimate *est = &the_estimate;
-    double *weight = (double*) Calloc(*n, double);
-    est->weight = weight;
     est->resid = resid;
     est->beta = beta;
     est->dist = dist;
@@ -127,7 +135,7 @@ int *subset1 = (int*) Calloc(*n, int);
     int *iarray = (int*) Calloc(*n, int);
     work->iarray = iarray;
     // determine size of work array for LAPACK:degels
-    work->lwork = fitwls(dat, est, w, work_np, -1);
+    work->lwork = fitwls(dat, est, subset0, work_np, -1);
     double *dgels_work = (double*) Calloc(work->lwork, double);
     work->dgels_work = dgels_work;
 
@@ -151,8 +159,12 @@ int *subset1 = (int*) Calloc(*n, int);
         goto clean_up;
     }
 
+#if _debug_mode
+print_magic_number(subset1, *m);
+#endif
+
     // STEP 2 (Algorithm 5)
-    err = algorithm_5(dat, work, est, subset0, subset1, alpha, m, maxiter,
+    err = algorithm_5(dat, work, est, subset1, subset0, alpha, m, maxiter,
         verbose);
     if (err != WBACON_ERROR_OK) {
         PRINT_OUT("Error: %s (step 2)\n", wbacon_error(err));
@@ -163,10 +175,9 @@ int *subset1 = (int*) Calloc(*n, int);
     Memcpy(x, wx, *n * *p);
 
 clean_up:
-    Free(work_pp); Free(work_p); Free(work_np); Free(work_n); Free(weight);
-    Free(iarray);
-    Free(wx); Free(wy);
-    Free(L); Free(subset1); Free(xty); Free(dgels_work);
+    Free(work_pp); Free(work_p); Free(work_np); Free(work_n); Free(dgels_work);
+    Free(iarray); Free(subset1);
+    Free(wx); Free(wy); Free(w_sqrt); Free(L);  Free(xty);
 }
 
 /******************************************************************************\
@@ -185,26 +196,20 @@ static wbacon_error_type initial_reg(regdata *dat, workarray *work,
 {
     int info, n = dat->n, p = dat->p;
     int* restrict iarray = work->iarray;
-    double* restrict weight = est->weight;
-    double* restrict weight_original = dat->w;
-    double* restrict L = est->L;
-    double* restrict xty = est->xty;
+    double* restrict w = dat->w;
     double* restrict x = dat->x;
     double* restrict y = dat->y;
     double* restrict wx = dat->wx;
+    double* restrict L = est->L;
+    double* restrict xty = est->xty;
     wbacon_error_type status = WBACON_ERROR_OK;
-
-    // 3) set weight = w if obs. is in subset (otherwise weight = 0)
-    for (int i = 0; i < n; i++)
-        weight[i] = (double)subset[i] * weight_original[i];
 
     // 4) compute regression estimate (on return, dat->wx is overwritten by the
     // R matrix of the QR factorization (R will be used by the caller of
     // initial_reg)
-    info = fitwls(dat, est, weight, work->dgels_work, work->lwork);
+    info = fitwls(dat, est, subset, work->dgels_work, work->lwork);
 
-    // if the design matrix dat->x on the subset is rank deficient, we enlarge
-    // the subset
+    // if the design matrix is rank deficient, we enlarge the subset
     if (info) {
         status = WBACON_ERROR_RANK_DEFICIENT;
         // sort the dist[i]'s in ascending order
@@ -214,13 +219,11 @@ static wbacon_error_type initial_reg(regdata *dat, workarray *work,
         while (*m < n) {
             (*m)++;
             // select obs. with smallest dist (among those obs. not in the
-            // subset); and set its weight to the original weight (i.e., not 0)
-            int at = iarray[*m - 1];
-            subset[at] = 1;
-            weight[at] = weight_original[at];
+            // subset)
+            subset[iarray[*m - 1]] = 1;
 
             // re-do regression and check rank
-            info = fitwls(dat, est, weight, work->dgels_work, work->lwork);
+            info = fitwls(dat, est, subset, work->dgels_work, work->lwork);
             if (info == 0) {
                 status = WBACON_ERROR_OK;
                 break;
@@ -239,7 +242,7 @@ static wbacon_error_type initial_reg(regdata *dat, workarray *work,
     for (int i = 0; i < p; i++)
         for (int j = 0; j < n; j++)
             if (subset[j])
-                xty[i] += weight_original[j] * x[j + i * n] * y[j];
+                xty[i] += w[j] * x[j + i * n] * y[j];
 
     // compute t[i]'s
     status = compute_ti(dat, work, est, subset, m, est->dist);
@@ -350,28 +353,21 @@ static wbacon_error_type algorithm_5(regdata *dat, workarray *work,
     double cutoff;
     double* restrict L = est->L;
     double* restrict wx = dat->wx;
-    double* restrict weight = est->weight;
-    double* restrict weight_original = dat->w;
     double* restrict dist = est->dist;
     wbacon_error_type err;
 
     if (*verbose)
         PRINT_OUT("Step 2 (Algorithm 5):\n");
 
-    // set the weights
-    for (int i = 0; i < n; i++)
-        weight[i] = (double)subset1[i] * weight_original[i];
-
-    Memcpy(subset0, subset1, n);
     while (iter <= *maxiter) {
 
-        if (*verbose)
-            print_magic_number(subset1, *m);
-
+#if _debug_mode
+print_magic_number(subset1, *m);
+#endif
 
         // weighted least squares (on return, wx is overwritten by the
         // QR factorization)
-        info = fitwls(dat, est, weight, work->dgels_work, work->lwork);
+        info = fitwls(dat, est, subset0, work->dgels_work, work->lwork);
         if (info)
             return WBACON_ERROR_RANK_DEFICIENT;
 
@@ -392,12 +388,10 @@ static wbacon_error_type algorithm_5(regdata *dat, workarray *work,
         *m = 0;
         for (int i = 0; i < n; i++) {
             if (dist[i] < cutoff) {
-                weight[i] = weight_original[i];
                 subset1[i] = 1;
-            (*m)++;
+                (*m)++;
             } else {
                 subset1[i] = 0;
-                weight[i] = 0.0;           // weight = 0 if not in subset
             }
         }
 

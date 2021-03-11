@@ -24,7 +24,7 @@
 |*                                                                            *|
 |*  dat        typedef struct 'regdata'                                       *|
 |*  est        typedef struct 'estimate'                                      *|
-|*  weight     weight used in weighted regression                             *|
+|*  subset     subset of observations                                         *|
 |*  work_dgels work array, array[lwork] used for QR factorization in dgels    *|
 |*  lwork      size of array 'work_dgels' (if < 0, then 'dgels' determines    *|
 |*             the optimal size and returns it as the functions return value) *|
@@ -34,7 +34,7 @@
 |*  on return, dat->wx is overwritten by the QR factorization as returned by  *|
 |*  LAPACK: dgeqrf                                                            *|
 \******************************************************************************/
-int fitwls(regdata *dat, estimate *est, double* restrict weight,
+int fitwls(regdata *dat, estimate *est, int* restrict subset,
     double* restrict work_dgels, int lwork)
 {
     const int int_1 = 1;
@@ -43,6 +43,8 @@ int fitwls(regdata *dat, estimate *est, double* restrict weight,
     double* restrict wy = dat->wy;
     double* restrict x = dat->x;
     double* restrict y = dat->y;
+    double* restrict weight = dat->w;
+    double* restrict weight_sqrt = dat->w_sqrt;
     double* restrict beta = est->beta;
     double* restrict resid = est->resid;
     double* restrict sigma = &est->sigma;
@@ -56,17 +58,17 @@ int fitwls(regdata *dat, estimate *est, double* restrict weight,
 
     // STEP 1: compute least squares fit
     // pre-multiply the design matrix and the response vector by sqrt(w)
-    double tmp, sum_w = 0.0;
+    double sum_w = 0.0, indicator;
     for (int i = 0; i < n; i++) {
-        sum_w += weight[i];
-        tmp = sqrt(weight[i]);
-        wy[i] = tmp * y[i];
-        wx[i] = tmp * x[i];
+        indicator = (double)subset[i];
+        sum_w += weight[i] * indicator;
+        wy[i] = weight_sqrt[i] * indicator * y[i];
+        wx[i] = weight_sqrt[i] * indicator * x[i];
     }
 
     for (int j = 1; j < p; j++)
         for (int i = 0; i < n; i++)
-            wx[i + n * j] = sqrt(weight[i]) * x[i + n * j];
+            wx[i + n * j] = (double)subset[i] * weight_sqrt[i] * x[i + n * j];
 
     // weighted least squares estimate (LAPACK::dgels),
     F77_CALL(dgels)("N", &n, &p, &int_1, wx, &n, wy, &n, work_dgels,

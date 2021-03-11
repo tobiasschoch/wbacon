@@ -17,5 +17,5 @@
 #define _FITWLS_H
 
 // prototypes for the functions
-int fitwls(regdata*, estimate*, double* restrict, double* restrict, int);
+int fitwls(regdata*, estimate*, int* restrict, double* restrict, int);
 #endif

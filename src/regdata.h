@@ -6,6 +6,7 @@ typedef struct regdata_struct {
     int n;
     int p;
     double *w;          // sampling weight
+    double *w_sqrt;     // sqrt of weight
     double *x;          // design matrix (raw and weighted)
     double *wx;
     double *y;          // response vector (raw and weighted)
