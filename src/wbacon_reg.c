@@ -25,7 +25,7 @@
 #include "wbacon_reg.h"
 
 #define _POWER2(_x) ((_x) * (_x))
-#define _debug_mode 0               // 0: default; 1: debug mode
+#define _debug_mode 1               // 0: default; 1: debug mode
 
 #if _debug_mode
 #include "utils.h"
@@ -57,8 +57,7 @@ static inline wbacon_error_type chol_downdate(double* restrict,
     double* restrict, int);
 static inline wbacon_error_type hat_matrix(regdata*, workarray*,
     double* restrict, double* restrict);
-static void select_subset(double* restrict, int* restrict, int* restrict,
-    int*, int*);
+static void select_subset(double* restrict, int* restrict, int*, int*);
 static inline void cholesky_reg(double*, double*, double*, double*, int*, int*);
 static inline void chol_update(double* restrict, double* restrict, int);
 
@@ -149,9 +148,15 @@ int *subset1 = (int*) Calloc(*n, int);
         goto clean_up;
     }
 
+#if _debug_mode
+PRINT_OUT("initialization\n");
+print_magic_number(subset0, *m);
+PRINT_OUT("\n");
+#endif
+
     // select the p+1 obs. with the smallest ti's (initial basic subset)
     *m = *p + 1;
-    select_subset(est->dist, iarray, subset1, m, n);
+    select_subset(est->dist, subset1, m, n);
 
     // STEP 1 (Algorithm 4)
     err = algorithm_4(dat, work, est, subset0, subset1, m, verbose, collect);
@@ -162,7 +167,9 @@ int *subset1 = (int*) Calloc(*n, int);
     }
 
 #if _debug_mode
+PRINT_OUT("Alg. 4 (end of)\n");
 print_magic_number(subset1, *m);
+PRINT_OUT("\n");
 #endif
 
     // STEP 2 (Algorithm 5)
@@ -328,7 +335,7 @@ static wbacon_error_type algorithm_4(regdata *dat, workarray *work,
         if (*m == p * *collect + 1)
             break;
 
-        select_subset(est->dist, iarray, subset1, m, &n);
+        select_subset(est->dist, subset1, m, &n);
     }
 
     return WBACON_ERROR_OK;
@@ -422,24 +429,23 @@ print_magic_number(subset1, *m);
 /******************************************************************************\
 |* select the smallest m observations of array x[n] into the subset           *|
 |*  x       array[n]                                                          *|
-|*  index   work array[n]                                                     *|
 |*  subset  on return: array[n], 1: element is in the subset, 0: otherwise    *|
 |*  m       size of the subset                                                *|
 |*  n       dimension                                                         *|
 \******************************************************************************/
-static void select_subset(double* restrict x, int* restrict iarray,
-    int* restrict subset, int *m, int *n)
+static void select_subset(double* restrict x, int* restrict subset, int *m,
+    int *n)
 {
-    // sort the x[i]'s in ascending order
-    psort_array(x, iarray, *n, *m);
+    // select the m-th smallest element (threshold)
+    select_k(x, 0, *n - 1, *m - 1);
+    double threshold = x[*m - 1];
 
-    // select the smallest 0...(m-1) observations into the subset
-    #pragma omp for simd
+    // select the elements smaller than the threshold into the subset
     for (int i = 0; i < *n; i++)
-        subset[i] = 0;
-
-   for (int i = 0; i < *m; i++)
-        subset[iarray[i]] = 1;
+        if (x[i] <= threshold)
+            subset[i] = 1;
+        else
+            subset[i] = 0;
 }
 
 /******************************************************************************\

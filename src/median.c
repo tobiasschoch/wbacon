@@ -26,7 +26,6 @@
 
 #include "median.h"
 
-static void select0(double *array, int lo, int hi, int k);
 static void partition_3way(double *array, int lo, int hi, int *i, int *j);
 static inline int choose_pivot(double *array, int lo, int hi)
     __attribute__((always_inline));
@@ -73,9 +72,9 @@ void median_destructive(double *array, int *n, double *result)
             }
         }
     } else {                            // quickselect
-        select0(array, lo, hi, k);
+        select_k(array, lo, hi, k);
         if (is_even)
-            select0(array, lo, hi, k + 1);
+            select_k(array, lo, hi, k + 1);
     }
 
     if (is_even)
@@ -92,10 +91,10 @@ void median_destructive(double *array, int *n, double *result)
 |*  hi      dimension (usually: n - 1)                                        *|
 |*  k       integer in 0:(n - 1)                                              *|
 |*                                                                            *|
-|* NOTE     select0 sorts 'array' partially, such that element 'k' is in its  *|
+|* NOTE     select_k sorts 'array' partially, such that element 'k' is in its *|
 |*          final (sorted) position => array[k] gives the k-th largest element*|
 \******************************************************************************/
-static void select0(double *array, int lo, int hi, int k)
+void select_k(double *array, int lo, int hi, int k)
 {
     if (hi <= lo)       // case: n = 1
         return;
@@ -107,9 +106,9 @@ static void select0(double *array, int lo, int hi, int k)
 
     // recursion only on the partitioning where element 'k' lies
     if (k <= j)
-        select0(array, lo, j, k);
+        select_k(array, lo, j, k);
     else if (k >= i)
-        select0(array, i, hi, k);
+        select_k(array, i, hi, k);
 }
 
 /******************************************************************************\
