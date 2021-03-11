@@ -22,7 +22,6 @@ endif
 # link
 ifneq (, $(findstring mingw, $(SYS)))
 # Windows MinGW
-#XXX -fopenmp
 wbacon: wbacon.o wbacon_error.o wbacon_reg.o wquantile.o fitwls.o partial_sort.o
 	$(CC) -fopenmp -shared -o $@.dll $@.o $(DLL_BLAS) $(DLL_LAPACK) $(DLL_R) \
 	wbacon_error.o wquantile.o wbacon_reg.o fitwls.o partial_sort.o
@@ -35,7 +34,6 @@ wbacon: wbacon.o wbacon_reg.o wbacon_error.o wquantile.o fitwls.o partial_sort.o
 endif
 
 # compile
-#XXX -fopenmp
 wbacon.o: wbacon.c
 	$(CC) -fopenmp -Wall -pedantic -I $(R_C_HEADER) -c $*.c $(CFLAGS)
 
@@ -46,7 +44,7 @@ wbacon_error.o: wbacon_error.c
 
 # compile
 wbacon_reg.o: wbacon_reg.c
-	$(CC) -Wall -pedantic -I $(R_C_HEADER) -c $*.c $(CFLAGS)
+	$(CC) -fopenmp -Wall -pedantic -I $(R_C_HEADER) -c $*.c $(CFLAGS)
 
 # compile
 wquantile.o: wquantile.c
@@ -54,7 +52,7 @@ wquantile.o: wquantile.c
 
 # compile
 fitwls.o: fitwls.c
-	$(CC) -Wall -pedantic -I $(R_C_HEADER) -c $*.c $(CFLAGS)
+	$(CC) -fopenmp -Wall -pedantic -I $(R_C_HEADER) -c $*.c $(CFLAGS)
 
 # compile
 partial_sort.o: partial_sort.c

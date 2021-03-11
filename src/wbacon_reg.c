@@ -106,8 +106,10 @@ int *subset1 = (int*) Calloc(*n, int);
     dat->wx = wx;
     // sqrt(w) is computed once and then shared
     double *w_sqrt = (double*) Calloc(*n, double);
+
     for (int i = 0; i < *n; i++)
         w_sqrt[i] = sqrt(w[i]);
+
     dat->w_sqrt = w_sqrt;
 
     // initialize and populate 'est' which is a estimate struct
@@ -239,6 +241,7 @@ static wbacon_error_type initial_reg(regdata *dat, workarray *work,
             L[j + i * p] = wx[i + j * n];
 
     // compute xty (weighted)
+    #pragma omp parallel for if(p * n > REG_OMP_MIN_SIZE)
     for (int i = 0; i < p; i++)
         for (int j = 0; j < n; j++)
             if (subset[j])
@@ -431,9 +434,11 @@ static void select_subset(double* restrict x, int* restrict iarray,
     psort_array(x, iarray, *n, *m);
 
     // select the smallest 0...(m-1) observations into the subset
+    #pragma omp for simd
     for (int i = 0; i < *n; i++)
         subset[i] = 0;
-    for (int i = 0; i < *m; i++)
+
+   for (int i = 0; i < *m; i++)
         subset[iarray[i]] = 1;
 }
 
@@ -654,9 +659,13 @@ static inline wbacon_error_type hat_matrix(regdata *dat, workarray *work,
     for (int i = 0; i < n; i++)
         hat[i] = _POWER2(work_np[i]);
 
-    for (int j = 1; j < p; j++)
-        for (int i = 0; i < n; i++)
+    #pragma omp parallel for if(p * n > REG_OMP_MIN_SIZE)
+    for (int j = 1; j < p; j++) {
+        #pragma omp simd
+        for (int i = 0; i < n; i++) {
             hat[i] += _POWER2(work_np[i + j * n]);
+        }
+    }
 
     for (int i = 0; i < n; i++)
         hat[i] *= weight[i];

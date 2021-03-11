@@ -16,6 +16,9 @@
 #include "fitwls.h"
 #include "wbacon_error.h"
 
+#include "omp.h"
+#define REG_OMP_MIN_SIZE 1000000
+
 #ifndef _WBACON_REG_H
 #define _WBACON_REG_H
 

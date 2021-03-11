@@ -66,9 +66,11 @@ int fitwls(regdata *dat, estimate *est, int* restrict subset,
         wx[i] = weight_sqrt[i] * indicator * x[i];
     }
 
-    for (int j = 1; j < p; j++)
+    #pragma omp parallel for if(p * n > FITWLS_OMP_MIN_SIZE)
+    for (int j = 1; j < p; j++) {
         for (int i = 0; i < n; i++)
             wx[i + n * j] = (double)subset[i] * weight_sqrt[i] * x[i + n * j];
+    }
 
     // weighted least squares estimate (LAPACK::dgels),
     F77_CALL(dgels)("N", &n, &p, &int_1, wx, &n, wy, &n, work_dgels,

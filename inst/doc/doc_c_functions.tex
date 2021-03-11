@@ -86,6 +86,15 @@
 \def\OMPMINSIZE{
     \code{OMP\_MIN\_SIZE} is of size 100\,000
 }
+\def\REGOMPMINSIZE{
+    \code{REG\_OMP\_MIN\_SIZE} is of size 1\,000\,000
+}
+\def\FITWLSOMPMINSIZE{
+    \code{FITWLS\_OMP\_MIN\_SIZE} is of size 1\,000\,000
+}
+
+
+
 
 % ==============================================================================
 % Document
@@ -219,7 +228,7 @@ See \code{methods.pdf} for more details.
 		\code{\LinkA{wbacon\_error}{wbaconerror}}
 		%
 		\item[external:]
-		\code{Rmath.h::\LinkA{qchisq}{qchisq}}
+		\code{Rmath.h:qchisq}
 	\end{description}
 \end{Dependencies}
 \begin{Value}
@@ -812,6 +821,14 @@ static wbacon_error_type initial_reg(regdata *dat, workarray *work,
 	\end{ldescription}
 \end{Arguments}
 \begin{Details}
+The function's loop over the columns of the data matrix is parallelized
+using the OpenMP preprocessor directive
+\begin{verbatim}
+#pragma omp parallel for if(p * n > REG_OMP_MIN_SIZE)
+\end{verbatim}
+\noindent where \REGOMPMINSIZE, and \code{n} and \code{p} are, respectively,
+the number of rows and columns.
+
 See \code{methods.pdf} for more details.
 \end{Details}
 \begin{Dependencies}
@@ -928,7 +945,7 @@ See \code{methods.pdf} for more details.
 		\code{\LinkA{fitwls}{fitwls}} and
 		\code{\LinkA{compute\_ti}{computeti}}
 		\item[external:]
-		\code{Rmath.h::\LinkA{qt}{qt}}
+		\code{Rmath.h:qt}
 	\end{description}
 \end{Dependencies}
 \begin{Value}
@@ -1012,6 +1029,14 @@ Then, it computes the $t_i$'s.
 \code{\LinkA{hat\_matrix}{hatmatrix}}
 \end{Dependency}
 \begin{Value}
+The function's loop over the columns of the hat matrix is parallelized
+using the OpenMP preprocessor directive
+\begin{verbatim}
+#pragma omp parallel for if(p * n > REG_OMP_MIN_SIZE)
+\end{verbatim}
+\noindent where \REGOMPMINSIZE, and \code{n} and \code{p} are, respectively,
+the number of rows and columns.
+
 The function returns a \code{\LinkA{wbacon\_error\_type}{wbaconerrortype}}:
 the return value is either \code{WBACON\_ERROR\_OK} (i.e., no error) or the
 error handed over by \code{\LinkA{hat\_matrix}{hatmatrix}}.
@@ -1206,6 +1231,16 @@ int fitwls(regdata *dat, estimate* est, int* restrict subset,
 \begin{Details}
 The regression coefficients are computed with the \code{LAPACK:dgels}
 subroutine using a QR factorization of the weighted design matrix.
+
+The function's loop over the columns of the hat matrix is parallelized
+using the OpenMP preprocessor directive
+\begin{verbatim}
+#pragma omp parallel for if(p * n > FITLS_OMP_MIN_SIZE)
+\end{verbatim}
+\noindent where \FITWLSOMPMINSIZE, and \code{n} and \code{p} are, respectively,
+the number of rows and columns.
+
+
 \end{Details}
 \begin{Dependencies}
 \code{LAPACK:dgels} and \code{BLAS:dgemv}

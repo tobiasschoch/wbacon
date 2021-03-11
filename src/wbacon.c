@@ -27,10 +27,6 @@
 */
 
 #include "wbacon.h"
-
-#include <omp.h>
-#define OMP_MIN_SIZE 100000
-
 #define _POWER2(_x) ((_x) * (_x))
 
 // data structure
@@ -111,8 +107,8 @@ static inline double qchisq2(double p, double df)
 |*  success  on return: 1: successful; 0: failure                             *|
 \******************************************************************************/
 void wbacon(double *x, double *w, double *center, double *scatter, double *dist,
-    int *n, int *p, double *alpha, int *subset, double *cutoff,
-    int *maxiter, int *verbose, int *version2, int *collect, int *success)
+    int *n, int *p, double *alpha, int *subset, double *cutoff, int *maxiter,
+    int *verbose, int *version2, int *collect, int *success)
 {
     *success = 1;
     wbacon_error_type err;
@@ -366,10 +362,10 @@ static void verbose_message(int subsetsize, int n, int iter, double cutoff)
 {
     double percentage = 100.0 * (double)subsetsize / (double)n;
     if (iter > 1)
-        PRINT_OUT("Subset %d: n = %d (%.1f%%); cutoff: %.2f\n", iter,
+        PRINT_OUT("Subset %d: m = %d (%.1f%%); cutoff: %.2f\n", iter,
             subsetsize, percentage, cutoff);
     else
-        PRINT_OUT("Subset %d: n = %d (%.1f%%)\n", iter, subsetsize, percentage);
+        PRINT_OUT("Subset %d: m = %d (%.1f%%)\n", iter, subsetsize, percentage);
 }
 
 /******************************************************************************\

@@ -14,6 +14,9 @@
 #include "partial_sort.h"
 #include "wbacon_error.h"
 
+#include "omp.h"
+#define OMP_MIN_SIZE 100000
+
 #ifndef _WBACON_H
 #define _WBACON_H
 
