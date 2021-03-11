@@ -457,6 +457,7 @@ static wbacon_error_type update_chol_xty(regdata *dat, workarray *work,
     estimate *est, int* restrict subset0, int* restrict subset1, int *verbose)
 {
     int n = dat->n, p = dat->p;
+    int* restrict stack = work->iarray;
     double* restrict xtx_update = work->work_p;
     double* restrict xty = est->xty;
     double* restrict x = dat->x;
@@ -468,38 +469,44 @@ static wbacon_error_type update_chol_xty(regdata *dat, workarray *work,
     Memcpy(work->work_pp, est->L, p * p);
     Memcpy(work->work_np, xty, p);
 
-    // first pass: make updates to L and xty (if required)
-    int n_update = 0;
+    // first pass: make updates to L and xty (if required) and put the
+    // downdates to the 'stack'
+    int n_update = 0, n_downdate = 0;
     for (int i = 0; i < n; i++) {
         if (subset1[i] > subset0[i]) {
+            // updates
             for (int j = 0; j < p; j++) {
                 xtx_update[j] = x[i + j * n] * sqrt(weight[i]);
                 xty[j] += x[i + j * n] * y[i] * weight[i];
             }
             chol_update(est->L, xtx_update, p);
             n_update++;
+        } else {
+            // downdates are put onto the stack
+            if (subset1[i] < subset0[i]) {
+                stack[n_downdate] = i;
+                n_downdate++;
+            }
         }
     }
 
     // in the second pass, we consider the downdates (which may turn L into a
     // rank deficient matrix)
-    int n_downdate = 0;
-    for (int i = 0; i < n; i++) {
-        if (subset1[i] < subset0[i]) {
-            for (int j = 0; j < p; j++) {
-                xtx_update[j] = x[i + j * n] * sqrt(weight[i]);
-                xty[j] -= x[i + j * n] * y[i] * weight[i];
-            }
-            err = chol_downdate(est->L, xtx_update, p);
-            if (err != WBACON_ERROR_OK) {
-                // updating failed: restore the original arrays
-                Memcpy(est->L, work->work_pp, p * p);
-                Memcpy(xty, work->work_np, p);
-                if (*verbose)
-                    PRINT_OUT(" (downdate failed, subset is increased)\n");
-                return err;
-            }
-            n_downdate++;
+    int at;
+    for (int i = 0; i < n_downdate; i++) {
+        at = stack[i];
+        for (int j = 0; j < p; j++) {
+            xtx_update[j] = x[at + j * n] * sqrt(weight[at]);
+            xty[j] -= x[at + j * n] * y[at] * weight[at];
+        }
+        err = chol_downdate(est->L, xtx_update, p);
+        if (err != WBACON_ERROR_OK) {
+            // updating failed: restore the original arrays
+            Memcpy(est->L, work->work_pp, p * p);
+            Memcpy(xty, work->work_np, p);
+            if (*verbose)
+                PRINT_OUT(" (downdate failed, subset is increased)\n");
+            return err;
         }
     }
     if (*verbose)
