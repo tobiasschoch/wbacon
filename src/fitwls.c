@@ -20,23 +20,22 @@
 #include "fitwls.h"
 
 /******************************************************************************\
-|* Weighted least squares estimate                                            *|
+|* Weighted least squares (incl. residual scale estimator and residuals)      *|
 |*                                                                            *|
 |*  dat        typedef struct 'regdata'                                       *|
+|*  est        typedef struct 'estimate'                                      *|
 |*  weight     weight used in weighted regression                             *|
 |*  work_dgels work array, array[lwork] used for QR factorization in dgels    *|
 |*  lwork      size of array 'work_dgels' (if < 0, then 'dgels' determines    *|
 |*             the optimal size and returns it as the functions return value) *|
-|*  beta       on return, beta is overwritten with the reg. coefficients      *|
-|*  resid      on return, resid is overwritten with the residuals             *|
 |* NOTE:                                                                      *|
 |*  if not successfull 1 is returned; otherwise 0                             *|
 |*  dat must contain slots for dat->wx and dat->wy                            *|
 |*  on return, dat->wx is overwritten by the QR factorization as returned by  *|
 |*  LAPACK: dgeqrf                                                            *|
 \******************************************************************************/
-int fitwls(regdata *dat, double* restrict weight, double* restrict work_dgels,
-    int lwork, double* restrict beta, double* restrict resid)
+int fitwls(regdata *dat, estimate *est, double* restrict weight,
+    double* restrict work_dgels, int lwork)
 {
     const int int_1 = 1;
     int info_dgels = 1, n = dat->n, p = dat->p;
@@ -44,6 +43,9 @@ int fitwls(regdata *dat, double* restrict weight, double* restrict work_dgels,
     double* restrict wy = dat->wy;
     double* restrict x = dat->x;
     double* restrict y = dat->y;
+    double* restrict beta = est->beta;
+    double* restrict resid = est->resid;
+    double* restrict sigma = &est->sigma;
 
     // STEP 0: determine the optimal size of array 'work' and return
     if (lwork < 0) {
@@ -54,8 +56,9 @@ int fitwls(regdata *dat, double* restrict weight, double* restrict work_dgels,
 
     // STEP 1: compute least squares fit
     // pre-multiply the design matrix and the response vector by sqrt(w)
-    double tmp;
+    double tmp, sum_w = 0.0;
     for (int i = 0; i < n; i++) {
+        sum_w += weight[i];
         tmp = sqrt(weight[i]);
         wy[i] = tmp * y[i];
         wx[i] = tmp * x[i];
@@ -77,7 +80,15 @@ int fitwls(regdata *dat, double* restrict weight, double* restrict work_dgels,
         if (fabs(wx[(n + 1) * i]) < sqrt(DBL_EPSILON))
             return 1;
 
-        Memcpy(beta, wy, p);   // extract 'beta'
+    // extract regression estimates (beta)
+    Memcpy(beta, wy, p);
+
+    // residual scale estimate (sigma, using the output of dgels)
+    double ssq = 0.0;
+    for (int i = p; i < n; i++) {
+        ssq += wy[i] * wy[i];
+    }
+    *sigma = sqrt(ssq / (sum_w - (double)p));
 
     // residuals
     const double double_minus1 = -1.0, double_1 = 1.0;

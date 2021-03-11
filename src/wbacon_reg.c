@@ -37,17 +37,6 @@ typedef struct workarray_struct {
     double *dgels_work;
 } workarray;
 
-// structure of estimates
-typedef struct estimate_struct {
-    double sigma;       // regression scale
-    double *weight;     // weight
-    double *resid;      // residuals
-    double *beta;       // regression coefficient
-    double *dist;       // distance
-    double *L;          // Cholesky factor
-    double *xty;        // X^Ty
-} estimate;
-
 // declarations of local function
 static wbacon_error_type initial_reg(regdata*, workarray*, estimate*,
     int* restrict, int*, int*);
@@ -138,7 +127,7 @@ int *subset1 = (int*) Calloc(*n, int);
     int *iarray = (int*) Calloc(*n, int);
     work->iarray = iarray;
     // determine size of work array for LAPACK:degels
-    work->lwork = fitwls(dat, w, work_np, -1, est->beta, est->resid);
+    work->lwork = fitwls(dat, est, w, work_np, -1);
     double *dgels_work = (double*) Calloc(work->lwork, double);
     work->dgels_work = dgels_work;
 
@@ -212,8 +201,7 @@ static wbacon_error_type initial_reg(regdata *dat, workarray *work,
     // 4) compute regression estimate (on return, dat->wx is overwritten by the
     // R matrix of the QR factorization (R will be used by the caller of
     // initial_reg)
-    info = fitwls(dat, weight, work->dgels_work, work->lwork, est->beta,
-        est->resid);
+    info = fitwls(dat, est, weight, work->dgels_work, work->lwork);
 
     // if the design matrix dat->x on the subset is rank deficient, we enlarge
     // the subset
@@ -232,8 +220,7 @@ static wbacon_error_type initial_reg(regdata *dat, workarray *work,
             weight[at] = weight_original[at];
 
             // re-do regression and check rank
-            info = fitwls(dat, weight, work->dgels_work, work->lwork,
-                est->beta, est->resid);
+            info = fitwls(dat, est, weight, work->dgels_work, work->lwork);
             if (info == 0) {
                 status = WBACON_ERROR_OK;
                 break;
@@ -369,7 +356,7 @@ static wbacon_error_type algorithm_5(regdata *dat, workarray *work,
     wbacon_error_type err;
 
     if (*verbose)
-    PRINT_OUT("Step 2 (Algorithm 5):\n");
+        PRINT_OUT("Step 2 (Algorithm 5):\n");
 
     // set the weights
     for (int i = 0; i < n; i++)
@@ -378,13 +365,13 @@ static wbacon_error_type algorithm_5(regdata *dat, workarray *work,
     Memcpy(subset0, subset1, n);
     while (iter <= *maxiter) {
 
-    print_magic_number(subset1, *m);
+        if (*verbose)
+            print_magic_number(subset1, *m);
 
 
         // weighted least squares (on return, wx is overwritten by the
         // QR factorization)
-        info = fitwls(dat, weight, work->dgels_work, work->lwork,
-            est->beta, est->resid);
+        info = fitwls(dat, est, weight, work->dgels_work, work->lwork);
         if (info)
             return WBACON_ERROR_RANK_DEFICIENT;
 
@@ -601,19 +588,9 @@ static inline wbacon_error_type chol_downdate(double* restrict L,
 static wbacon_error_type compute_ti(regdata *dat, workarray *work,
     estimate *est, int* restrict subset, int *m, double* restrict tis)
 {
-    int n = dat->n, p = dat->p;
-    double* restrict weight = est->weight;
+    int n = dat->n;
     double* restrict resid = est->resid;
     double* restrict hat = work->work_n;
-
-    // regression scale
-    double sigma = 0.0, total_w = 0.0;
-    for (int i = 0; i < n; i++) {
-        total_w += weight[i];
-        sigma += weight[i] * _POWER2(resid[i]);
-    }
-    sigma /= total_w - (double)p;
-    est->sigma = sqrt(sigma);
 
     // compute the diag. of the 'hat' matrix
     wbacon_error_type err = hat_matrix(dat, work, est->L, hat);

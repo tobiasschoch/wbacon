@@ -11,7 +11,7 @@ library(wbacon)
 #===============================================================================
 # We test the implementation on 5 well known data sets.
 ERR <- 0
-NEWLINE <- TRUE
+NEWLINE <- FALSE
 
 #-------------------------------------------------------------------------------
 data(hbk, package = "robustbase")
