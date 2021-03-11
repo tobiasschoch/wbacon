@@ -1,4 +1,4 @@
-# wbacon: Weighted BACON algorithms for multivariate outlier nomination (detection) and robust linear regression <img src="inst/logo.svg" align="right" width=120 height=139 alt="" />
+# wbacon: Weighted BACON algorithms for multivariate outlier nomination (detection) and robust linear regression <img src="inst/varia/logo.svg" align="right" width=120 height=139 alt="" />
 
 [Billor et al.](#References) (2000) proposed the BACON
 (blocked adaptive computationally-efficient outlier nominators)
