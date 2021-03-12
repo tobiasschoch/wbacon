@@ -22,15 +22,18 @@ endif
 # link
 ifneq (, $(findstring mingw, $(SYS)))
 # Windows MinGW
-wbacon: wbacon.o wbacon_error.o wbacon_reg.o wquantile.o fitwls.o partial_sort.o
+wbacon: wbacon.o wbacon_error.o wbacon_reg.o wquantile.o fitwls.o \
+	partial_sort.o median.o
 	$(CC) -shared -o $@.dll $@.o $(DLL_BLAS) $(DLL_LAPACK) $(DLL_R) \
-	wbacon_error.o wquantile.o wbacon_reg.o fitwls.o partial_sort.o
+	wbacon_error.o wquantile.o wbacon_reg.o fitwls.o partial_sort.o \
+	median.o
 else
 # Linux
-wbacon: wbacon.o wbacon_reg.o wbacon_error.o wquantile.o fitwls.o partial_sort.o
+wbacon: wbacon.o wbacon_reg.o wbacon_error.o wquantile.o fitwls.o \
+	partial_sort.o median.o
 	$(CC) -shared -L $(DLL_BLAS) $(DLL_LAPACK) $(DLL_R) -o $@.so $@.o \
 	wbacon_error.o wquantile.o wbacon_reg.o fitwls.o partial_sort.o \
-	-lm -lblas -llapack -lR
+	median.o -lm -lblas -llapack -lR
 endif
 
 # compile
@@ -58,7 +61,12 @@ fitwls.o: fitwls.c
 partial_sort.o: partial_sort.c
 	$(CC) -Wall -pedantic -I $(R_C_HEADER) -c $*.c $(CFLAGS)
 
+# compile
+median.o: median.c
+	$(CC) -Wall -pedantic -I $(R_C_HEADER) -c $*.c $(CFLAGS)
+
 # housekeeping (using make clean)
 .PHONY: clean
 clean:
-	rm wbacon.o wquantile.o fitwls.o partial_sort.o wbacon_reg.o wbacon_error.o
+	rm wbacon.o wquantile.o fitwls.o partial_sort.o wbacon_reg.o \
+	wbacon_error.o median.o
