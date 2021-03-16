@@ -1,12 +1,3 @@
-/******************************************************************************\
-|* bacon                                                                      *|
-|* -------------------------------------------------------------------------- *|
-|* PROJECT  sct library                                                       *|
-|* SUBEJCT  header file for weighted BACON                                    *|
-|* AUTHORS  Tobias Schoch (tobias.schoch@fhnw.ch), January 19, 2020           *|
-|* LICENSE  GPL >= 2                                                          *|
-|* COMMENT  [none]                                                            *|
-\******************************************************************************/
 #include <Rmath.h>
 #include <R_ext/Lapack.h>
 #include <R_ext/BLAS.h>

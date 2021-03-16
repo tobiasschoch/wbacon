@@ -1,16 +1,15 @@
-/******************************************************************************\
-|* fitwls                                                                     *|
-|* -------------------------------------------------------------------------- *|
-|* PROJECT  robsurvey library                                                 *|
-|* SUBEJCT  header file for utility functions                                 *|
-|* AUTHORS  Tobias Schoch (tobias.schoch@fhnw.ch), Dec 6, 2020                *|
-|* LICENSE  GPL >= 2                                                          *|
-|* COMMENT  [none]                                                            *|
-\******************************************************************************/
 #include <R.h>
 #ifndef _UTILS_H
 #define _UTILS_H
 
+/******************************************************************************\
+|* prints a 'magic number' that represents an 0-1-array: the number consists  *|
+|* of a series/ chunks of base-10 numbers; these chunks represent 10 bits of  *|
+|* the 0-1-array (little endian); e.g. '1023' represents the bit pattern/ set *|
+|* '1111111111'                                                               *|
+|*  set   array[n]                                                            *|
+|*  n     dimension                                                           *|
+\******************************************************************************/
 void print_magic_number(int *set, unsigned int n)
 {
     unsigned int at, magic;
@@ -33,5 +32,4 @@ void print_magic_number(int *set, unsigned int n)
     }
     Rprintf("\n");
 }
-
 #endif

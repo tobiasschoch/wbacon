@@ -1,7 +1,7 @@
 /* Implementation of a weighted variant of the BACON algorithm for robust
    linear regression of Billor et al. (2000)
 
-   Copyright (C) 2020 Tobias Schoch (e-mail: tobias.schoch@gmail.com)
+   Copyright (C) 2020-2021 Tobias Schoch (e-mail: tobias.schoch@gmail.com)
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public

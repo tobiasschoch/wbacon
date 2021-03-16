@@ -14,31 +14,31 @@ wBACON_reg <- function(formula, weights = NULL, data, collect = 4,
 	yname <- names(mf)[response]
 	x <- stats::model.matrix(mt, mf)
 	if (is.null(weights))
-		w <- rep(1, n)
+		weights <- rep(1, n)
 
 	# NA treatment
-	cc <- stats::complete.cases(y, x, w)
+	cc <- stats::complete.cases(y, x, weights)
 	if (sum(cc) != n) {
 		if (na.rm) {
 			x <- x[cc, ]
 			y <- y[cc]
-			w <- w[cc]
+			weights <- weights[cc]
 		} else {
 			stop("Data must not contain missing values; see 'na.rm'\n",
 				call. = FALSE)
 		}
 	}
-	n <- nrow(x); p <- ncol(x)
+	n <- NROW(x); p <- NCOL(x)
 
 	# check if any element is not finite
-	if (sum(is.finite(c(x, y, w))) != (2 + p) * n)
+	if (sum(is.finite(c(x, y, weights))) != (2 + p) * n)
 		stop("Some observations are not finite\n", call. = FALSE)
 
 	# Algorithm 3
 	if (verbose)
 		cat("\nOutlier detection (Algorithm 3)\n---\n")
-	wb <- wBACON(if (attr(mt, "intercept")) x[, -1] else x, w, alpha, collect,
-		version, na.rm, maxiter, verbose)
+	wb <- wBACON(if (attr(mt, "intercept")) x[, -1] else x, weights, alpha,
+        collect, version, na.rm, maxiter, verbose)
 
 	if (isFALSE(wb$converged))
 		stop("wBACON on the design matrix failed\n")
@@ -48,7 +48,7 @@ wBACON_reg <- function(formula, weights = NULL, data, collect = 4,
 		cat("\nRegression\n---\n")
 	collect <- min(collect, floor(n / p))
 	tmp <- .C("wbacon_reg", x = as.double(x), y = as.double(y),
-		w = as.double(w), resid = as.double(numeric(n)),
+		w = as.double(weights), resid = as.double(numeric(n)),
 		beta = as.double(numeric(p)), subset = as.integer(wb$subset),
 		dist = as.double(wb$dist), n = as.integer(n), p = as.integer(p),
 		m = as.integer(sum(wb$subset)), verbose = as.integer(verbose),
@@ -68,11 +68,11 @@ wBACON_reg <- function(formula, weights = NULL, data, collect = 4,
 		residuals = tmp$resid,
 		rank = p,
 		fitted.values = y - tmp$resid,
-		df.residual = sum(w[tmp$subset == 1]) - p,
+		df.residual = sum(weights[tmp$subset == 1]) - p,
 		call = match.call(),
 		terms = mt,
 		model = mf,
-		weights = w,
+		weights = weights,
 		qr = QR,
 		subset = (tmp$subset == 1),
 		reg = list(converged = as.logical(tmp$sucess), collect = collect,

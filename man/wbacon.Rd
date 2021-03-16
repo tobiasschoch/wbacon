@@ -7,7 +7,7 @@
 \alias{center}
 \title{Weighted BACON Algorithm for Multivariate Outlier Detection}
 \usage{
-wBACON(x, w = NULL, alpha = 0.05, collect = 4, version = c("V2", "V1"),
+wBACON(x, weights = NULL, alpha = 0.05, collect = 4, version = c("V2", "V1"),
     na.rm = FALSE, maxiter = 50, verbose = TRUE)
 distance(object)
 \method{print}{wbaconmv}(x, digits = max(3L, getOption("digits") - 3L), ...)
@@ -17,7 +17,8 @@ center(object)
 }
 \arguments{
 	\item{x}{\code{[matrix]} or \code{[data.frame]}.}
-	\item{w}{\code{[numeric]} sampling weight (default \code{w = NULL}).}
+	\item{weights}{\code{[numeric]} sampling weight (default
+        \code{weights = NULL}).}
 	\item{alpha}{\code{[numeric]} tuning constant, level of significance,
 		\eqn{0 < \alpha < 1}{0 < alpha < 1}; (default: \code{alpha = 0.05}).}
 	\item{collect}{determines the size \eqn{m} of the initial subset to be
@@ -56,8 +57,8 @@ the standardized chi-square \eqn{1 - \alpha}{1 - alpha} quantile. All
 observations whose squared Mahalanobis distances is larger than
 the threshold are regarded as outliers.
 
-If the sampling weights \code{w} are not explicitly specified (i.e.,
-\code{w = NULL}), they are taken to be 1.0.
+If the sampling weights \code{weights} are not explicitly specified (i.e.,
+\code{weights = NULL}), they are taken to be 1.0.
 
 \subsection{Incomplete/missing data}{
 The \code{wBACON} \emph{cannot} deal with missing values. In contrast,
@@ -97,7 +98,7 @@ logicals that flags the nominated outliers.
 An object of class \code{wbaconmv} with slots
 
 	\item{x}{see function arguments}
-	\item{w}{see function arguments}
+	\item{weights}{see function arguments}
 	\item{center}{estimated center of the data}
 	\item{dist}{Mahalanobis distances}
 	\item{n}{number of observations}

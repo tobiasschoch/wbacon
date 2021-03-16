@@ -1,8 +1,8 @@
-wBACON <- function(x, w = NULL, alpha = 0.05, collect = 4,
+wBACON <- function(x, weights = NULL, alpha = 0.05, collect = 4,
 	version = c("V2", "V1"), na.rm = FALSE, maxiter = 50, verbose = FALSE)
 {
-	n <- nrow(x); p <- ncol(x)
-	stopifnot(n > p, p > 1,  0 < alpha, alpha < 1, maxiter > 0, collect > 1)
+	n <- NROW(x); p <- NCOL(x)
+	stopifnot(n > p, p > 0, 0 < alpha, alpha < 1, maxiter > 0, collect > 1)
 
 	if (version[1] == "V2")
 		vers <- 1
@@ -14,17 +14,17 @@ wBACON <- function(x, w = NULL, alpha = 0.05, collect = 4,
 	if (!is.matrix(x))
 		x <- as.matrix(x)
 
-	if (is.null(w))
-		w <- rep(1, n)
+	if (is.null(weights))
+		weights <- rep(1, n)
 
-	stopifnot(n == length(w))
+	stopifnot(n == length(weights))
 
 	# NA treatment
-	cc <- stats::complete.cases(x, w)
+	cc <- stats::complete.cases(x, weights)
 	if (sum(cc) != n) {
 		if (na.rm) {
 			x <- x[cc, ]
-			w <- w[cc]
+			weights <- weights[cc]
 		} else
 			stop("Data must not contain missing values; see argument 'na.rm'\n",
 				call. = FALSE)
@@ -32,7 +32,7 @@ wBACON <- function(x, w = NULL, alpha = 0.05, collect = 4,
 	n <- nrow(x)
 
 	# check if any element is not finite
-	chk <- sum(is.finite(c(x, w))) != (1 + p) * n
+	chk <- sum(is.finite(c(x, weights))) != (1 + p) * n
 	if (chk)
 		stop("Some observations are not finite\n", call. = FALSE)
 
@@ -44,7 +44,7 @@ wBACON <- function(x, w = NULL, alpha = 0.05, collect = 4,
 		cat("Note: initial subset > 60% (use a smaller value for 'collect')\n")
 
 	# compute weighted BACON algorithm
-	tmp <- .C("wbacon", x = as.double(x), w = as.double(w),
+	tmp <- .C("wbacon", x = as.double(x), w = as.double(weights),
 		center = as.double(numeric(p)), scatter = as.double(numeric(p * p)),
 		dist = as.double(numeric(n)), n = as.integer(n), p = as.integer(p),
 		alpha = as.double(alpha), subset = as.integer(rep(0, n)),

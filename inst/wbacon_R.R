@@ -123,76 +123,82 @@ chi2_cutoff <- function(alpha, n, p, r)
 }
 
 
-# mvBACON2 <- function (x, collect = 4, m = min(collect * p, n * 0.5), 
-# 	alpha = 0.95, init.sel = c("Mahalanobis", "dUniMedian", "random", "manual"),
-# 	man.sel, maxsteps = 100, allowSingular = FALSE, verbose = TRUE) 
-# {
-#     trace1 <- function(i, r, n) {
-#         cat("MV-BACON (subset no. ", i, "): ", r, 
-#             " of ", n, " (", round(r/n * 100, digits = 2), 
-#             " %)", sep = "", fill = TRUE)
-#     }
-#     init.sel <- match.arg(init.sel)
-#     n <- nrow(x)
-#     p <- ncol(x)
-#     stopifnot(n > p, p > 0, 0 < alpha, alpha < 1)
-#     ordered.indices <- switch(init.sel, Mahalanobis = {
-#         order(mahalanobis(x, center = colMeans(x), cov = var(x)))
-#     }, random = sample(n), manual = {
-#         m <- length(man.sel)
-#         stopifnot(is.numeric(man.sel), 1 <= man.sel, man.sel <= 
-#             n, man.sel == as.integer(man.sel))
-#         c(man.sel, c(1:n)[-man.sel])
-#     }, dUniMedian = {
-#         x.centr <- sweep(x, 2, colMedians(x))
-#         order(mahalanobis(x.centr, 0, cov(x.centr)))
-#     }, stop("invalid 'init.sel' -- should not happen; please report!"))
-#     m <- as.integer(m)
-#     stopifnot(n >= m, m > 0)
-#     ordered.x <- x[ordered.indices, , drop = FALSE]
-#
-#     while (m < n && p > (rnk <- qr(var(ordered.x[1:m, , drop = FALSE]))$rank)) 
-# 		m <- m + 1L
-#
-#     if (verbose) 
-#         cat("rank(ordered.x[1:m,] >= p  ==> chosen m = ", m, "\n")
-#     if (rnk < p && !allowSingular) 
-#         stop("matrix-rank ( x[1:m,] ) < p  for all m <= n")
-#
-#     subset <- 1:n %in% ordered.indices[1:m]
-#     presubset <- rep(FALSE, n)
-#     converged <- FALSE
-#     steps <- 1L
-#
-# print(which(subset == TRUE))
-#
-#     repeat {
-#         r <- sum(subset)
-#         if (verbose) 
-#             trace1(steps, r, n)
-#         x. <- x[subset, , drop = FALSE]
-#         center <- colMeans(x.)
-#         cov <- var(x.)
-#         dis <- sqrt(mahalanobis(x, center, cov))
-#         converged <- !any(xor(presubset, subset))
-#         if (converged) 
-#             break
-#         presubset <- subset
-#         limit <- chi2_cutoff(alpha, n, p, r) 
-#
-#         subset <- dis < limit
-#
-# print(which(subset == TRUE))
-#
-#         steps <- steps + 1L
-#         if (steps > maxsteps) 
-#             break
-#     }
-#     if (steps > maxsteps) 
-#         warning("basic subset has not converged in ", maxsteps, 
-#             " steps")
-#     list(dis = dis, subset = subset, center = center, cov = cov, 
-#         steps = steps, limit = limit, converged = converged)
-# }
-#
-#
+#----------------------------------------------------------------------------
+chi2Crit <- function(n, p, r, alpha) {
+    h <- (n + p + 1)/2
+    chr <- max(0, (h - r)/(h + r))
+    cnp <- 1 + (p + 1)/(n - p) + 2/(n - 1 - 3 * p)
+    cnpr <- cnp + chr
+    cnpr^2 * qchisq(alpha/n, p, lower.tail = FALSE)
+}
+
+
+mvBACON2 <- function (x, collect = 4, m = min(collect * p, n * 0.5),
+    alpha = 0.95, init.sel = c("Mahalanobis", "dUniMedian", "random",
+        "manual", "V2"), man.sel, maxsteps = 100,
+    allowSingular = FALSE)
+{
+    init.sel <- match.arg(init.sel)
+    n <- nrow(x)
+    p <- ncol(x)
+    stopifnot(n > p, p > 0, 0 < alpha, alpha < 1)
+    ordered.indices <- switch(init.sel,
+        Mahalanobis = {
+            order(mahalanobis(x, center = colMeans(x), cov = var(x)))
+        },
+        random = sample(n),
+        manual = {
+            m <- length(man.sel)
+            stopifnot(is.numeric(man.sel), 1 <= man.sel, man.sel <= n,
+                man.sel == as.integer(man.sel))
+            c(man.sel, c(1:n)[-man.sel])
+        },
+        dUniMedian = {
+            x.centr <- sweep(x, 2, colMedians(x))
+            order(mahalanobis(x.centr, 0, cov(x.centr)))
+        },
+        V2 = {
+            x.centr <- sweep(x, 2, colMedians(x))
+            order(apply(x.centr, 1, crossprod))
+        },
+        stop("invalid 'init.sel' -- should not happen; please report!")
+    )
+    m <- as.integer(m)
+    stopifnot(n >= m, m > 0)
+    ordered.x <- x[ordered.indices, , drop = FALSE]
+
+    while (m < n) {
+        rnk <- qr(var(ordered.x[1:m, , drop = FALSE]))$rank
+        if (rnk == p)
+            break
+        else
+            m <- m + 1
+    }
+
+    if (rnk < p && !allowSingular)
+        stop("matrix-rank ( x[1:m,] ) < p  for all m <= n")
+    subset <- 1:n %in% ordered.indices[1:m]
+    presubset <- rep(FALSE, n)
+    converged <- FALSE
+    steps <- 1L
+    repeat {
+        r <- sum(subset)
+        x. <- x[subset, , drop = FALSE]
+        center <- colMeans(x.)
+        cov <- var(x.)
+        dis <- mahalanobis(x, center, cov)
+        converged <- !any(xor(presubset, subset))
+        if (converged)
+            break
+        presubset <- subset
+        limit <- chi2Crit(n, p, r, alpha)
+        subset <- dis < limit
+        steps <- steps + 1L
+        if (steps > maxsteps)
+            break
+    }
+    if (steps > maxsteps)
+        warning("basic subset has not converged in ", maxsteps, " steps")
+    list(dis = dis, subset = subset, center = center, cov = cov,
+        steps = steps, limit = limit, converged = converged)
+}
