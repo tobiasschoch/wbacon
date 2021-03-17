@@ -53,29 +53,42 @@ wBACON <- function(x, weights = NULL, alpha = 0.05, collect = 4,
 		collect = as.integer(collect), success = as.integer(1),
 		PACKAGE = "wbacon")
 
-	tmp$cov <- matrix(tmp$scatter, ncol = p)
-	tmp$cov <- tmp$cov + t(tmp$cov * lower.tri(tmp$cov))
-	tmp$verbose <- NULL
-	tmp$scatter <- NULL
+ 	tmp$verbose <- NULL
 	tmp$converged <- tmp$success == 1
 	tmp$success <- NULL
-	tmp$call <- match.call()
+    tmp$x <- matrix(tmp$x, ncol = p)
+
+    if (!tmp$converged) {
+        tmp$center <- rep(NA, p)
+        tmp$cov <- matrix(rep(NA, p * p), ncol = p)
+        tmp$dist <- rep(NA, n)
+        tmp$subset <- rep(NA, n)
+        tmp$cutoff <- NA
+    } else {
+        tmp$cov <- matrix(tmp$scatter, ncol = p)
+	    tmp$cov <- tmp$cov + t(tmp$cov * lower.tri(tmp$cov))
+    }
 	names(tmp$center) <- colnames(x)
 	colnames(tmp$cov) <- colnames(x)
 	rownames(tmp$cov) <- colnames(x)
+    tmp$scatter <- NULL
+
+	tmp$call <- match.call()
 	class(tmp) <- "wbaconmv"
 	tmp
 }
 
 print.wbaconmv <- function(x, digits = max(3L, getOption("digits") - 3L), ...)
 {
-	cat("\nWeighted BACON: Robust location, covariance, and distances\n")
 	if (x$converged) {
-		cat("Initialized by method:", ifelse(x$version == 1, "V2", "V1"), "\n")
+        cat("\nWeighted BACON: Robust location, covariance, and distances\n")
 		cat(paste0("Converged in ", x$maxiter, " iterations (alpha = ",
-			x$alpha, ")\n\n"))
+			x$alpha, ")\n"))
+        n_outlier <- x$n - sum(x$subset)
+        cat(paste0("Number of potential outliers: ", n_outlier, " (",
+            round(100 * n_outlier / x$n, 2), "%)\n\n"))
 	} else
-		cat(paste0("Algorithm did not converge in ", x$maxiter,
+		cat(paste0("Weighted BACON did not converge in ", x$maxiter,
 			" iterations!\n\n"))
 }
 
@@ -83,26 +96,28 @@ summary.wbaconmv <- function(object, ...)
 {
 	digits <- max(3L, getOption("digits") - 3L)
 	cat("\nWeighted BACON: Robust location, covariance, and distances\n")
-	if (object$converged) {
-		cat("Initialized by method:", ifelse(object$version == 1, "V2", "V1"),
-			"\n")
-		cat(paste0("Converged in ", object$maxiter, " iterations (alpha = ",
-			object$alpha, ")\n"))
-		n <- length(object$subset)
-		n_outlier <- sum(object$subset)
-		cat(paste0("\nNumber of detected outliers: ", n_outlier, " (",
-			round(100 * n_outlier / n, 2), "%)\n"))
-		cat("\nRobust estimate of location:\n")
-		print(object$center, digits = digits)
-		cat("\nRobust estimate of covariance:\n")
-		print(object$cov, digits = digits)
-		cat(paste0("\nDistances (cutoff: ", format(object$cutoff,
-			digits = digits), "):\n"))
-		print(summary(object$dist), digits = digits)
-	} else
-		cat(paste0("Algorithm did not converge in ", object$maxiter,
-			" iterations!\n"))
-
+    cat("Initialized by method:", ifelse(object$version == 1, "V2", "V1"),
+        "\n")
+    if (object$converged)
+        cat(paste0("Converged in ", object$maxiter, " iterations (alpha = ",
+            object$alpha, ")\n"))
+    else
+        cat(paste0("\nDID NOT CONVERGE in ", object$maxiter,
+            " iterations (alpha = ", object$alpha, ")\n"))
+    n <- length(object$subset)
+    n_outlier <- object$n - sum(object$subset)
+    cat(paste0("\nNumber of potential outliers: ", n_outlier, " (",
+        round(100 * n_outlier / n, 2), "%)\n"))
+    cat("\nRobust estimate of location:\n")
+    print(object$center, digits = digits)
+    cat("\nRobust estimate of covariance:\n")
+    print(object$cov, digits = digits)
+    cat(paste0("\nDistances (cutoff: ", format(object$cutoff,
+        digits = digits), "):\n"))
+    if (object$converged)
+        print(summary(object$dist), digits = digits)
+    else
+        print(NA)
 	cat("\n")
 }
 
