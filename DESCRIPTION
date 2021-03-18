@@ -13,7 +13,10 @@ LazyData: true
 Depends:
     R (>= 3.5.0)
 Imports:
-	stats
+	stats,
+    graphics,
+    grDevices,
+    hexbin
 Suggests:
 	modi,
 	robustbase,

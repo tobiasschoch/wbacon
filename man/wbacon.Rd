@@ -85,6 +85,9 @@ to finally label outlying observations as such.
 }
 
 \subsection{Utility functions and tools}{
+Diagnostic plots are available by the \code{\link[=plot.wbaconmv]{plot}}
+method.
+
 The method \code{center} and \code{vcov} return, respectively, the
 estimated center/location and covariance matrix.
 
@@ -123,5 +126,5 @@ Béguin C., Hulliger B. (2008). The BACON-EEM Algorithm for Multivariate
 	34, pp. 91-103.
 }
 \seealso{
-\link[=is_outlier.wbaconmv]{is_outlier}
+\code{\link[=plot.wbaconmv]{plot}} and \link[=is_outlier.wbaconmv]{is_outlier}
 }

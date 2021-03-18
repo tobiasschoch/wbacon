@@ -53,6 +53,7 @@ wBACON <- function(x, weights = NULL, alpha = 0.05, collect = 4,
 		collect = as.integer(collect), success = as.integer(1),
 		PACKAGE = "wbacon")
 
+    tmp$cutoff <- sqrt(tmp$cutoff)
  	tmp$verbose <- NULL
 	tmp$converged <- tmp$success == 1
 	tmp$success <- NULL

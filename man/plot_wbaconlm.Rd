@@ -70,6 +70,9 @@ There you can find details on the implementation and references.
 The standardized residuals vs. robust Mahalanobis distance plot
 (\code{which = 4}) has been proposed by Rousseeuw and van Zomeren (1990).
 }
+\value{
+[no return value]
+}
 \references{
 Rousseeuw, P.J. and B.C. van Zomeren (1990).  Unmasking Multivariate Outliers
 and Leverage Points,

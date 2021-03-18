@@ -8,8 +8,12 @@ export(wBACON)
 S3method(print, wbaconmv)
 S3method(summary, wbaconmv)
 S3method(vcov, wbaconmv)
+S3method(vcov, wbaconmv)
+S3method(plot, wbaconmv)
+
 export(distance)
 export(center)
+export(SeparationIndex)
 
 export(wBACON_reg)
 S3method(print, wbaconlm)
