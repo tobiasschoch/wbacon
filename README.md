@@ -56,7 +56,7 @@ to finally label outlying observations as such.
 
 The software provides the analyst with tools and measures to study potentially
 outlying observations. It is strongly recommended to use the tools. See
-the package folders `vignettes` and `inst/doc` for a vignette (guide) and
+the package folders `vignettes` and `doc` for a vignette (guide) and
 further documentation.
 
 ## Installation

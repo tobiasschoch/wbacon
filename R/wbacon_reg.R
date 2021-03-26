@@ -77,8 +77,10 @@ wBACON_reg <- function(formula, weights = NULL, data, collect = 4,
 		subset = (tmp$subset == 1),
 		reg = list(converged = as.logical(tmp$sucess), collect = collect,
 			version = version, alpha = alpha, maxiter = tmp$maxiter,
-			dist = tmp$dist),
-		mv = list(center = wb$center, cov = wb$cov, dist = wb$dist))
+			dist = tmp$dist, cutoff = qt(alpha / (2 * (tmp$m + 1)), tmp$m - p,
+            lower.tail = FALSE)),
+		mv = list(center = wb$center, cov = wb$cov, dist = wb$dist,
+            cutoff = wb$cutoff))
 	names(res$coefficients) <- colnames(x)
 	class(res) <- "wbaconlm"
 	res

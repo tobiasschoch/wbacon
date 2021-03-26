@@ -21,4 +21,6 @@ Suggests:
 	modi,
 	robustbase,
 	robustX,
-	cellWise
+	cellWise,
+    knitr
+VignetteBuilder: knitr, rmarkdown

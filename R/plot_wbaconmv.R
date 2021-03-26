@@ -20,7 +20,7 @@ plot.wbaconmv <- function(x, which = 1:2,
 
     if (show[1]) {
         plot(x$dist, xlab = "Index", ylab = "Robust distance",
-            main = caption[1], type = "n")
+            main = caption[1], type = "n", ...)
         at <- x$subset == 1
         points(which(at), x$dist[at])
         points(which(!at), x$dist[!at], pch = pch, col = col)
@@ -32,25 +32,27 @@ plot.wbaconmv <- function(x, which = 1:2,
         tmp <- SeparationIndex(x, alpha, tol, maxiter)
         if (tmp$failed) {
             plot(0, 0, type = "n", axes = FALSE, xlab = "", ylab = "",
-            main = caption[2])
+            main = caption[2], ...)
             text(0, 1, labels = "[too few observations]")
         } else {
             if (!tmp$converged)
                 warning("Optimal projection: not converged; see arguments 'maxiter'")
-            proj <- tmp$proj
             if (hex) {
-                require(hexbin)
-                hb <- hexbin::hexbin(proj, x$dist, ...)
-                plot(hb, xlab = "Univariate projection",
-                    ylab = "Robust distance", main = caption[2])
+                if(!require(hexbin))
+                    stop("Package 'hexbin' is not available\n")
+                hb <- hexbin::hexbin(tmp$proj, x$dist)
+                hvp <- plot(hb, xlab = "Univariate projection",
+                    ylab = "Robust distance", main = caption[2], ...)
+                hexVP.abline(hvp$plot, h = x$cutoff, lty = 2, col = 2)
             } else {
                 if (length(tmp$proj) > 10000)
                     message("Tool tip: A hexbin scatterplot is available (hex = TRUE)\n")
-                plot(proj, x$dist, xlab = "Univariate projection",
-                    ylab = "Robust distance", main = caption[2], type = "n")
+                plot(tmp$proj, x$dist, xlab = "Univariate projection",
+                    ylab = "Robust distance", main = caption[2], type = "n",
+                    ...)
                 at <- x$subset == 1
-                points(proj[at], x$dist[at])
-                points(proj[!at], x$dist[!at], pch = pch, col = col)
+                points(tmp$proj[at], x$dist[at])
+                points(tmp$proj[!at], x$dist[!at], pch = pch, col = col)
                 abline(h = x$cutoff, lty = 2, col = col)
             }
         }

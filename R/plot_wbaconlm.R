@@ -1,9 +1,8 @@
-plot.wbaconlm <- function (x, which = c(1, 2, 3, 4),
-	caption = c("Residuals vs Fitted", "Normal Q-Q", "Scale-Location",
-		"Standardized Residuals vs Robust Mahalanobis Distance"),
-	panel = if (add.smooth) function(x, y, ...)
-		panel.smooth(x, y, iter = iter.smooth, ...) else points,
-    sub.caption = NULL, main = "",
+plot.wbaconlm <- function(x, which = c(1, 2, 3, 4),
+    hex = FALSE, caption = c("Residuals vs Fitted", "Normal Q-Q",
+    "Scale-Location", "Standardized Residuals vs Robust Mahalanobis Distance"),
+	panel = if (add.smooth) function(x, y, ...) panel.smooth(x, y,
+    iter = iter.smooth, ...) else points, sub.caption = NULL, main = "",
 	ask = prod(par("mfcol")) < length(which) && dev.interactive(), ...,
 	id.n = 3, labels.id = names(residuals(x)), cex.id = 0.75, qqline = TRUE,
 	add.smooth = getOption("add.smooth"), iter.smooth = 3,
@@ -19,12 +18,19 @@ plot.wbaconlm <- function (x, which = c(1, 2, 3, 4),
         }
         x
     }
+
+    if (hex) {
+        if(!require(hexbin))
+            stop("Package 'hexbin' is not available\n")
+    }
+
     if (!is.numeric(which) || any(which < 1) || any(which > 6))
         stop("'which' must be in 1:4")
+
     show <- rep(FALSE, 6)
     show[which] <- TRUE
 
-	subset0 <- x$subset
+    subset0 <- x$subset
     r <- x$residuals[subset0]
     yh <- x$fitted.values[subset0]
     w <- x$weights[subset0]
@@ -98,18 +104,25 @@ plot.wbaconlm <- function (x, which = c(1, 2, 3, 4),
         if (id.n > 0)
             ylim <- extendrange(r = ylim, f = 0.08)
         dev.hold()
-        plot(yh, r, xlab = l.fit, ylab = "Residuals", main = main,
-            ylim = ylim, type = "n", ...)
-        panel(yh, r, ...)
-        if (one.fig)
-            title(sub = sub.caption, ...)
-        mtext(getCaption(1), 3, 0.25, cex = cex.caption)
-        if (id.n > 0) {
-            y.id <- r[show.r]
-            y.id[y.id < 0] <- y.id[y.id < 0] - strheight(" ") / 3
-            text.id(yh[show.r], y.id, show.r)
+        if (hex) {
+            hb <- hexbin(yh, r, ybnds = ylim)
+            hvp <- plot(hb, xlab = l.fit, ylab = "Residuals", main = main)
+            hexVP.abline(hvp$plot, h = 0, lty = 3, col = "gray")
+            hexVP.loess(hb, hvp = hvp$plot, span = 2 / 3, ...)
+        } else {
+            plot(yh, r, xlab = l.fit, ylab = "Residuals", main = main,
+                ylim = ylim, type = "n", ...)
+            panel(yh, r, ...)
+            if (one.fig)
+                title(sub = sub.caption, ...)
+            mtext(getCaption(1), 3, 0.25, cex = cex.caption)
+            if (id.n > 0) {
+                y.id <- r[show.r]
+                y.id[y.id < 0] <- y.id[y.id < 0] - strheight(" ") / 3
+                text.id(yh[show.r], y.id, show.r)
+            }
+            abline(h = 0, lty = 3, col = "gray")
         }
-        abline(h = 0, lty = 3, col = "gray")
         dev.flush()
     }
 	# Normal Q-Q
@@ -132,32 +145,50 @@ plot.wbaconlm <- function (x, which = c(1, 2, 3, 4),
         sqrtabsr <- sqrt(abs(rs))
         ylim <- c(0, max(sqrtabsr, na.rm = TRUE))
         yl <- as.expression(substitute(sqrt(abs(YL)),
-			list(YL = as.name(ylab23))))
+            list(YL = as.name(ylab23))))
         yhn0 <- yh
         dev.hold()
-        plot(yhn0, sqrtabsr, xlab = l.fit, ylab = yl, main = main, ylim = ylim,
-			type = "n", ...)
-        panel(yhn0, sqrtabsr, ...)
-        if (one.fig)
-            title(sub = sub.caption, ...)
-        mtext(getCaption(3), 3, 0.25, cex = cex.caption)
-        if (id.n > 0)
-            text.id(yhn0[show.rs], sqrtabsr[show.rs], show.rs)
+        if (hex) {
+            hb <- hexbin(yhn0, sqrtabsr, ybnds = ylim)
+            hvp <- plot(hb, xlab = l.fit, ylab = yl, main = main)
+            hexVP.loess(hb, hvp = hvp$plot, span = 2 / 3, ...)
+        } else {
+            plot(yhn0, sqrtabsr, xlab = l.fit, ylab = yl, main = main,
+                ylim = ylim, type = "n", ...)
+            panel(yhn0, sqrtabsr, ...)
+            if (one.fig)
+                title(sub = sub.caption, ...)
+            mtext(getCaption(3), 3, 0.25, cex = cex.caption)
+            if (id.n > 0)
+                text.id(yhn0[show.rs], sqrtabsr[show.rs], show.rs)
+        }
         dev.flush()
     }
 	# Standardized residuals vs. robust Mahalanobis distances
     if (show[4L]) {
 		xlim <- c(0, max(x$mv$dist, na.rm = TRUE))
 		dev.hold()
-		plot(x$mv$dist, x$residuals / s, xlab = "Robust Mahalanobis Distance",
-			ylab = "Standardized Residuals", main = main, xlim = xlim,
-			type = "n", ...)
-        points(x$mv$dist[subset0], x$residuals[subset0] / s, ...)
-        points(x$mv$dist[!subset0], x$residuals[!subset0] / s, pch = 19, ...)
-        abline(h = 0, lty = 3, col = "gray")
-        if (one.fig)
-            title(sub = sub.caption, ...)
-        mtext(getCaption(4), 3, 0.25, cex = cex.caption)
+        if (hex) {
+            hb <- hexbin(x$mv$dist, x$residuals/s, xbnds = xlim)
+            hvp <- plot(hb, xlab = "Robust distance",
+                ylab = "Standardized residuals", main = main)
+            hexVP.abline(hvp$plot, h = 0, lty = 3, col = "gray")
+            hexVP.abline(hvp$plot, v = x$mv$cutoff, h = c(-x$reg$cutoff,
+                x$reg$cutoff), lty = 2, col = 2)
+        } else {
+            plot(x$mv$dist, x$residuals / s, xlab = "Robust distance",
+                ylab = "Standardized residuals", main = main, xlim = xlim,
+                type = "n", ...)
+            points(x$mv$dist[subset0], x$residuals[subset0] / s, ...)
+            points(x$mv$dist[!subset0], x$residuals[!subset0] / s, pch = 19,
+                col = 2, ...)
+            abline(h = 0, lty = 3, col = "gray")
+            abline(v = x$mv$cutoff, h = c(-x$reg$cutoff, x$reg$cutoff),
+                lty = 2, col = 2)
+           if (one.fig)
+                title(sub = sub.caption, ...)
+            mtext(getCaption(4), 3, 0.25, cex = cex.caption)
+        }
 		dev.flush()
     }
     if (!one.fig && par("oma")[3L] >= 1)

@@ -1,3 +1,4 @@
+import(hexbin)
 S3method(plot, wbaconlm)
 
 export(is_outlier)
