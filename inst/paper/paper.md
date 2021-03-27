@@ -10,7 +10,7 @@ authors:
    orcid: 0000-0002-1640-3395
    affiliation: 1
 affiliations:
- - name: University of Applied Sciences and Arts Northwestern Switzerland, School of Business
+ - name: University of Applied Sciences and Arts Northwestern Switzerland, School of Business, Riggenbachstrasse 16, CH-4600 Olten, Switzerland
 index: 1
 date: 26 March 2021
 bibliography: paper.bib
