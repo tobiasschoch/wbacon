@@ -22,9 +22,9 @@ A summary describing the high-level functionality and purpose of the software fo
 
 # The BACON algorithms
 
-Outlier nomination (detection) and robust regression are computationally hard problems. This is all the more true when the number of variables and observations grow rapidly. Among all candidate methods, the BACON (blocked adaptive computationally efficient outlier nominators) algorithm of [@billoretal2000] has favorable computational characteristics as it requires only a few model evaluation irrespective of the sample size. This makes it a superior algorithm for big data applications. It is also a quite popular method (google scholar reports more than 500 citations in February 2021). The BACON algorithms for multivariate outliers nomination and robust linear regression are available in R statistical software [@r2021] from the R package `robustX` [robustx].
+Outlier nomination (detection) and robust regression are computationally hard problems. This is all the more true when the number of variables and observations grow rapidly. Among all candidate methods, the BACON (blocked adaptive computationally efficient outlier nominators) algorithm of @billoretal2000 has favorable computational characteristics as it requires only a few model evaluation irrespective of the sample size. This makes it a superior algorithm for big data applications. It is also a quite popular method (google scholar reports more than 500 citations in February 2021). The BACON algorithms for multivariate outliers nomination and robust linear regression are available  from the R package `robustX` [@robustx] for the R statistical software [@r2021].
 
-The BACON algorithm for multivariate outlier nomination has been extended such that it is applicable to weighted problems (in the context of survey sampling) and incomplete data [@beguinhulliger2008]. The extended method is available from the R package `modi` [@modi].
+The BACON algorithm for multivariate outlier nomination has been by @beguinhulliger2008 extended to weighted problems (in the context of survey sampling) and incomplete data. The extended method is available from the R package `modi` [@modi].
 
 # Statement of need
 
