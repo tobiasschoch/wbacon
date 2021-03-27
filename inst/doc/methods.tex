@@ -141,6 +141,37 @@ quantile and partial sorting device are documented.
 
 %------------------------------------------------------------------------------
 \section{The BACON algorithms in a nutshell}\label{sec:nutshell}
+The BACON algorithms assume that the underlying model is an appropriate
+description of the non-outlying observations \citep{billor_hadi_etal_2000}.
+More precisely,
+
+\begin{itemize}
+    \item the outlier nomination method assumes that the ``good'' data have
+        (roughly) an \emph{elliptically contoured} distribution (this includes
+        the Gaussian distribution as a special case);
+    \item the regression method assumes that the non-outlying (``good'')
+        data are described by a \emph{linear} (homoscedastic) regression model
+        and that the independent variables (having removed the regression
+        intercept/constant, if there is a constant) follow (roughly) an
+        elliptically contoured distribution.
+\end{itemize}
+
+\vspace{0.5em}
+
+\noindent \emph{``Although the algorithms will often do something reasonable
+even when these assumptions are violated, it is hard to say what the
+results mean.''} \citep[][p. 290]{billor_hadi_etal_2000}
+
+\vspace{1em}
+
+It is strongly recommended that the structure of the data be examined
+and whether the assumptions made about the ``good'' observations are
+reasonable.  In line with \citet[][p. 290]{billor_hadi_etal_2000}, we use
+the term outlier ``nomination'' rather than ``detection'' to highlight that
+algorithms should not go beyond nominating observations as \emph{potential}
+outliers; see also \citet{beguin_hulliger_2008}. \emph{It is left to the
+analyst to finally label outlying observations as such.}
+
 Suppose that the data at hand are $n$ observations on $p$ real-valued
 variables, $p < n$. The data are represented as the $(n \times p)$
 matrix $\bm X = (\bm x_1, \ldots, \bm x_n)^T$, $\bm x_i \in \R^p$,
@@ -160,6 +191,7 @@ the restricted matrix.
 
 %------------------------------------------------------------------------------
 \subsection{Multivariate outlier detection}
+
 Following \citet{billor_hadi_etal_2000}, the BACON algorithm for multivariate
 outlier detection consists of two algorithms (called Algorithm 2 and 3),
 which are applied after another.

@@ -18,36 +18,35 @@ bibliography: paper.bib
 
 # Summary
 
-A summary describing the high-level functionality and purpose of the software for a diverse, non-specialist audience.
+Outlier nomination (detection) and robust regression are computationally hard problems. This is all the more true when the number of variables and observations grow rapidly. Among all candidate methods, the BACON (blocked adaptive computationally efficient outlier nominators) algorithms of @billoretal2000 have favorable computational characteristics as they require only a few model evaluation irrespective of the sample size. This makes them superior and popular algorithms (at the time of writing [Google Scholar](https://scholar.google.com) reports more than 500 citations of the @billoretal2000 paper).
+
+`wbacon` is a user-contributed package/library for the `R` statistical software [@r2021]. The library is aimed at medium to large datasets that can possibly have (sampling) weights (e.g., data from complex survey samples). The library has a user-friendly `R` interface (with plotting methods, etc.) and is written mainly in the `C` language (with OpenMP support for parallelization; see @openmp2018) for performance reasons.
 
 # The BACON algorithms
 
-Outlier nomination (detection) and robust regression are computationally hard problems. This is all the more true when the number of variables and observations grow rapidly. Among all candidate methods, the BACON (blocked adaptive computationally efficient outlier nominators) algorithm of @billoretal2000 has favorable computational characteristics as it requires only a few model evaluation irrespective of the sample size. This makes it a superior algorithm for big data applications. It is also a quite popular method (google scholar reports more than 500 citations in February 2021). The BACON algorithms for multivariate outliers nomination and robust linear regression are available  from the R package `robustX` [@robustx] for the R statistical software [@r2021].
+Technically, the BACON algorithms consist of the application of series of simple statistical estimation methods such as coordinate-wise means/medians, covariance matrix, Mahalanobis distances, or least squares regression on subsets of the data. The algorithms start from an initial small subset of "good" data and keep adding those observations to the subset whose distances/ discrepancy are smaller than a predefined threshold value. The algorithms terminate if the subset cannot be increased further. The observations not in the final subset are nominated as outliers. We follow @billoretal2000 and use the term "nomination" of outliers instead of "detection" to emphasize that the algorithms should not go beyond nominating observations as potential outliers. It is left to the analyst to finally label outlying observations as such.
 
-The BACON algorithm for multivariate outlier nomination has been by @beguinhulliger2008 extended to weighted problems (in the context of survey sampling) and incomplete data. The extended method is available from the R package `modi` [@modi].
+A naive implementation of the BACON algorithms would call the (simple) estimation methods iteratively on a sequence of growing subsets of the data without bothering too much with reusing or updating existing blocks of data. This leads to an excessively large number of copy/ modify operations and (unnecessary) recomputations. Overall, we would end up with a computationally inefficient implementation. With small datasets, the inefficiencies would probably not be noticed. With large amounts of data, however, the situation is quite different.
 
 # Statement of need
+The two BACON algorithms are available from the package `robustX` [@robustx] for the `R` statistical software. The BACON algorithm for outlier nomination has been by @beguinhulliger2008 extended to weighted problems (in the context of survey sampling) and incomplete data. The extended method is available from the R package `modi` [@modi]. Both implementations are not explicitly targeted at big data applications. Our library fills this gap.
 
-The existing implementations (packages `robustx` and `modi`) are not explicitly targeted at big data applications. There is a clear need for this.
+# What the library offers
 
-# What the package offers
+The implementation of the `wbacon` package is targeted at medium to large datasets and is mainly implemented in the `C` language. The code depends heavily on the subroutines in the `BLAS` [@blas2002] and `LAPACK` [@lapack1999] libraries. If computation time is of great importance to the user, we recommend replacing the reference implementation of the `BLAS` library that ships with `R` by a version that has been adapted to the user's hardware (see e.g., OpenBLAS). The non-`BLAS` components of `wbacon` use multiple threads (if the compiler supports `OpenMP`; see @openmp2018). But the major improvements of `wbacon` (in terms of computation time) over the naive implementation are achieved by using partial sorting (in place of a full sort), reuse of computed estimates, and employ an up-/downdating scheme for the Cholesky and QR factorizations. The computational costs of the up-/downdating schemes are far less than recomputing the entire decomposition repeatedly.
 
-Technically, the BACON algorithms consist of the application of series of simple statistical estimation methods such as coordinate-wise means, covariance matrix, Mahalanobis distances, or least squares regression on subsets of the data. A naive implementation would call the estimation methods iteratively on a sequence of growing subsets of the data without bothering too much with reusing or updating existing blocks of data. This leads to an excessively large number of copy/ modify operations and (unnecessary) recomputations. Overall, we would end up with a computationally inefficient implementation.
+# Diagnostic tools
 
-The implementation of the wbacon package is targeted at medium to large datasets. In order to ensure reasonable compute time for such data, the code is mainly implemented in the C language with an API for the R statistical software. BLAS  [@blas2002] and LAPACK [@lapack1999] and parallelization by OpenMP [@openmp2018]. OpenBLAS
+The BACON algorithms assume that the underlying model is an appropriate description of the non-outlying observations [@billoretal2000]. More precisely,
 
-we use a partial sorting device (based on Quicksort), reuse of computed estimates, and employ an up-/downdating scheme for the Cholesky and QR factorizations. The computational costs of the up-/downdating schemes are far less than recomputing the entire decomposition repeatedly.
+* the outlier nomination method assumes that the "good" data have (roughly) an *elliptically contoured* distribution (this includes the Gaussian distribution as a special case);
+* the regression method assumes that the non-outlying ("good") data are described by a *linear* (homoscedastic) regression model and that the independent variables (having removed the regression intercept/constant, if there is a constant) follow (roughly) an elliptically contoured distribution.
 
-# Outlier: no automatic
+> "Although the algorithms will often do something reasonable even when these assumptions are violated, it is hard to say what the results mean." [@billoretal2000, p. 289]
 
-[@willemsetal2009]
-
-[@rousseeuwvanzomeren1990]
-
-[@qiujoe2006]
-
-hexbin [@hexbin]
+It is strongly recommended that the structure of the data be examined and whether the assumptions made about the "good" observations are reasonable. The `wbacon` library provides the analyst with tools to study potentially outlying observations. For multivariate outlier nomination, the package implements several diagnostic plots. Worth mentioning is the graph which plots the robust (Mahalanobis) distances against the univariate projection of the data that maximizes the separation criterion of @qiujoe2006. This kind of diagnostic graph attempts to separate outlying from non-outlying observations as much as possible; see @willemsetal2009. It is particularly helpful when the outliers are clustered or show patterns. For robust linear regression, the package offers the standard plotting methods that are available for objects of the class `lm`. In addition, it implements the plot of the robust Mahalanobis distances of the (non-constant) design variables against the standardized residual which as been proposed by @rousseeuwvanzomeren1990. All plotting methods can be displayed as hexagonally binned scatter plots, using the functionality of the `hexbin` [@hexbin] package. This option is recommended for large datasets.
 
 # Acknowledgements
+I would like to acknowledge many fruitful discussions with Beat Hulliger. This research did not receive any special grant from funding agencies in the public, commercial, or not-for-profit sectors.
 
 # References
