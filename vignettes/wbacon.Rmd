@@ -277,35 +277,35 @@ The Figure shows `plot(reg, which = 4)`. The filled circles represent the outlie
 
 ## References {#biblio}
 
-Béguin, C. and B. Hulliger (2002).  *Robust Multivariate Outlier Detection and Imputation with Incomplete Survey Data*, Deliverable D4/5.2.1/2 Part C: EUREDIT project, https://www.cs.york.ac.uk/euredit/euredit-main.html, research project funded by the European Commission, IST-1999-10226.
+Béguin, C. and B. Hulliger (2002). *Robust Multivariate Outlier Detection and Imputation with Incomplete Survey Data*, Deliverable D4/5.2.1/2 Part C: EUREDIT project, https://www.cs.york.ac.uk/euredit/euredit-main.html, research project funded by the European Commission, IST-1999-10226.
 
-Béguin, C. and B. Hulliger (2008).  The BACON-EEM Algorithm for Multivariate Outlier Detection in Incomplete Survey Data, *Survey Methodology*, Vol. 34, No. 1, 91--103.
+Béguin, C. and B. Hulliger (2008). The BACON-EEM Algorithm for Multivariate Outlier Detection in Incomplete Survey Data, *Survey Methodology*, Vol. 34, No. 1, 91--103.
 
-Billor, N., A. S. Hadi, and P. F. Vellemann (2000).  BACON: Blocked Adaptive Computationally-efficient Outlier Nominators, *Computational Statistics and Data Analysis*, 34, 279--298.
+Billor, N., A. S. Hadi, and P. F. Vellemann (2000). BACON: Blocked Adaptive Computationally-efficient Outlier Nominators, *Computational Statistics and Data Analysis*, 34, 279--298.
 
 Campbell, N. A. (1989). *Bushfire Mapping using NOAA AVHRR Data*. Technical Report. Commonwealth Scientific and Industrial Research Organisation, North Ryde.
 
-Carr, D., N. Lewin-Koh, and M. Maechler (2021).  *hexbin: Hexagonal Binning Routines*. R package version 1.28.2. (The package contains copies of lattice functions written by Deepayan Sarkar).
+Carr, D., N. Lewin-Koh, and M. Maechler (2021). *hexbin: Hexagonal Binning Routines*. R package version 1.28.2. (The package contains copies of lattice functions written by Deepayan Sarkar).
 
-Chatterjee, S. and A. H. Hadi (2012).  *Regression Analysis by Example*, 5th ed., Hoboken (NJ): John Wiley \& Sons.
+Chatterjee, S. and A. H. Hadi (2012). *Regression Analysis by Example*, 5th ed., Hoboken (NJ): John Wiley \& Sons.
 
-Hulliger, B. and T. Schoch (2009).  Robust multivariate imputation with survey data, in *Proceedings of the 57th Session of the International Statistical Institute*, Durban.
+Hulliger, B. and T. Schoch (2009). Robust multivariate imputation with survey data, in *Proceedings of the 57th Session of the International Statistical Institute*, Durban.
 
-Hulliger, B. and M. Sterchi (2020).  *modi: Multivariate Outlier Detection and Imputation for Incomplete Survey Data*, R package version 0.1-0.
+Hulliger, B. and M. Sterchi (2020). *modi: Multivariate Outlier Detection and Imputation for Incomplete Survey Data*, R package version 0.1-0.
 
-Maechler, M., P. Rousseeuw, C. Croux, V. Todorov, A. Ruckstuhl, M. Salibian-Barrera, T. Verbeke, M. Koller, E. L. T. Conceicao, and M. Anna di Palma (2020).  *robustbase: Basic Robust Statistics*, R package version 0.93-6.
+Maechler, M., P. Rousseeuw, C. Croux, V. Todorov, A. Ruckstuhl, M. Salibian-Barrera, T. Verbeke, M. Koller, E. L. T. Conceicao, and M. Anna di Palma (2020). *robustbase: Basic Robust Statistics*, R package version 0.93-6.
 
-Maronna, R. A. and V. J. Yohai (1995).  The Behavior of the Stahel-Donoho Robust Multivariate Estimator, *Journal of the American Statistical Association*, 90, 330--341.
+Maronna, R. A. and V. J. Yohai (1995). The Behavior of the Stahel-Donoho Robust Multivariate Estimator, *Journal of the American Statistical Association*, 90, 330--341.
 
-Qiu, W. and H. Joe (2006).  Separation index and partial membership for clustering, *Computational Statistics and Data Analysis* 50, pp. 585-603.
+Qiu, W. and H. Joe (2006). Separation index and partial membership for clustering, *Computational Statistics and Data Analysis* 50, pp. 585-603.
 
-Raymaekers, J. and P. Rousseeuw (2020).  *cellWise: Analyzing Data with Cellwise Outliers*, R package version 2.2.1.
+Raymaekers, J. and P. Rousseeuw (2020). *cellWise: Analyzing Data with Cellwise Outliers*, R package version 2.2.1.
 
-Rousseeuw, P. J. and K. van Driessen (1999).  A fast algorithm for the Minimum Covariance Determinant estimator, *Technometrics*, 41, 212--223.
+Rousseeuw, P. J. and K. van Driessen (1999). A fast algorithm for the Minimum Covariance Determinant estimator, *Technometrics*, 41, 212--223.
 
-Rousseeuw, P. J. and K. van Zomeren (1990).  Unmasking Multivariate Outliers and Leverage Points, *Journal of the American Statistical Association*, 411, 633--639.
+Rousseeuw, P. J. and K. van Zomeren (1990). Unmasking Multivariate Outliers and Leverage Points, *Journal of the American Statistical Association*, 411, 633--639.
 
-Willems, G., H. Joe, and R. Zamar (2009).  Diagnosing Multivariate Outliers Detected by Robust Estimators, *Journal of Computational and Graphical Statistics* 18, pp. 73-91.
+Willems, G., H. Joe, and R. Zamar (2009). Diagnosing Multivariate Outliers Detected by Robust Estimators, *Journal of Computational and Graphical Statistics* 18, pp. 73-91.
 
 ## Notes {#notes}
 
