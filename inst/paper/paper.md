@@ -13,7 +13,7 @@ affiliations:
  - name: University of Applied Sciences and Arts Northwestern Switzerland, School of Business
 index: 1
 date: 26 March 2021
-bibliography: inst/paper/paper.bib
+bibliography: paper.bib
 ---
 
 # Summary
