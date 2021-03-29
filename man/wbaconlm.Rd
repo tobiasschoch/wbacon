@@ -12,7 +12,6 @@
 }
 \arguments{
 	\item{object}{object of class \code{wbaconlm}.}
-	\item{x}{object of class \code{wbaconlm}.}
 	\item{...}{additional arguments passed to the method.}
 }
 \description{

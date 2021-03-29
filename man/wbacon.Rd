@@ -8,8 +8,8 @@
 \title{Weighted BACON Algorithm for Multivariate Outlier Detection}
 \usage{
 wBACON(x, weights = NULL, alpha = 0.05, collect = 4, version = c("V2", "V1"),
-    na.rm = FALSE, maxiter = 50, verbose = TRUE)
-distance(object)
+    na.rm = FALSE, maxiter = 50, verbose = FALSE)
+distance(x)
 \method{print}{wbaconmv}(x, digits = max(3L, getOption("digits") - 3L), ...)
 \method{summary}{wbaconmv}(object, ...)
 center(object)

@@ -2,10 +2,9 @@
 \alias{predict.wbaconlm}
 \title{Predicted Values Based on the Weighted BACON Linear Regression}
 \usage{
-predict.wbaconlm(object, newdata, se.fit = FALSE, scale = NULL, df = Inf,
-    interval = c("none", "confidence", "prediction"), level = 0.95,
-    type = c("response", "terms"), terms = NULL, na.action = na.pass,
-    pred.var = res.var/weights, weights = 1, ...)
+\method{predict}{wbaconlm}(object, newdata, se.fit = FALSE, scale = NULL,
+    df = Inf, interval = c("none", "confidence", "prediction"), level = 0.95,
+    type = c("response", "terms"), terms = NULL, na.action = na.pass, ...)
 }
 \arguments{
 	\item{object}{Object of class inheriting from \code{"lm"}}
@@ -24,13 +23,8 @@ predict.wbaconlm(object, newdata, se.fit = FALSE, scale = NULL, df = Inf,
 		terms), a \code{[character]} vector.}
 	\item{na.action}{function determining what should be done with missing
 		values in \code{newdata}. The default is to predict \code{NA}.}
-	\item{pred.var}{the variance(s) for future observations to be assumed
-		for prediction intervals.  See \sQuote{Details}.}
-	\item{weights}{variance weights for prediction \code{[numeric vector]}.
-		This can be a numeric vector or a one-sided model formula. In the
-		latter case, it is interpreted as an expression evaluated in
-		\code{newdata}.}
-	\item{\dots}{further arguments passed to or from other methods.}
+	\item{\dots}{further arguments passed to
+        \code{\link[=predict.lm]{predict.lm}}}
 }
 \description{
 This function does exactly what \code{\link[=predict.lm]{predict}} does for

@@ -1,7 +1,7 @@
 predict.wbaconlm <- function(object, newdata, se.fit = FALSE, scale = NULL,
 	df = Inf, interval = c("none", "confidence", "prediction"),
     level = 0.95, type = c("response", "terms"), terms = NULL,
-	na.action = na.pass, pred.var = res.var/weights, weights = 1, ...)
+	na.action = na.pass, ...)
 {
 	# on the subset, the weighted BACON regression works like a lm model
 	in_subset <- object$subset == 1
@@ -13,5 +13,5 @@ predict.wbaconlm <- function(object, newdata, se.fit = FALSE, scale = NULL,
 	ans$qr$qr = ans$qr$qr[in_subset, ]
 	class(ans) <- "lm"
 	stats::predict.lm(ans, newdata, se.fit, scale, df, interval, level, type,
-		terms, na.action, pred.var, weights, ...)
+		terms, na.action, ...)
 }

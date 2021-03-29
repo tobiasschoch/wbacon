@@ -1,4 +1,17 @@
-import(hexbin)
+importFrom("graphics",
+    "abline", "mtext", "panel.smooth", "par", "points", "strheight", "text",
+    "title")
+
+importFrom("grDevices",
+    "as.graphicsAnnot", "dev.flush", "dev.hold", "dev.interactive",
+    "devAskNewPage", "extendrange")
+
+importFrom("stats",
+    "cov", "na.pass", "qnorm", "qqnorm", "qt", "residuals")
+
+importFrom("hexbin",
+    "hexbin", "hexVP.loess", "hexVP.abline")
+
 S3method(plot, wbaconlm)
 
 export(is_outlier)

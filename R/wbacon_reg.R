@@ -1,5 +1,6 @@
 wBACON_reg <- function(formula, weights = NULL, data, collect = 4,
-	na.rm = FALSE, alpha = 0.05, version = "V2", maxiter = 50, verbose = FALSE)
+	na.rm = FALSE, alpha = 0.05, version = c("V2", "V1"), maxiter = 50,
+    verbose = FALSE)
 {
 	stopifnot(alpha < 1, alpha > 0, collect > 0, maxiter > 0, collect > 0)
 	if (!inherits(formula, "formula"))

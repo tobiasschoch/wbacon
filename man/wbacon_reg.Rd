@@ -34,6 +34,7 @@ wBACON_reg(formula, weights = NULL, data, collect = 4, na.rm = FALSE,
 		is printed to the console (default: \code{TRUE}).}
 	\item{digits}{\code{[integer]} minimal number of significant digits.}
 	\item{object}{object of class \code{wbaconlm}.}
+	\item{x}{object of class \code{wbaconlm}.}
 	\item{...}{additional arguments passed to the method.}
 }
 \description{

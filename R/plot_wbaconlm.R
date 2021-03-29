@@ -19,11 +19,6 @@ plot.wbaconlm <- function(x, which = c(1, 2, 3, 4),
         x
     }
 
-    if (hex) {
-        if(!require(hexbin))
-            stop("Package 'hexbin' is not available\n")
-    }
-
     if (!is.numeric(which) || any(which < 1) || any(which > 6))
         stop("'which' must be in 1:4")
 
@@ -105,8 +100,10 @@ plot.wbaconlm <- function(x, which = c(1, 2, 3, 4),
             ylim <- extendrange(r = ylim, f = 0.08)
         dev.hold()
         if (hex) {
+            requireNamespace("hexbin")
             hb <- hexbin(yh, r, ybnds = ylim)
-            hvp <- plot(hb, xlab = l.fit, ylab = "Residuals", main = main)
+            hvp <- hexbin::plot(hb, xlab = l.fit, ylab = "Residuals",
+                main = main)
             hexVP.abline(hvp$plot, h = 0, lty = 3, col = "gray")
             hexVP.loess(hb, hvp = hvp$plot, span = 2 / 3, ...)
         } else {

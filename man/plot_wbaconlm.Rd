@@ -2,7 +2,7 @@
 \alias{plot.wbaconlm}
 \title{Plot Diagnostics for an Object of Class \code{wbaconlm}}
 \usage{
-\method{plot}{wbaconlm}(x, which = c(1, 2, 3, 4),
+\method{plot}{wbaconlm}(x, which = c(1, 2, 3, 4), hex = FALSE,
 	caption = c("Residuals vs Fitted", "Normal Q-Q", "Scale-Location",
 		"Standardized Residuals vs Robust Mahalanobis Distance"),
 	panel = if (add.smooth) function(x, y, ...)
@@ -19,6 +19,8 @@
 	\item{x}{object of class \code{wbaconlm}.}
 	\item{which}{if a subset of the plots is required, specify a subset of
 		the numbers \code{1:4}, \code{[integer]}.}
+	\item{hex}{toogle a hexagonally binned plot, \code{[logical]}, default
+        \code{hex = FALSE}.}
 	\item{caption}{captions to appear above the plots;
 		\code{[character]} vector of valid graphics annotations. It
 		can be set to \code{""} or \code{NA} to suppress all captions.}

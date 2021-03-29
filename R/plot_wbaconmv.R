@@ -38,10 +38,9 @@ plot.wbaconmv <- function(x, which = 1:2,
             if (!tmp$converged)
                 warning("Optimal projection: not converged; see arguments 'maxiter'")
             if (hex) {
-                if(!require(hexbin))
-                    stop("Package 'hexbin' is not available\n")
-                hb <- hexbin::hexbin(tmp$proj, x$dist)
-                hvp <- plot(hb, xlab = "Univariate projection",
+                requireNamespace("hexbin")
+                hb <- hexbin(tmp$proj, x$dist)
+                hvp <- hexbin::plot(hb, xlab = "Univariate projection",
                     ylab = "Robust distance", main = caption[2], ...)
                 hexVP.abline(hvp$plot, h = x$cutoff, lty = 2, col = 2)
             } else {

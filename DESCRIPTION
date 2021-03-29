@@ -4,7 +4,9 @@ Title: Weighted BACON algorithms
 Version: 0.2
 Author: Tobias Schoch [aut, cre, cph]
 Maintainer: Tobias Schoch <tobias.schoch@gmail.com>
-Description: Weighted BACON algorithm for multivariate outlier dectection and robust linear regression
+Description: The weighted BACON algorithms are methods for multivariate
+    outlier nomination (detection) and robust linear regression. The methods
+    take (sampling) weights into account.
 License: GPL (>= 2)
 URL: https://github.com/tobiasschoch/wbacon
 BugReports: https://github.com/tobiasschoch/wbacon/issues

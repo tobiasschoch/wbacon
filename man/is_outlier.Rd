@@ -1,4 +1,5 @@
 \name{is_outlier}
+\alias{is_outlier}
 \alias{is_outlier.wbaconlm}
 \alias{is_outlier.wbaconmv}
 \title{Flag Outliers}

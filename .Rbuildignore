@@ -1,0 +1,27 @@
+# github stuff
+^\.git$
+^\.github$
+^\.gitattributes$
+^\.gitignore$
+^README\.md$
+^CONTRIBUTING\.md$
+# documentation
+^inst/doc/Rd2\.sty$
+^inst/doc/doc_c_functions\.tex$
+^inst/doc/methods\.tex$
+# varia
+^inst/varia$
+# benchmark folder
+^tests/benchmark$
+^tests/simulation$
+# joss paper
+^inst/paper$
+# src folder
+^src/_myMakefile$
+^src/_myMakefile_omp$
+^src/checkout_wquantile\.bat$
+# vignettes folder
+^vignettes/_my_Makefile$
+^vignettes/wbacon\.html$
+# license
+^inst/LICENSE$

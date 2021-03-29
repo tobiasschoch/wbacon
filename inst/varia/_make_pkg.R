@@ -20,7 +20,8 @@ file.copy(pkg_files, paste0(PKG_ROOT, "/", PKG), recursive = TRUE)
 # clean src folder (remove binary files)
 binary_files <- list.files(paste0(PKG_ROOT, "/", PKG, "/src"),
     pattern = "\\.o$|\\.dll$|\\.so$")
-file.remove(paste0(PKG_ROOT, "/", PKG, "/src/", binary_files))
+if (length(binary_files) > 0)
+    file.remove(paste0(PKG_ROOT, "/", PKG, "/src/", binary_files))
 
 #-------------------------------------------------------------------------------
 setwd(PKG_ROOT)

@@ -1,5 +1,6 @@
 \name{plot.wbaconmv}
 \alias{plot.wbaconmv}
+\alias{SeparationIndex}
 \title{Plot Diagnostics for an Object of Class \code{wbaconmv}}
 \usage{
 \method{plot}{wbaconmv}(x, which = 1:2,
