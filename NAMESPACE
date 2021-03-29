@@ -25,8 +25,8 @@ S3method(coef, wbaconlm)
 S3method(vcov, wbaconlm)
 S3method(predict, wbaconlm)
 
-export(weighted_quantile)
-export(weighted_median)
+export(quantile_w)
+export(median_w)
 
 useDynLib(wbacon, wbacon)
 useDynLib(wbacon, wbacon_reg)

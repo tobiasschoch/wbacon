@@ -22,5 +22,6 @@ Suggests:
 	robustbase,
 	robustX,
 	cellWise,
-    knitr
+    knitr,
+    rmarkdown
 VignetteBuilder: knitr, rmarkdown

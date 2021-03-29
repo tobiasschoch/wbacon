@@ -1,8 +1,8 @@
-\name{weighted_quantile}
-\alias{weighted_quantile}
+\name{quantile_w}
+\alias{quantile_w}
 \title{Weighted Sample Quantiles}
 \usage{
-weighted_quantile(x, w, probs, na.rm = FALSE)
+quantile_w(x, w, probs, na.rm = FALSE)
 }
 \arguments{
 \item{x}{\code{[numeric vector]} observations.}
@@ -16,17 +16,17 @@ weighted_quantile(x, w, probs, na.rm = FALSE)
 Weighted estimate of the population quantiles.
 }
 \description{
-\code{weighted_quantile} computes the weighted population quantiles.
+\code{quantile_w} computes the weighted population quantiles.
 }
 \details{
 \describe{
-	\item{Overview.}{\code{weighted_quantile} computes the weighted sample
+	\item{Overview.}{\code{quantile_w} computes the weighted sample
 		quantiles; argument \code{probs} allows vector inputs.}
     \item{Implementation.}{The function is based on a weighted version of
 		the quickselect algorithm with the Bentley and McIlroy (1993) 3-way
 		partitioning scheme. For very small arrays, we use insertion sort.}
    \item{Compatibility.}{For equal weighting, i.e. when all elements in
-		\code{w} are equal, \code{weighted_quantile} computes quantiles that
+		\code{w} are equal, \code{quantile_w} computes quantiles that
 		are identical with \code{type = 2} in \code{stats::quantile}; see
 		also Hyndman and Fan (1996).}
 }
@@ -39,5 +39,5 @@ Hyndman, R.J. and Y. Fan (1996). Sample Quantiles in Statistical Packages,
 \emph{The American Statistician} 50, pp. 361-365.
 }
 \seealso{
-\code{\link{weighted_median}}
+\code{\link{median_w}}
 }
