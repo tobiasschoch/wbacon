@@ -401,14 +401,10 @@ static inline void scatter_w(wbdata *dat, double* restrict work_np,
     }
 
     // lower triangle of the scatter matrix
-    const double d_one = 1.0, d_zero = 0.0;
-    F77_CALL(dsyrk)("L", "T", &p, &n, &d_one, work_np, &n, &d_zero, scatter,
-        &p);
-
+    const double d_zero = 0.0;
     double denom = 1.0 / (sum_w - 1.0);
-    for (int j = 0; j < p; j++)
-        for (int i = j; i < p; i++)
-            scatter[p * j + i] *= denom;
+    F77_CALL(dsyrk)("L", "T", &p, &n, &denom, work_np, &n, &d_zero, scatter,
+        &p);
 }
 
 /******************************************************************************\
@@ -425,20 +421,21 @@ static inline void mean_scatter_w(wbdata *dat, double* restrict select_weight,
     double* restrict scatter)
 {
     int n = dat->n, p = dat->p;
+    double denom;
     double* restrict w = dat->w;
     double* restrict w_sqrt = dat->w_sqrt;
 
     // sum(w[in subset]) and let work_n[i] = w[i] if in subset, otherwise 0
-    double sum_w = 0.0, tmp, denom;
+    double sum_w = 0.0, tmp;
     for (int i = 0; i < n; i++) {
         tmp = select_weight[i] * w[i];
         work_n[i] = tmp;
         sum_w += tmp;
     }
-    denom = 1.0 / sum_w;
 
     // coordinate-wise mean and centered data
     Memcpy(work_np, dat->x, n * p);
+    denom = 1.0 / sum_w;
 
     #pragma omp parallel for if(p * n > OMP_MIN_SIZE)
     for (int j = 0; j < p; j++) {
@@ -458,14 +455,10 @@ static inline void mean_scatter_w(wbdata *dat, double* restrict select_weight,
     }
 
     // lower triangle of the scatter matrix
-    const double d_one = 1.0, d_zero = 0.0;
-    F77_CALL(dsyrk)("L", "T", &p, &n, &d_one, work_np, &n, &d_zero, scatter,
-        &p);
-
+    const double d_zero = 0.0;
     denom = 1.0 / (sum_w - 1.0);
-    for (int j = 0; j < p; j++)
-        for (int i = j; i < p; i++)
-            scatter[p * j + i] *= denom;
+    F77_CALL(dsyrk)("L", "T", &p, &n, &denom, work_np, &n, &d_zero, scatter,
+        &p);
 }
 
 /******************************************************************************\

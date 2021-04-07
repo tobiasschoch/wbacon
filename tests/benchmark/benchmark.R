@@ -7,6 +7,9 @@
 library(wbacon)
 library(microbenchmark)
 
+library(omp)
+set_num_threads(8)
+
 ref <- read.csv("data_benchmark.csv")
 #-------------------------------------------------------------------------------
 # TUNING OF THE METHOD
