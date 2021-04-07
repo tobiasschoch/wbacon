@@ -18,7 +18,7 @@
    https://www.gnu.org/licenses/
 
    Billor N, Hadi AS, Vellemann PF (2000). BACON: Blocked Adaptative
-      Computationally efficient Outlier Nominators. Computational Statistics
+      Computationally Efficient Outlier Nominators. Computational Statistics
       and Data Analysis 34, pp. 279-298.
 */
 

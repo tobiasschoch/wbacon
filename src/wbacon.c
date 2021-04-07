@@ -19,7 +19,7 @@
    https://www.gnu.org/licenses/
 
    Billor N, Hadi AS, Vellemann PF (2000). BACON: Blocked Adaptative
-      Computationally efficient Outlier Nominators. Computational Statistics
+      Computationally Efficient Outlier Nominators. Computational Statistics
       and Data Analysis 34, pp. 279-298.
    Béguin C, Hulliger B (2008). The BACON-EEM Algorithm for Multivariate
       Outlier Detection in Incomplete Survey Data. Survey Methodology 34,
@@ -540,9 +540,9 @@ static inline wbacon_error_type mahalanobis(wbdata *dat, workarray *work,
 
     // squared Mahalanobis distances (row sums)
     for (int i = 0; i < n; i++)
-        dist[i] = 0.0;
+        dist[i] = _POWER2(work_np[i]);
 
-    for (int j = 0; j < p; j++)
+    for (int j = 1; j < p; j++)
         for (int i = 0; i < n; i++)
             dist[i] += _POWER2(work_np[n * j + i]);
 
