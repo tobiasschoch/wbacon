@@ -66,8 +66,9 @@ int fitwls(regdata *dat, estimate *est, int* restrict subset,
         wx[i] = weight_sqrt[i] * indicator * x[i];
     }
 
-    #pragma omp parallel for if(p * n > FITWLS_OMP_MIN_SIZE)
+    #pragma omp parallel for if(n > FITWLS_OMP_MIN_SIZE)
     for (int j = 1; j < p; j++) {
+        #pragma omp simd
         for (int i = 0; i < n; i++)
             wx[i + n * j] = (double)subset[i] * weight_sqrt[i] * x[i + n * j];
     }
@@ -89,9 +90,9 @@ int fitwls(regdata *dat, estimate *est, int* restrict subset,
 
     // residual scale estimate (sigma, using the output of dgels)
     double ssq = 0.0;
-    for (int i = p; i < n; i++) {
+    for (int i = p; i < n; i++)
         ssq += wy[i] * wy[i];
-    }
+
     *sigma = sqrt(ssq / (sum_w - (double)p));
 
     // residuals

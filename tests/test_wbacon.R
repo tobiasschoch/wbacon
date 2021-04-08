@@ -60,47 +60,37 @@ compare <- function(data, name, init = "V2"){
 	if (!is.null(res)) {
 		cat(name, ": differences detected\n")
 		colnames(res) <- c("center", "cov", "distance", "subset")
+        print(res)
 	}
 
-	res
+    return(NROW(res))
 }
 
 #===============================================================================
 # Tests I
 #===============================================================================
-# We test the implementations on 7 well known data sets. The function 'compare'
-# is expected to return 'NULL'; otherwise the two implementations differ
+# We test the implementations on 7 well known data sets.
+errors <- 0
 
-data(hbk, package = "robustbase")
-d_hbk <- data.matrix(hbk[, 1:3])
-compare(d_hbk, "hbk", "V1")
-compare(d_hbk, "hbk", "V2")
+setup <- matrix(c(
+#------------------------------
+#    DATASET        VARIABLES
+#------------------------------
+    "hbk",          "1:3",
+    "bushfire",     "1:5",
+    "aircraft",     "1:4",
+    "education",    "2:4",
+    "heart",        "1:2",
+    "milk",         "1:8",
+    "pulpfiber",    "1:8"), byrow = TRUE, ncol = 2)
 
-data(bushfire, package = "robustbase")
-compare(bushfire, "bushfire", "V1")
-compare(bushfire, "bushfire", "V2")
-
-data(aircraft, package = "robustbase")
-d_aircraft <- data.matrix(aircraft[, 1:4])
-compare(d_aircraft, "aircraft", "V1")
-compare(d_aircraft, "aircraft", "V2")
-
-data(education, package = "robustbase")
-d_education<- data.matrix(education[, 2:4])
-compare(d_education, "education", "V1")
-compare(d_education, "education", "V2")
-
-data(heart, package = "robustbase")
-d_heart <- data.matrix(heart[, 1:2])
-compare(d_heart, "heart", "V1")
-compare(d_heart, "heart", "V2")
-
-data(milk, package = "robustbase")
-compare(milk, "milk", "V1")
-compare(milk, "milk", "V2")
-
-data(pulpfiber, package = "robustbase")
-pulp <- as.matrix(pulpfiber)
-compare(pulp, "pulpfiber", "V1")
-compare(pulp, "pulpfiber", "V2")
-
+for (i in 1:nrow(setup)) {
+    data_name <- setup[i, 1]
+    data(list = data_name, package = "robustbase")
+    dt <- data.matrix(get(data_name))
+    eval(parse(text = paste0("dt <- dt[,", setup[i, 2], "]")))
+    errors <- errors + compare(dt, data_name, "V1")
+    errors <- errors + compare(dt, data_name, "V2")
+}
+if (errors == 0)
+    cat("\nno errors\n\n")

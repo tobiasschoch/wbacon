@@ -8,7 +8,7 @@ library(wbacon)
 library(microbenchmark)
 
 library(omp)
-set_num_threads(8)
+set_num_threads(4)
 
 ref <- read.csv("data_benchmark.csv")
 #-------------------------------------------------------------------------------
@@ -25,7 +25,7 @@ scenario <- data.frame(matrix(c(
      10,    10000,  0.1,  100,
      20,   100000,  0.1,  100,
     200,    10000,  0.1,   10,
-     20,  1000000,  0.1,   10), byrow = TRUE, ncol = 4))
+     20,  1000010,  0.1,   10), byrow = TRUE, ncol = 4))
 colnames(scenario) <- c("p", "n", "eps", "times")
 
 #-------------------------------------------------------------------------------

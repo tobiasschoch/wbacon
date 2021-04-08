@@ -40,7 +40,7 @@ wBACON <- function(x, weights = NULL, alpha = 0.05, collect = 4,
 	if (collect >= n / p)
 		stop("Argument 'collect' must be an integer smaller than ",
 			floor(n / p), "\n")
-	if (collect * p / n > 0.6)
+	if (collect * p / n > 0.6 && verbose)
 		cat("Note: initial subset > 60% (use a smaller value for 'collect')\n")
 
 	# compute weighted BACON algorithm

@@ -173,7 +173,7 @@ algebra subprograms (BLAS), \textit{ACM Transactions on Mathematical Software},
 \begin{Description}
 The function implements a weighted variant of Algorithm 3 of Billor et al.
 (2000). It calls a weighted variant of Algorithm 2 of Billor et al. (2000) to
-initialize the subset (see \code{\LinkA{initialsubset}{initialsubset}}).
+initialize the subset (see \code{\LinkA{initial\_subset}{initialsubset}}).
 \end{Description}
 \begin{Usage}
 \begin{verbatim}
@@ -217,13 +217,9 @@ See \code{methods.pdf} for more details.
 \begin{Dependencies}
 	\begin{description}
 		\item[internal:]
-		\code{\LinkA{wquantile\_noalloc}{wquantilenoalloc}},
-		\code{\LinkA{euclidean\_norm2}{euclideannorm2}},
-		\code{\LinkA{scatter\_w}{scatterw}},
-		\code{\LinkA{mean\_scatter\_w}{meanscatterw}},
-		\code{\LinkA{mahalanobis}{mahalanobis}},
-
-		\code{\LinkA{initialsubset}{initialsubset}},
+        \code{\LinkA{initial\_location}{initiallocation}},
+		\code{\LinkA{initial\_subset}{initialsubset}},
+        \code{\LinkA{mahalanobis}{mahalanobis}},
 		\code{\LinkA{cutoffval}{cutoffval}}, and
 		\code{\LinkA{wbacon\_error}{wbaconerror}}
 		%
@@ -463,14 +459,58 @@ typedef struct \code{\LinkA{wbdata}{wbdata}} and
 \addcontentsline{toc}{subsection}{Internal functions}%
 
 %---------------------------------------
-\HeaderB{initialsubset}{Internal function}{initialsubset}
+\HeaderB{initial\_location}{Internal function}{initiallocation}
 \begin{Description}
-Computes the initial subset. This is a weighted variant of Algorithm 2 of Billor
+Computes the initial location: either version ``v1'' or ``v2'' or Billor
 et al. (2000).
 \end{Description}
 \begin{Usage}
 \begin{verbatim}
-static wbacon_error_type initialsubset(wbdata *dat, workarray *work,
+static wbacon_error_type initial_location(wbdata *dat, workarray *work,
+    double* restrict select_weight, double* restrict center,
+    double* restrict scatter, int* version2)
+\end{verbatim}
+\end{Usage}
+\begin{Arguments}
+	\begin{ldescription}
+		\WBDATA
+		\WORKwb
+		\SELECTWEIGHT
+		\CENTER
+		\SCATTER
+ 		\item[\code{version2}] toggle, \code{[int]}, defines the method to
+			construct the initial subset: \code{1}: ``Version 2'' of Billor et
+			al. (2000) is used; \code{0}: ``Version 1'' is used.
+	\end{ldescription}
+\end{Arguments}
+\begin{Dependency}
+    \code{\LinkA{wquantile\_noalloc}{wquantile}},
+    \code{\LinkA{euclidean\_norm2}{euclideannorm2}}, and
+    \code{\LinkA{mahalanobis}{mahalanobis}}
+\end{Dependency}
+\begin{Value}
+The function returns a \code{\LinkA{wbacon\_error\_type}{wbaconerrortype}}:
+the return value is either \code{WBACON\_ERROR\_OK} (i.e., no error) or the
+error handed over by \code{\LinkA{mahalanobis}{mahalanobis}}.
+
+See \code{methods.pdf} for the details.
+
+On return, the following slots are overwritten:
+\begin{ldescription}
+	\item[\code{center}]
+	\item[\code{scatter}]
+\end{ldescription}
+\end{Value}
+
+%---------------------------------------
+\HeaderB{initial\_subset}{Internal function}{initialsubset}
+\begin{Description}
+Computes the initial subset. This is a weighted variant of Algorithm 2 of
+Billor et al. (2000).
+\end{Description}
+\begin{Usage}
+\begin{verbatim}
+static wbacon_error_type initial_subset(wbdata *dat, workarray *work,
     double* restrict select_weight, double* restrict center,
     double* restrict scatter, int* restrict subset,
     int* restrict subsetsize, int *verbose, int *collect)
@@ -534,10 +574,10 @@ static inline wbacon_error_type mahalanobis(wbdata *dat, workarray *work,
 The function's loop over the columns of the data matrix is parallelized
 using the OpenMP preprocessor directive
 \begin{verbatim}
-#pragma omp parallel for if(p * n > OMP_MIN_SIZE)
+#pragma omp parallel for if(n > OMP_MIN_SIZE)
 \end{verbatim}
-\noindent where \OMPMINSIZE, and \code{n} and \code{p} are, respectively,
-the number of rows and columns. The inner loop over the \code{n}
+\noindent where \OMPMINSIZE, and \code{n} and is
+the number of rows. The inner loop over the \code{n}
 rows is equipped with the directive \code{\#pragma omp simd} to tell the
 compiler that we demand SIMD vectorization.
 \end{Details}
@@ -583,12 +623,10 @@ The weighted \code{scatter} matrix is computed without (re-) computing the
 The function's loop over the columns of the data matrix is parallelized
 using the OpenMP preprocessor directive
 \begin{verbatim}
-#pragma omp parallel for if(p * n > 10 * OMP_MIN_SIZE)
+#pragma omp parallel for if(n > OMP_MIN_SIZE)
 \end{verbatim}
-\noindent where \OMPMINSIZE, and \code{n} and \code{p} are, respectively,
-the number of rows and columns. It is not efficient to use the parallelization
-on rather small arrays; therefore, we have pre-multiplied
-\code{OMP\_MIN\_SIZE} by a factor of 10. The inner loop over the \code{n}
+\noindent where \OMPMINSIZE and \code{n} is
+the number of rows. The inner loop over the \code{n}
 rows is equipped with the directive \code{\#pragma omp simd} to tell the
 compiler that we demand SIMD vectorization.
 \end{Details}
@@ -626,10 +664,10 @@ static inline void mean_scatter_w(wbdata *dat, double* restrict select_weight,
 The function's loop over the columns of the data matrix is parallelized
 using the OpenMP preprocessor directive
 \begin{verbatim}
-#pragma omp parallel for if(p * n > OMP_MIN_SIZE)
+#pragma omp parallel for if(n > OMP_MIN_SIZE)
 \end{verbatim}
-\noindent where \OMPMINSIZE, and \code{n} and \code{p} are, respectively,
-the number of rows and columns. The inner loop over the \code{n}
+\noindent where \OMPMINSIZE and \code{n} is
+the number of rows. The inner loop over the \code{n}
 rows is equipped with the directive \code{\#pragma omp simd} to tell the
 compiler that we demand SIMD vectorization.
 \end{Details}
@@ -824,10 +862,9 @@ static wbacon_error_type initial_reg(regdata *dat, workarray *work,
 The function's loop over the columns of the data matrix is parallelized
 using the OpenMP preprocessor directive
 \begin{verbatim}
-#pragma omp parallel for if(p * n > REG_OMP_MIN_SIZE)
+#pragma omp parallel for if(n > REG_OMP_MIN_SIZE)
 \end{verbatim}
-\noindent where \REGOMPMINSIZE, and \code{n} and \code{p} are, respectively,
-the number of rows and columns.
+\noindent where \REGOMPMINSIZE and \code{n} is the number of rows and columns.
 
 See \code{methods.pdf} for more details.
 \end{Details}
@@ -1032,10 +1069,9 @@ Then, it computes the $t_i$'s.
 The function's loop over the columns of the hat matrix is parallelized
 using the OpenMP preprocessor directive
 \begin{verbatim}
-#pragma omp parallel for if(p * n > REG_OMP_MIN_SIZE)
+#pragma omp parallel for if(n > REG_OMP_MIN_SIZE)
 \end{verbatim}
-\noindent where \REGOMPMINSIZE, and \code{n} and \code{p} are, respectively,
-the number of rows and columns.
+\noindent where \REGOMPMINSIZE and \code{n} is the number of rows and columns.
 
 The function returns a \code{\LinkA{wbacon\_error\_type}{wbaconerrortype}}:
 the return value is either \code{WBACON\_ERROR\_OK} (i.e., no error) or the
@@ -1235,11 +1271,9 @@ subroutine using a QR factorization of the weighted design matrix.
 The function's loop over the columns of the hat matrix is parallelized
 using the OpenMP preprocessor directive
 \begin{verbatim}
-#pragma omp parallel for if(p * n > FITLS_OMP_MIN_SIZE)
+#pragma omp parallel for if(n > FITLS_OMP_MIN_SIZE)
 \end{verbatim}
-\noindent where \FITWLSOMPMINSIZE, and \code{n} and \code{p} are, respectively,
-the number of rows and columns.
-
+\noindent where \FITWLSOMPMINSIZE and \code{n} is the number of rows.
 
 \end{Details}
 \begin{Dependencies}

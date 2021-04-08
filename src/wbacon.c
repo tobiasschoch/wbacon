@@ -49,9 +49,11 @@ typedef struct workarray_struct {
 } workarray;
 
 // declarations of local function
-static wbacon_error_type initialsubset(wbdata*, workarray*, double* restrict,
+static wbacon_error_type initial_subset(wbdata*, workarray*, double* restrict,
     double* restrict, double* restrict, int* restrict, int* restrict, int*,
     int*);
+static wbacon_error_type initial_location(wbdata*, workarray*,
+    double* restrict, double* restrict, double* restrict, int*);
 static inline wbacon_error_type mahalanobis(wbdata*, workarray*,
     double* restrict, double* restrict, double* restrict);
 static wbacon_error_type check_matrix_fullrank(double* restrict, int);
@@ -110,11 +112,12 @@ void wbacon(double *x, double *w, double *center, double *scatter, double *dist,
     int *n, int *p, double *alpha, int *subset, double *cutoff, int *maxiter,
     int *verbose, int *version2, int *collect, int *success)
 {
-    *success = 1;
+    int subsetsize;
     wbacon_error_type err;
-
     int* restrict subset0 = (int*) Calloc(*n, int);
     double* select_weight = (double*) Calloc(*n, double);
+
+    *success = 1;
 
     // square root of the weights
     double* w_sqrt = (double*) Calloc(*n, double);
@@ -147,33 +150,18 @@ void wbacon(double *x, double *w, double *center, double *scatter, double *dist,
     work->work_pp = work_pp;
     work->work_2n = work_2n;
 
-    // STEP 0: establish initial subset
-    if (*version2) {
-        // center: coordinate-wise weighted median
-        double d_half = 0.5;
-        for (int j = 0; j < *p; j++)
-            wquantile_noalloc(x + *n * j, w, work_2n, n, &d_half, &center[j]);
-
-        // distance: Euclidean norm
-        euclidean_norm2(dat, work_np, center);
-    } else {
-        // Mahalanobis distances
-        for (int i = 0; i < *n; i++)
-            select_weight[i] = 1.0;
-
-        err = mahalanobis(dat, work, select_weight, center, scatter);
-        if (err != WBACON_ERROR_OK) {
-            *success = 0;
-            PRINT_OUT("Error: covariance %s\n", wbacon_error(err));
-            goto clean_up;
-        }
+    // STEP 0
+    // initial location
+    err = initial_location(dat, work, select_weight, center, scatter, version2);
+    if (err != WBACON_ERROR_OK) {
+        *success = 0;
+        PRINT_OUT("Error: covariance %s\n", wbacon_error(err));
+        goto clean_up;
     }
 
-    // determine initial subset
-    int subsetsize;
-    err = initialsubset(dat, work, select_weight, center, scatter, subset,
+    // initial subset
+    err = initial_subset(dat, work, select_weight, center, scatter, subset,
         &subsetsize, verbose, collect);
-
     if (err != WBACON_ERROR_OK) {
         *success = 0;
         PRINT_OUT("Error: %s (initial subset)\n", wbacon_error(err));
@@ -244,6 +232,42 @@ clean_up:
 }
 
 /******************************************************************************\
+|* initial location: either V1 or V2 of Billor et al. (2000)                  *|
+|*  dat           data, typedef struct wbdata                                 *|
+|*  work          work arrays, typedef struct workarray                       *|
+|*  select_weight weight = 1.0 if obs. in subset, otherwise 0.0, array[n]     *|
+|*  center        array[p]                                                    *|
+|*  scatter       array[p, p]                                                 *|
+|*  version2      toogle: 1 = version V2; 0 = Version V1                      *|
+\******************************************************************************/
+static wbacon_error_type initial_location(wbdata *dat, workarray *work,
+    double* restrict select_weight, double* restrict center,
+    double* restrict scatter, int* version2)
+{
+    int n = dat->n, p = dat->p;
+    double* restrict x = dat->x;
+    wbacon_error_type err = WBACON_ERROR_OK;
+
+    if (*version2) {
+        // center: coordinate-wise weighted median
+        double d_half = 0.5;
+        for (int j = 0; j < p; j++)
+            wquantile_noalloc(x + n * j, dat->w, work->work_2n, &n,
+                &d_half, &center[j]);
+
+        // distance: Euclidean norm
+        euclidean_norm2(dat, work->work_np, center);
+    } else {
+        // Mahalanobis distances
+        for (int i = 0; i < n; i++)
+            select_weight[i] = 1.0;
+
+        err = mahalanobis(dat, work, select_weight, center, scatter);
+    }
+    return err;
+}
+
+/******************************************************************************\
 |* cutoff for the chi-squared quantile                                        *|
 |*  k       size of subset                                                    *|
 |*  n, p    dimensions                                                        *|
@@ -258,7 +282,7 @@ static inline double cutoffval(int n, int k, int p)
 }
 
 /******************************************************************************\
-|* initialsubset                                                              *|
+|* initial_subset                                                              *|
 |*  dat           data, typedef struct wbdata                                 *|
 |*  work          work arrays, typedef struct workarray                       *|
 |*  select_weight weight = 1.0 if obs. in subset, otherwise 0.0, array[n]     *|
@@ -269,7 +293,7 @@ static inline double cutoffval(int n, int k, int p)
 |*  verbose       0: quiet; 1: verbose                                        *|
 |*  collect       parameter to specify the size of the intial subset          *|
 \******************************************************************************/
-static wbacon_error_type initialsubset(wbdata *dat, workarray *work,
+static wbacon_error_type initial_subset(wbdata *dat, workarray *work,
     double* restrict select_weight, double* restrict center,
     double* restrict scatter, int* restrict subset,
     int* restrict subsetsize, int *verbose, int *collect)
@@ -380,21 +404,20 @@ static inline void scatter_w(wbdata *dat, double* restrict work_np,
     double* restrict scatter)
 {
     int n = dat->n, p = dat->p;
+    double* restrict x = dat->x;
     double* restrict w = dat->w;
     double* restrict w_sqrt = dat->w_sqrt;
-
-    Memcpy(work_np, dat->x, n * p);
 
     double sum_w = 0.0;
     for (int i = 0; i < n; i++)
         sum_w += w[i] * select_weight[i];
 
     // centered data
-    #pragma omp parallel for if(p * n * 100 > OMP_MIN_SIZE)
+    #pragma omp parallel for if(n > OMP_MIN_SIZE)
     for (int j = 0; j < p; j++) {
         #pragma omp simd
         for (int i = 0; i < n; i++) {
-            work_np[n * j + i] -= center[j];
+            work_np[n * j + i] = x[n * j + i] - center[j];
             work_np[n * j + i] *= w_sqrt[i] * select_weight[i];
         }
     }
@@ -421,6 +444,7 @@ static inline void mean_scatter_w(wbdata *dat, double* restrict select_weight,
 {
     int n = dat->n, p = dat->p;
     double denom;
+    double* restrict x = dat->x;
     double* restrict w = dat->w;
     double* restrict w_sqrt = dat->w_sqrt;
 
@@ -433,22 +457,21 @@ static inline void mean_scatter_w(wbdata *dat, double* restrict select_weight,
     }
 
     // coordinate-wise mean and centered data
-    Memcpy(work_np, dat->x, n * p);
     denom = 1.0 / sum_w;
 
-    #pragma omp parallel for if(p * n > OMP_MIN_SIZE)
+    #pragma omp parallel for if(n > OMP_MIN_SIZE)
     for (int j = 0; j < p; j++) {
         center[j] = 0.0;
         #pragma omp simd
         for (int i = 0; i < n; i++)
-            center[j] += work_np[n * j + i] * work_n[i];
+            center[j] += x[n * j + i] * work_n[i];
 
         center[j] *= denom;
 
         // center the data and pre-multiply by sqrt(w[i])
         #pragma omp simd
         for (int i = 0; i < n; i++) {
-            work_np[n * j + i] -= center[j];
+            work_np[n * j + i] = x[n * j + i] - center[j];
             work_np[n * j + i] *= w_sqrt[i] * select_weight[i];
         }
     }
@@ -472,20 +495,20 @@ static inline void euclidean_norm2(wbdata *dat, double* restrict work_np,
 {
     int n = dat->n, p = dat->p;
     double abs, scale, ssq;
+    double* restrict x = dat->x;
     double* restrict dist = dat->dist;
 
-    Memcpy(work_np, dat->x, n * p);
     for (int i = 0; i < n; i++) {
         ssq = 1.0;
         scale = 0.0;
         for (int j = 0; j < p; j++) {
-            work_np[n * j + i] -= center[j];    // center the data
+            work_np[n * j + i] = x[n * j + i] - center[j];
             abs = fabs(work_np[n * j + i]);
             if (abs < DBL_EPSILON)
                 continue;
             if (scale <= abs) {
                 ssq = 1.0 + ssq * _POWER2(scale / abs);
-                scale = abs;                    // change the scaling factor
+                scale = abs;
             } else {
                 ssq += _POWER2(abs / scale);
             }
@@ -509,33 +532,31 @@ static inline wbacon_error_type mahalanobis(wbdata *dat, workarray *work,
 {
     int n = dat->n, p = dat->p;
     double* restrict dist = dat->dist;
+    double* restrict x = dat->x;
     double* restrict work_np = work->work_np;
-    double* restrict work_pp = work->work_pp;
-    double* restrict work_n = work->work_n;
 
     // coordinate-wise mean and scatter matrix
-    mean_scatter_w(dat, select_weight, work_n, work_np, center, scatter);
-
-    Memcpy(work_np, dat->x, n * p);                 // copy of 'x'
-
-    #pragma omp parallel for if(p * n > 10 * OMP_MIN_SIZE)
-    for (int j = 0; j < p; j++) {
-        #pragma omp simd
-        for (int i = 0; i < n; i++)
-            work_np[n * j + i] -= center[j];        // center the data
-    }
+    mean_scatter_w(dat, select_weight, work->work_n, work_np, center, scatter);
 
     // Cholesky decomposition of scatter matrix
-    Memcpy(work_pp, scatter, p * p);
+    Memcpy(work->work_pp, scatter, p * p);
     int info;
-    F77_CALL(dpotrf)("L", &p, work_pp, &p, &info);
+    F77_CALL(dpotrf)("L", &p, work->work_pp, &p, &info);
     if (info != 0)
         return WBACON_ERROR_RANK_DEFICIENT;
 
+    // center the data
+    #pragma omp parallel for if(n > OMP_MIN_SIZE)
+    for (int j = 0; j < p; j++) {
+        #pragma omp simd
+        for (int i = 0; i < n; i++)
+            work_np[n * j + i] = x[n* j + i] - center[j];
+    }
+
     // Solve for y in A * y = B by forward substitution (A = Cholesky factor)
     const double d_one = 1.0;
-    F77_CALL(dtrsm)("R", "L", "T", "N", &n, &p, &d_one, work_pp, &p, work_np,
-        &n);
+    F77_CALL(dtrsm)("R", "L", "T", "N", &n, &p, &d_one, work->work_pp, &p,
+        work_np, &n);
 
     // squared Mahalanobis distances (row sums)
     for (int i = 0; i < n; i++)

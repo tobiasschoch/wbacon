@@ -123,7 +123,7 @@ int *subset1 = (int*) Calloc(*n, int);
     double *xty = (double*) Calloc(*p, double);
     est->xty = xty;
 
-    // initialize and populate 'data' which is a workarray struct
+    // initialize and populate 'work' which is a workarray struct
     workarray warray;
     workarray *work = &warray;
     double *work_p = (double*) Calloc(*p, double);
@@ -214,7 +214,7 @@ static wbacon_error_type initial_reg(regdata *dat, workarray *work,
     double* restrict xty = est->xty;
     wbacon_error_type status = WBACON_ERROR_OK;
 
-    // 4) compute regression estimate (on return, dat->wx is overwritten by the
+    // compute regression estimate (on return, dat->wx is overwritten by the
     // R matrix of the QR factorization (R will be used by the caller of
     // initial_reg)
     info = fitwls(dat, est, subset, work->dgels_work, work->lwork);
@@ -249,11 +249,14 @@ static wbacon_error_type initial_reg(regdata *dat, workarray *work,
             L[j + i * p] = wx[i + j * n];
 
     // compute xty (weighted)
-    #pragma omp parallel for if(p * n > REG_OMP_MIN_SIZE)
-    for (int i = 0; i < p; i++)
-        for (int j = 0; j < n; j++)
+    #pragma omp parallel for if(n > REG_OMP_MIN_SIZE)
+    for (int i = 0; i < p; i++) {
+        #pragma omp simd
+        for (int j = 0; j < n; j++) {
             if (subset[j])
                 xty[i] += w[j] * x[j + i * n] * y[j];
+        }
+    }
 
     // compute t[i]'s
     status = compute_ti(dat, work, est, subset, m, est->dist);
@@ -678,7 +681,7 @@ static inline wbacon_error_type hat_matrix(regdata *dat, workarray *work,
     for (int i = 0; i < n; i++)
         hat[i] = _POWER2(work_np[i]);
 
-    #pragma omp parallel for if(p * n > REG_OMP_MIN_SIZE)
+    #pragma omp parallel for if(n > REG_OMP_MIN_SIZE)
     for (int j = 1; j < p; j++) {
         #pragma omp simd
         for (int i = 0; i < n; i++) {
