@@ -118,7 +118,6 @@ void wbacon(double *x, double *w, double *center, double *scatter, double *dist,
 
     // square root of the weights
     double* w_sqrt = (double*) Calloc(*n, double);
-    Memcpy(w_sqrt, w, *n);
     for (int i = 0; i < *n; i++)
         w_sqrt[i] = sqrt(w[i]);
 
