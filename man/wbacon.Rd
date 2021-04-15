@@ -8,7 +8,7 @@
 \title{Weighted BACON Algorithm for Multivariate Outlier Detection}
 \usage{
 wBACON(x, weights = NULL, alpha = 0.05, collect = 4, version = c("V2", "V1"),
-    na.rm = FALSE, maxiter = 50, verbose = FALSE)
+    na.rm = FALSE, maxiter = 50, verbose = FALSE, n_threads = 2)
 distance(x)
 \method{print}{wbaconmv}(x, digits = max(3L, getOption("digits") - 3L), ...)
 \method{summary}{wbaconmv}(object, ...)
@@ -34,6 +34,8 @@ center(object)
 		\code{maxiter = 50}).}
 	\item{verbose}{\code{[logical]} indicating whether additional information
 		is printed to the console (default: \code{TRUE}).}
+    \item{n_threads}{\code{[integer]} number of threads used for OpenMP
+        (\code{default: 2}).}
 	\item{digits}{\code{[integer]} minimal number of significant digits.}
 	\item{...}{additional arguments passed to the method.}
 	\item{object}{object of class \code{wbaconmv}.}
@@ -126,5 +128,6 @@ Béguin C., Hulliger B. (2008). The BACON-EEM Algorithm for Multivariate
 	34, pp. 91-103.
 }
 \seealso{
-\code{\link[=plot.wbaconmv]{plot}} and \link[=is_outlier.wbaconmv]{is_outlier}
+\code{\link[=plot.wbaconmv]{plot}} and
+\code{\link[=is_outlier.wbaconmv]{is_outlier}}
 }

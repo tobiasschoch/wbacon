@@ -7,14 +7,11 @@
 library(wbacon)
 library(microbenchmark)
 
-library(omp)
-set_num_threads(4)
-
 ref <- read.csv("data_benchmark.csv")
 #-------------------------------------------------------------------------------
 # TUNING OF THE METHOD
 VERS <- "V2"
-ALPHA <- 0.95
+ALPHA <- 0.05
 
 #-------------------------------------------------------------------------------
 # SCENARIOS

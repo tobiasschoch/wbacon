@@ -26,5 +26,5 @@
 
 // declarations
 void wbacon_reg(double*, double*, double*, double*, double*, int*, double*,
-    int*, int*, int*, int*, int*, int*, double*, int*);
+    int*, int*, int*, int*, int*, int*, double*, int*, int*, int*);
 #endif

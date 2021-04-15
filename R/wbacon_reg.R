@@ -1,8 +1,9 @@
 wBACON_reg <- function(formula, weights = NULL, data, collect = 4,
 	na.rm = FALSE, alpha = 0.05, version = c("V2", "V1"), maxiter = 50,
-    verbose = FALSE)
+    verbose = FALSE, original = FALSE, n_threads = 2)
 {
-	stopifnot(alpha < 1, alpha > 0, collect > 0, maxiter > 0, collect > 0)
+	stopifnot(alpha < 1, alpha > 0, collect > 0, maxiter > 0, collect > 0,
+        n_threads > 0)
 	if (!inherits(formula, "formula"))
 		stop("Argument '", formula, "' must be a formula\n", call. = FALSE)
 
@@ -54,7 +55,9 @@ wBACON_reg <- function(formula, weights = NULL, data, collect = 4,
 		dist = as.double(wb$dist), n = as.integer(n), p = as.integer(p),
 		m = as.integer(sum(wb$subset)), verbose = as.integer(verbose),
 		sucess = as.integer(1), collect = as.integer(collect),
-		alpha = as.double(alpha), maxiter = as.integer(maxiter))
+		alpha = as.double(alpha), maxiter = as.integer(maxiter),
+        original = as.integer(original), n_threads = as.integer(n_threads),
+        PACKAGE = "wbacon")
 
 	# cast the QR factorization as returned by LAPACK:dgeqrf to a 'qr' object
 	QR <- structure(

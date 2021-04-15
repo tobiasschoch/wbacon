@@ -83,15 +83,21 @@ static inline void chol_update(double* restrict, double* restrict, int);
 |*  alpha    level of significance that determines the (1-alpha) quantile of  *|
 |*           the Student t-distr. used as a cutoff value for the t[i]'s       *|
 |*  maxiter  maximum number of iterations                                     *|
+|*  original toggle: 1: initial basic subset of size 'collect * p' as defined *|
+|*           as defined in Billor et al. (2000); 0: skips taking a subset of  *|
+|*           size 'collect * p' and uses instead the size of the subset that  *|
+|*           results from Algorithm 3                                         *|
+|*  threads  set the max number of threads for OpenMP                         *|
 \******************************************************************************/
 void wbacon_reg(double *x, double *y, double *w, double *resid, double *beta,
     int *subset0, double *dist, int *n, int *p, int *m, int *verbose,
-    int *success, int *collect, double *alpha, int *maxiter)
+    int *success, int *collect, double *alpha, int *maxiter, int *original,
+    int *threads)
 {
-wbacon_error_type err;
-*success = 1;
+    wbacon_error_type err;
+    *success = 1;
 
-int *subset1 = (int*) Calloc(*n, int);
+    int *subset1 = (int*) Calloc(*n, int);
 
     // initialize and populate 'data' which is a regdata struct
     regdata data;
@@ -141,7 +147,24 @@ int *subset1 = (int*) Calloc(*n, int);
     double *dgels_work = (double*) Calloc(work->lwork, double);
     work->dgels_work = dgels_work;
 
+    // store current definition of max number of threads
+    int default_no_threads = omp_get_max_threads();
+    // set preferred number of threads
+    if (*threads <= default_no_threads) {
+        omp_set_num_threads(*threads);
+    } else {
+        PRINT_OUT("The requested no. of threads is larger than the default.\n");
+        PRINT_OUT("Thus, the default is kept at %d\n", default_no_threads);
+    }
+
     // STEP 0 (initialization)
+    if (*original) {
+        // select the m = collect * p obs. with the smallest distances (from
+        // Alg. 3) into subset0; otherwise we take the subset of all 'good'
+        // obs. as determined by Alg. 3 (i.e., subset0)
+        *m = *collect * *p;
+        select_subset(dist, work_n, subset0, m, n);
+    }
     err = initial_reg(dat, work, est, subset0, m, verbose);
     if (err != WBACON_ERROR_OK) {
         *success = 0;
@@ -151,7 +174,8 @@ int *subset1 = (int*) Calloc(*n, int);
 
 #if _debug_mode
 PRINT_OUT("initialization\n");
-print_magic_number(subset0, *m);
+print_magic_number(subset0, *n);
+print_magic_number(subset1, *n);
 PRINT_OUT("\n");
 #endif
 
@@ -169,7 +193,8 @@ PRINT_OUT("\n");
 
 #if _debug_mode
 PRINT_OUT("Alg. 4 (end of)\n");
-print_magic_number(subset1, *m);
+print_magic_number(subset0, *n);
+print_magic_number(subset1, *n);
 PRINT_OUT("\n");
 #endif
 
@@ -188,6 +213,10 @@ clean_up:
     Free(work_pp); Free(work_p); Free(work_np); Free(work_n); Free(dgels_work);
     Free(iarray); Free(subset1);
     Free(wx); Free(wy); Free(w_sqrt); Free(L);  Free(xty);
+
+    // set the number of threads to the default value
+    if (*threads != default_no_threads)
+        omp_set_num_threads(default_no_threads);
 }
 
 /******************************************************************************\
@@ -231,7 +260,6 @@ static wbacon_error_type initial_reg(regdata *dat, workarray *work,
             // select obs. with smallest dist (among those obs. not in the
             // subset)
             subset[iarray[*m - 1]] = 1;
-
             // re-do regression and check rank
             info = fitwls(dat, est, subset, work->dgels_work, work->lwork);
             if (info == 0) {
@@ -241,7 +269,7 @@ static wbacon_error_type initial_reg(regdata *dat, workarray *work,
         }
     }
     if (*verbose)
-    PRINT_OUT("Step 0: initial subset, m = %d\n", *m);
+        PRINT_OUT("Step 0: initial subset, m = %d\n", *m);
 
     // extract R matrix (as a lower triangular matrix: L) from dat->wx
     for (int i = 0; i < p; i++)
@@ -301,7 +329,6 @@ static wbacon_error_type algorithm_4(regdata *dat, workarray *work,
             for (;;) {
                 (*m)++;
                 subset1[iarray[*m - 1]] = 1;
-
                 if (*verbose)
                     PRINT_OUT("  m = %d", *m);
 
@@ -376,7 +403,7 @@ static wbacon_error_type algorithm_5(regdata *dat, workarray *work,
     while (iter <= *maxiter) {
 
 #if _debug_mode
-print_magic_number(subset1, *m);
+print_magic_number(subset0, n);
 #endif
 
         // weighted least squares (on return, wx is overwritten by the

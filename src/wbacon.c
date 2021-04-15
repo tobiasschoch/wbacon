@@ -107,12 +107,13 @@ static inline double qchisq2(double p, double df)
 |*  version2 1: 'Version 2' init. of Billor et al. (2000); 0: 'Version 1'     *|
 |*  collect  on entry: parameter to specify the size of the intial subset     *|
 |*  success  on return: 1: successful; 0: failure                             *|
+|*  threads  set the max number of threads for OpenMP                         *|
 \******************************************************************************/
 void wbacon(double *x, double *w, double *center, double *scatter, double *dist,
     int *n, int *p, double *alpha, int *subset, double *cutoff, int *maxiter,
-    int *verbose, int *version2, int *collect, int *success)
+    int *verbose, int *version2, int *collect, int *success, int *threads)
 {
-    int subsetsize;
+    int subsetsize, default_no_threads;
     wbacon_error_type err;
     int* restrict subset0 = (int*) Calloc(*n, int);
     double* select_weight = (double*) Calloc(*n, double);
@@ -149,6 +150,16 @@ void wbacon(double *x, double *w, double *center, double *scatter, double *dist,
     work->work_np = work_np;
     work->work_pp = work_pp;
     work->work_2n = work_2n;
+
+    // store current definition of max number of threads
+    default_no_threads = omp_get_max_threads();
+    // set preferred number of threads
+    if (*threads <= default_no_threads) {
+        omp_set_num_threads(*threads);
+    } else {
+        PRINT_OUT("The requested no. of threads is larger than the default.\n");
+        PRINT_OUT("Thus, the default is kept at %d\n", default_no_threads);
+    }
 
     // STEP 0
     // initial location
@@ -229,6 +240,10 @@ clean_up:
     Free(subset0); Free(work_np); Free(work_pp);
     Free(work_2n); Free(work_n); Free(iarray); Free(w_sqrt);
     Free(select_weight);
+
+    // set the number of threads to the default value
+    if (*threads != default_no_threads)
+        omp_set_num_threads(default_no_threads);
 }
 
 /******************************************************************************\

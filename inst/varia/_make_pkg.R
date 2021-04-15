@@ -1,3 +1,14 @@
+#!/usr/bin/env Rscript
+args <- commandArgs(trailingOnly = TRUE)
+if (length(args) == 0) {
+    mode <- "fast"
+} else {
+mode <- switch(args,
+    fast    = "fast",
+    check   = "check")
+}
+
+#-------------------------------------------------------------------------------
 PKG <- "wbacon"
 if (.Platform$OS.type == "unix") {
 	PKG_SOURCE <- "/mnt/c/my/code"
@@ -17,6 +28,12 @@ dir.create(PKG)
 pkg_files <- list.files(paste0(PKG_SOURCE, "/", PKG), full.names = TRUE)
 file.copy(pkg_files, paste0(PKG_ROOT, "/", PKG), recursive = TRUE)
 
+# copy .Rbuildignore and .Rinstignore
+if (mode == "check") {
+file.copy(paste0(paste0(PKG_SOURCE, "/", PKG, "/",
+    c(".Rbuildignore", ".Rinstignore"))), paste0(PKG_ROOT, "/", PKG))
+}
+
 # clean src folder (remove binary files)
 binary_files <- list.files(paste0(PKG_ROOT, "/", PKG, "/src"),
     pattern = "\\.o$|\\.dll$|\\.so$")
@@ -27,13 +44,21 @@ if (length(binary_files) > 0)
 setwd(PKG_ROOT)
 
 # fast install (only x64 arch; without html help files and vignette)
-system("R CMD INSTALL wbacon --no-html --no-multiarch")
+if (mode == "fast")
+    system(paste0("R CMD INSTALL ", PKG, " --no-html --no-multiarch"))
+
+# build the tar ball and check
+if (mode == "check") {
+    vers <- trimws(strsplit(readLines("wbacon/DESCRIPTION")[4], ":")[[1]][2])
+    pkg_tar <- paste0(PKG, "_", vers, ".tar.gz")
+    if (file.exists(pkg_tar))
+        file.remove(pkg_tar)
+    system(paste0("R CMD build ", PKG))
+    system(paste0("R CMD check ", pkg_tar))
+}
 
 # install (without building the vignette)
 #system("R CMD INSTALL wbacon")
-
-# build the tar ball
-#system("R CMD build wbacon")
 
 # install from the tar ball
 #system("R CMD INSTALL wbacon_0.2.tar.gz")

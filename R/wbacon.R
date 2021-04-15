@@ -1,8 +1,10 @@
 wBACON <- function(x, weights = NULL, alpha = 0.05, collect = 4,
-	version = c("V2", "V1"), na.rm = FALSE, maxiter = 50, verbose = FALSE)
+	version = c("V2", "V1"), na.rm = FALSE, maxiter = 50, verbose = FALSE,
+    n_threads = 2)
 {
 	n <- NROW(x); p <- NCOL(x)
-	stopifnot(n > p, p > 0, 0 < alpha, alpha < 1, maxiter > 0, collect > 1)
+	stopifnot(n > p, p > 0, 0 < alpha, alpha < 1, maxiter > 0, collect > 1,
+        n_threads > 0)
 
 	if (version[1] == "V2")
 		vers <- 1
@@ -51,7 +53,7 @@ wBACON <- function(x, weights = NULL, alpha = 0.05, collect = 4,
 		cutoff = as.double(numeric(1)), maxiter = as.integer(abs(maxiter)),
 		verbose = as.integer(verbose), version = as.integer(vers),
 		collect = as.integer(collect), success = as.integer(1),
-		PACKAGE = "wbacon")
+        n_threads = as.integer(n_threads), PACKAGE = "wbacon")
 
     tmp$cutoff <- sqrt(tmp$cutoff)
  	tmp$verbose <- NULL

@@ -2,8 +2,7 @@
 \alias{wbacon-package}
 \alias{wbacon}
 \docType{package}
-\title{Weighted BACON Algorithms for Multivariate Outlier Nomination
-(Detection) and Robust Linear Regression}
+\title{Weighted BACON Algorithms for Multivariate Outlier Nomination (Detection) and Robust Linear Regression}
 \description{
 The package \pkg{wbacon} implements the BACON algorithms of Billor et al.
 (2000) and some of the extensions proposed by Béguin and Hulliger (2008).

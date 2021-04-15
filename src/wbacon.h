@@ -5,7 +5,7 @@
 #include "partial_sort.h"
 #include "wbacon_error.h"
 
-#include "omp.h"
+#include <omp.h>
 #define OMP_MIN_SIZE 1000000        // OpenMP enabled when n > OMP_MIN_SIZE
 
 #ifndef _WBACON_H
@@ -23,5 +23,5 @@
 
 // declarations
 void wbacon(double*, double*, double*, double*, double*, int*, int*, double*,
-    int*, double*, int*, int*, int*, int*, int*);
+    int*, double*, int*, int*, int*, int*, int*, int*);
 #endif
