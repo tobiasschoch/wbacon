@@ -5,7 +5,13 @@
 # COMMENT  pkg 'robustbase' must be installed
 #===============================================================================
 library(wbacon)
+
 library(robustX)
+# check that version 1.25 (or newer) of robustX is installed
+robustX_version <- as.numeric(gsub("-", "", getNamespaceVersion("robustX")))
+if (robustX_version < 1.25)
+    stop(paste0("Version >= 1.25 of package 'robustX' is required, you have ",
+        robustX_version, "\n"))
 
 #===============================================================================
 # Tests
