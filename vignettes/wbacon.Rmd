@@ -1,6 +1,6 @@
 ---
 title: "Vignette: Weighted BACON algorithms"
-author: "Tobias Schoch (package vers. 0.2)"
+author: "Tobias Schoch (package vers. 0.3)"
 output:
     html_document:
         highlight: tango

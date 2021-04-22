@@ -5,7 +5,8 @@ if (length(args) == 0) {
 } else {
 mode <- switch(args,
     fast    = "fast",
-    check   = "check")
+    check   = "check",
+    full    = "full")
 }
 
 #-------------------------------------------------------------------------------
@@ -57,14 +58,15 @@ if (mode == "check") {
     system(paste0("R CMD check ", pkg_tar))
 }
 
-# install (without building the vignette)
-#system("R CMD INSTALL wbacon")
-
-# install from the tar ball
-#system("R CMD INSTALL wbacon_0.2.tar.gz")
-
-# install from the tar ball and generate *.zip-file
-#system("R CMD INSTALL --build wbacon_0.2.tar.gz")
+# full build and install (incl. html, vignette, etc)
+if (mode == "full") {
+    vers <- trimws(strsplit(readLines("wbacon/DESCRIPTION")[4], ":")[[1]][2])
+    pkg_tar <- paste0(PKG, "_", vers, ".tar.gz")
+    if (file.exists(pkg_tar))
+        file.remove(pkg_tar)
+    system(paste0("R CMD build ", PKG))
+    system(paste0("R CMD INSTALL ", pkg_tar))
+}
 
 # render pdf manual
 #system("R CMD Rd2pdf wbacon")
