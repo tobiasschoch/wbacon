@@ -144,3 +144,8 @@ coefficients.
 \code{\link[=predict.wbaconlm]{predict}} is used for prediction (incl.
 confidence and prediction intervals).
 }
+\examples{
+data(iris)
+wBACON_reg(Sepal.Length ~ Sepal.Width + Petal.Length + Petal.Width, data = iris)
+}
+

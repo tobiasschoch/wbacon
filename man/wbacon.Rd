@@ -131,3 +131,11 @@ Béguin C., Hulliger B. (2008). The BACON-EEM Algorithm for Multivariate
 \code{\link[=plot.wbaconmv]{plot}} and
 \code{\link[=is_outlier.wbaconmv]{is_outlier}}
 }
+\examples{
+data(swiss)
+dt <- swiss[, c("Fertility", "Agriculture", "Examination", "Education",
+    "Infant.Mortality")]
+m <- wBACON(dt)
+m
+which(is_outlier(m))
+}

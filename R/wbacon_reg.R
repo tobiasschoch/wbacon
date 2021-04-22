@@ -10,6 +10,9 @@ wBACON_reg <- function(formula, weights = NULL, data, collect = 4,
 	# data preparation
 	mf <- stats::model.frame(formula, data, na.action = stats::na.pass)
 	mt <- stats::terms(mf)
+    if (any(attr(mt, "dataClasses") == "factor"))
+        stop("Factor variables are not allowed\n")
+
 	response <- attr(mt, "response")
 	y <- as.numeric(stats::model.response(mf))
 	n <- length(y)
