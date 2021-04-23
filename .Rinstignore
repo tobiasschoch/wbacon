@@ -23,5 +23,5 @@
 # vignettes folder
 ^vignettes/_my_Makefile$
 ^vignettes/wbacon\.html$
-# license
-^inst/LICENSE$
+# license (github requries it in the base directory but CRAN complains)
+^LICENSE$

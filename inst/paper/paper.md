@@ -13,7 +13,7 @@ authors:
    affiliation: 1
 affiliations:
  - name: University of Applied Sciences and Arts Northwestern Switzerland, School of Business, Riggenbachstrasse 16, CH-4600 Olten, Switzerland
-index: 1
+   index: 1
 date: 29 March 2021
 bibliography: paper.bib
 ---
