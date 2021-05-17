@@ -119,15 +119,15 @@ data(bushfire.weights, package = "modi")
 #### Outlier detection
 
 ```{r}
-fit <- wBACON(bushfire, w = bushfire.weights, alpha = 0.95)
+fit <- wBACON(bushfire, w = bushfire.weights, alpha = 0.05)
 fit
 ```
 
-The argument `alpha` determines the $(1-\alpha)$-quantile $\chi_{\alpha,d}^2$ of the chi-square distribution with $d$ degrees of freedom.<sup>[3](#notes)</sup> All observations whose Mahalanobis distances are smaller than $\chi_{\alpha, d}^2$ are selected into the subset of outlier-free data. It is recommended to choose `alpha` on grounds of an educated guess of the share of "good" observations in the data. Here, we guessed that 95\% of the observations are not outliers. In general, the choice of `alpha` does not exert great influence on the result. For instance, the specifications `alpha = 0.95`, `alpha = 0.9`, and `alpha = 0.8` yield the same result.
+The argument `alpha` determines the $(1-\alpha)$-quantile $\chi_{\alpha,d}^2$ of the chi-square distribution with $d$ degrees of freedom.<sup>[3](#notes)</sup> All observations whose squared Mahalanobis distances are smaller than the quantile (times a correction factor) are selected into the subset of outlier-free data. It is recommended to choose `alpha` on grounds of an educated guess of the share of "good" observations in the data. Here, we suppose that 95\% of the observations are not outliers.
 
 By default, the initial subset is determined by the Euclidean norm (initialization method: `version = "V2"`).
 
-* This initialization method is robust because it is based on the coordinate-wise (weighted) median but the resulting estimators of center and scatter are *not affine equivariant*. Let $T(\cdot)$ denote an estimator of a parameter of interest (e.g., covariance matrix) and let $X$ denote the $(n \times p)$ data matrix. An estimator $T$ is affine equivariant if and only if $T(A X + b) = A T(X) + b$, for any nonsingular $(m \times n)$ matrix $A$ and any $n$-vector $ b$. Although version `"V2"` of the BACON method leads to estimators that are not affine equivariant in the above sense, [Billor et al.](#biblio) (2000) point out that the method is nearly affine equivariant.
+* This initialization method is robust because it is based on the coordinate-wise (weighted) median. The resulting estimators of center and scatter are *not affine equivariant*. Let $T(\cdot)$ denote an estimator of a parameter of interest (e.g., covariance matrix) and let $X$ denote the $(n \times p)$ data matrix. An estimator $T$ is affine equivariant if and only if $T(A X + b) = A T(X) + b$, for any nonsingular $(m \times n)$ matrix $A$ and any $n$-vector $b$. Although version `"V2"` of the BACON method yields an estimator that is not affine equivariant in the above sense, [Billor et al.](#biblio) (2000) point out that the method is nearly affine equivariant.
 * There exists an alternative initialization method (`"version = V1"`) which is based on the coordinate-wise (weighted) means; therefore, it is affine equivariant but *not robust*.
 
 From the above output, we see that the algorithm converged in three iterations. In case the algorithm does not converge, we may increase the maximum number of iterations (default: `maxiter = 50`) and toggle `verbose = TRUE` to (hopefully) learn more why the method did not converge.
@@ -177,7 +177,7 @@ head(philips)
 We compute the BACON algorithm but this time with the initialization method `version = "V1"`.
 
 ```{r}
-fit <- wBACON(philips, alpha = 0.99, version = "V1")
+fit <- wBACON(philips, alpha = 0.05, version = "V1")
 fit
 ```
 
@@ -229,7 +229,7 @@ reg <- wBACON_reg(EXP ~ RES + INC + YOUNG, data = education)
 reg
 ```
 
-The instance `reg` is an object of the class `wbaconlm`.  The printed output of `wBACON_reg` is identical with the one of the `lm` function. In addition, we are told the size of the subset on which the regression has been computed. The observations not in the subset are considered outliers (here 3 out of 50 observations, i.e. 6\%).
+The instance `reg` is an object of the class `wbaconlm`.  The printed output of `wBACON_reg` is identical with the one of the `lm` function. In addition, we are told the size of the subset on which the regression has been computed. The observations not in the subset are considered outliers (here 1 out of 50 observations).
 
 The `summary()` method can be used to obtain a summary of the estimated model.
 
@@ -248,9 +248,9 @@ where we have used `is_outlier()` to extract the set of declared outliers from `
 
 ### Tuning
 
-By default, `wBACON_reg` uses the parametrization $\alpha = 0.95$, `collect = 4`, and `version = "V2"`. These parameters are used to call the `wBACON` algorithm on the design matrix. Then, the same parameters are used to compute the robust regression.
+By default, `wBACON_reg` uses the parametrization $\alpha = 0.05$, `collect = 4`, and `version = "V2"`. These parameters are used to call the `wBACON` algorithm on the design matrix. Then, the same parameters are used to compute the robust regression.
 
-To ensure a high breakdown point, `version = "V2"` should not be changed to `version = "V1"` unless you have good reasons.  The main "turning knob" to tune the algorithm is `alpha`, which defines the $(1-$`alpha`$)$ quantile of the Student $t$-distribution.  All observations whose distances/discrepancies [See document `methods.pdf` in the folder `doc` of the package.] are smaller (in absolute value) than the quantile are selected into the subset of "good" data.  By choosing smaller values for `alpha` (e.g., 0.7), more observations are selected (ceteris paribus) into the subset of "good" data (and vice versa).
+To ensure a high breakdown point, `version = "V2"` should not be changed to `version = "V1"` unless you have good reasons.  The main "turning knob" to tune the algorithm is `alpha`, which defines the $(1-$`alpha`$)$ quantile of the Student $t$-distribution. All observations whose distances/discrepancies [See document `methods.pdf` in the folder `doc` of the package.] are smaller (in absolute value) than the quantile are selected into the subset of "good" data.  By choosing smaller values for `alpha` (e.g., 0.2), more observations are selected (ceteris paribus) into the subset of "good" data (and vice versa).
 
 The parameter `collect` specifies the initial subset size, which is defined as $m = p \cdot collect$. It can be modified but should be chosen such that $m$ is considerably smaller than the number of observations $n$.  Otherwise there is a high risk of selecting too many "bad" observations into the initial subset, which will eventually bias the regression estimates.
 
@@ -271,7 +271,54 @@ The plot types `4:6` of `plot.lm` are not implemented for objects of the class `
 plot(reg, 4)
 ```
 
-The Figure shows `plot(reg, which = 4)`. The filled circles represent the outliers detected by the BACON algorithm.  The two outlying observations with robust Mahalanobis distances (see abscissae) slightly below 1.0 are flagged as outliers because their standardized residual falls outside the interval spanned by $\pm \, t_{\alpha/(2m+2), m - p}$, where $t_{\alpha, m - p}$ is the $(1-\alpha)$ quantile of the Student $t$-distribution with $m-p$ degrees of freedom, $m$ denoting the size of the final subset of outlier-free data. Here, we have $m=47$, $\alpha = 0.95$ (see argument `alpha` of `wBACON_reg`), thus the interval is $[-2.42, \; 2.42]$. The outlier in the top right corner is both a residual outlier and an outlier in the model's design space.
+The *filled* circle(s) represent the outliers nominated by the BACON algorithm. The outlier in the top right corner is both a residual outlier and an outlier in the model's design space.
+
+ * Observation with robust Mahalanobis distances larger than 4.57 (see abscissae) are flagged as outliers in the model's design space (leverage observations).
+ * Observations whose standardized residual falls outside the interval spanned by $\pm \, t_{\alpha/(2m+2), m - p}$, where $t_{\alpha, m - p}$ is the $(1-\alpha)$ quantile of the Student $t$-distribution with $m-p$ degrees of freedom, $m$ denoting the size of the final subset of outlier-free data. Here, we have $m=49$, $\alpha = 0.05$ (see argument `alpha` of `wBACON_reg`), thus the interval is $[-3.52, \; 3.52]$.
+
+
+
+# Benchmarking
+
+We benchmark our implementation against `robustX::BACON()`. Our implementation is intentionally *limited to single-threaded* computations (`n_threads = 1`; no OpenMP parallelization support). It is clear that when the number of variables is large, the parallelized computations are (usually) much faster.
+
+We consider estimating a robust linear regression for a Gaussian mixture distribution, where a proportion of $1- \epsilon$ of the observations is generated by the Gaussian model, while a proportion of $\epsilon$ (the outliers) is generated by a shifted Gaussian distribution. We chose $\epsilon = 0.05$; see Appendix for more details on the setup. The number of variables ($p$) and number of observations ($n$) are varied. Table 1 shows the ratio of average compute time of the two implementation for some configurations of $(n,p)$. A ratio $> 1.0$ ($< 1.0$) implies that `wBACON_reg()` is faster (slower) than `robustX:BACON()`. The average ratio refers to compute time averages over repeated benchmarks using the R package `microbenchmark` [@]. It is evident from the results in Table 1 that `wBACON_reg()` is considerably faster than its competitor. More importantly, the differences become larger as we increase $n$ or $p$. The differences in compute speed are mainly due to the fact that `wBACON_reg()` updates the regression estimates as the subset of non-outlying observations grows, while `robustX:BACON()` recomputes the estimates at each iteration.
+
+| No. of variables $p$ | No. of observations $n$ | Ratio |
+| :------------------- | :---------------------- | ----: |
+|  5 |  100 |  4.4 |
+| 10 |  100 |  5.3 |
+| 20 |  100 |  7.1 |
+|  5 | 1000 | 43.9 |
+| 10 | 1000 | 52.5 |
+| 20 | 1000 | 55.0 |
+
+Table 1: Benchmarks: Robust linear regression
+
+
+
+
+| No. of variables | No. of observations | Ratio |
+| :--------------- | :------------------ | ----: |
+|  5 |   1000 | 5.9 |
+| 10 |   1000 | 3.9 |
+| 20 |   1000 | 2.5 |
+|  5 |  10000 | 6.5 |
+| 10 |  10000 | 3.7 |
+| 20 |  10000 | 2.8 |
+|  5 | 100000 | 7.3 |
+| 10 | 100000 | 4.2 |
+| 20 | 100000 | 3.3 |
+
+Table 2: Benchmarks: Multivariate outlier nomination/ detection
+
+
+# Appendix
+
+Consider the Gaussian mixture distribution $G = (1 - \epsilon) \cdot N(0 \cdot 1_p, I_p) + \epsilon \cdot N(4 \cdot 1_p, I_p)$, where $\epsilon = 0.05$ (amount of contamination), $N$ is the cumulative distribution function of the $p$-variate standard Gaussian distribution, $I_p$ and $1_p$ are, respectively, the $(p \times p)$ identity matrix and the $p$-vector of ones. We generate the $(\lfloor \epsilon n\rfloor \times p)$ design matrix $X_{good}$ of "good" observations from the $N(0 \cdot 1_p, I_p)$ distribution; $n$ denotes the sample size. The design matrix $X_{bad}$ consisting of $\lceil (1 - \epsilon) n \rceil$ "bad" observations is generated from the $N(4 \cdot 1_p, I_p)$ distribution. Next, we generate the vectors of the response variable $y_{good} = X_{good} 1_p + e$ and $y_{bad} = X_{bad} (10 \cdot 1_p) + e$, where $e$ is a random error with standard Gaussian distribution. In the simulation, $y$ is regressed on $X$, where $y = (y_{good}^T, y_{bad}^T)^T$ and $X = (X_{good}^T, X_{bad}^T)^T$.
+
+Compute environment: R version 4.0.3 (2020-10-10), x86_64-w64-mingw32, Windows 10 x64 (build 19041), Intel Core i7-8550U CPU (8th generation mobile processor, released in 2017), 1.80 GHz base clock
+
 
 ---
 

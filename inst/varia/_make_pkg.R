@@ -31,8 +31,12 @@ file.copy(pkg_files, paste0(PKG_ROOT, "/", PKG), recursive = TRUE)
 
 # copy .Rbuildignore and .Rinstignore
 if (mode == "check") {
-file.copy(paste0(paste0(PKG_SOURCE, "/", PKG, "/",
-    c(".Rbuildignore", ".Rinstignore"))), paste0(PKG_ROOT, "/", PKG))
+    f_R_build_ignore <- paste0(PKG_SOURCE, "/", PKG, "/.Rbuildignore")
+    if (file.exists(f_R_build_ignore))
+        file.copy(f_R_build_ignore, paste0(PKG_ROOT, "/", PKG))
+    f_R_inst_ignore <- paste0(PKG_SOURCE, "/", PKG, "/.Rbuildignore")
+    if (file.exists(f_R_inst_ignore))
+        file.copy(f_R_inst_ignore, paste0(PKG_ROOT, "/", PKG))
 }
 
 # clean src folder (remove binary files)
