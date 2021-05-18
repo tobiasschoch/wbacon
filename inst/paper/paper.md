@@ -26,15 +26,15 @@ Outlier nomination (detection) and robust regression are computationally hard pr
 # The BACON algorithms
 Technically, the BACON algorithms consist of the application of series of simple statistical estimation methods such as coordinate-wise means/medians, covariance matrix, Mahalanobis distances, or least squares regression on subsets of the data. The algorithms start from an initial small subset of "good" data and keep adding those observations to the subset whose distances/ discrepancies are smaller than a predefined threshold value. The algorithms terminate if the subset cannot be increased further. The observations not in the final subset are nominated as outliers. We follow @billoretal2000 and use the term "nomination" of outliers instead of "detection" to emphasize that the algorithms should not go beyond nominating observations as potential outliers. It is left to the analyst to finally label outlying observations as such.
 
-The BACON algorithm for multivariate outlier nomination can be initialized in two ways: version "V1" or "V2" [see @billoretal2000]. In version "V1", the algorithm is started from the coordinatewise median. As a consequence, the resulting estimators of location and scatter are robust (the breakdown point is approximately 40\%, see @billoretal2000) but not affine equivariant estimators of the population location and scatter. However, @billoretal2000 show that the estimators are *nearly* affine equivariant. The initialization by version "V1" leads to estimators that are affine equivariant by design because the algorithm is started from the coordinatewise mean but the estimators have a very low breakdown point.
+The BACON algorithm for multivariate outlier nomination can be initialized in two ways: version "V1" or "V2" [see @billoretal2000]. In version "V1", the algorithm is started from the coordinatewise median. As a consequence, the resulting estimators of location and scatter are robust (the breakdown point is approximately 40\%, see @billoretal2000) but not affine equivariant estimators of the population location and scatter. However, @billoretal2000 show that the estimators are *nearly* affine equivariant. The initialization by version "V1" yields estimators that are affine equivariant by design because the algorithm is started from the coordinatewise mean but the estimators have a very low breakdown point.
 
 A naive implementation of the BACON algorithms would call the (simple) estimation methods iteratively on a sequence of growing subsets of the data without bothering too much with reusing or updating existing blocks of data. This leads to an excessively large number of copy/ modify operations and (unnecessary) recomputations. Overall, we would end up with a computationally inefficient implementation. With small datasets, the inefficiencies would probably not be noticed. With large amounts of data, however, the situation is quite different.
 
 # Statement of need
-The two BACON algorithms are available from the package `robustX` [@robustx] for the `R` statistical software. The BACON algorithm for multivariate outlier nomination has been extended  to weighted problems (in the context of survey sampling) and incomplete data by @beguinhulliger2008. The extended method is available from the `R` package `modi` [@modi]. Both implementations are not explicitly targeted at big data applications. Our package fills this gap.
+The two BACON algorithms are available from the package `robustX` [@robustx] for the `R` statistical software. The BACON algorithm for multivariate outlier nomination has been extended  to weighted problems (in the context of survey sampling) and incomplete data by @beguinhulliger2008. The extended method is available from the `R` package `modi` [@modi]. Both implementations are not explicitly targeted at large data sets. Our package fills this gap.
 
 # What the package offers
-The implementation of the `wbacon` package is targeted at medium to large datasets and is mainly implemented in the `C` language. The code depends heavily on the subroutines in the libraries `BLAS` [@blas2002] and `LAPACK` [@lapack1999]. If computation time is of great importance to the user, we recommend replacing the reference implementation of the `BLAS` library that ships with `R` by a version that has been adapted to the user's hardware (see e.g., OpenBLAS). The non-`BLAS` components of `wbacon` use multiple threads (if the compiler supports `OpenMP`; see @openmp2018). But the major improvements of `wbacon` (in terms of computation time) over the naive implementation are achieved by using partial sorting (in place of a full sort), reusing computed estimates, and employing an up-/downdating scheme for the Cholesky and QR factorizations. The computational costs of the up-/downdating schemes are far less than recomputing the entire decomposition repeatedly.
+The implementation of the `wbacon` package is targeted at medium to large datasets and is mainly implemented in the `C` language. The code depends heavily on the subroutines in the libraries `BLAS` [@blas2002] and `LAPACK` [@lapack1999]. If computation time is of great importance to the user, we recommend replacing the reference implementation of the `BLAS` library that ships with `R` by a version that has been adapted to the user's hardware (see e.g., OpenBLAS). The non-`BLAS` components of `wbacon` use multiple threads (if the compiler supports `OpenMP`; see @openmp2018) for the computations over the $p$ variables/ columns because the computational time complexity is dominated by $p$. For instance, the complexity of the BACON algorithm for multivariate outlier nomination is determined by the complexity of the covariance matrix computation, which is of order $\mathcal{O}(np^2)$, where $n$ denotes the number of observations. The major improvements of `wbacon` (in terms of computation time) over the naive implementation, however, are achieved by using partial sorting (in place of a full sort), reusing computed estimates, and employing an up-/downdating scheme for the Cholesky and QR factorizations. The computational costs of the up-/downdating schemes are far less than recomputing the entire decomposition repeatedly.
 
 # Diagnostic tools
 The BACON algorithms assume that the underlying model is an appropriate description of the non-outlying observations. More precisely [@billoretal2000],
@@ -50,7 +50,7 @@ The `wbacon` library provides the analyst with tools to study potentially outlyi
 
 # Illustration
 
-In this section, we study the BACON algorithm for robust linear regression. Our data are data on education expenditures in 50 US states in 1975 [@chatterjeehadi2006, Chap. 5.7]. The data can be loaded from the `robustbase` [@robustbase] package.
+In this section, we study the BACON algorithm for robust linear regression. Our data are on education expenditures in 50 US states in 1975 [@chatterjeehadi2006, Chap. 5.7]. The data can be loaded from the `robustbase` package [@robustbase] package.
 
 ```{.r}
 library(wbacon)
@@ -60,7 +60,7 @@ names(education)[3:6] <- c("RES", "INC", "YOUNG", "EXP")
 head(education)
 ```
 
-The measured variables for the 50 states are:
+The variables are:
 
  * `State`: State
  * `Region`: group variable with outcomes: 1=Northeastern, 2=North central, 3=Southern, and 4=Western
@@ -69,7 +69,7 @@ The measured variables for the 50 states are:
  * `YOUNG`: Number of residents per thousand under 18 years of age in 1974
  * `EXP`: Per capita expenditure on public education in a state (\$US), projected for 1975
 
-Our goal is to regress education expenditures (`EXP`) on the variables `RES`, `INC`, and `YOUNG`. By the BACON robust linear regression algorithm, we have
+Our goal is to regress education expenditures (`EXP`) on the variables `RES`, `INC`, and `YOUNG`. For the BACON robust linear regression algorithm, we have
 
 ```{.r}
 reg <- wBACON_reg(EXP ~ RES + INC + YOUNG, data = education)
@@ -88,11 +88,11 @@ reg
 
 By default, `wBACON_reg()` uses the parametrization `alpha = 0.05`, `collect = 4`, and `version = "V2"`. These parameters are used to call the `wBACON()` multivariate outlier nomination/ detection algorithm on the design matrix. Then, the same parameters are used to compute the robust linear regression.
 
-To ensure a high breakdown point, `version = "V2"` should not be changed to `version = "V1"` unless you have good reasons to do so. The main "turning knob" to tune the algorithm is `alpha`, which defines the $(1 - \alpha)$ quantile of the Student $t$-distribution. All observations whose distances/discrepancies [See document `methods.pdf` in the folder `doc` of the package.] are smaller (in absolute value) than the quantile are selected into the subset of "good" data. By choosing smaller values for `alpha` (e.g., 0.2), more observations are selected (ceteris paribus) into the subset of "good" data (and vice versa).
+To ensure a high breakdown point, `version = "V2"` should not be changed to "V1" unless you have good reasons to do so. The main "turning knob" to tune the algorithm is `alpha`, which defines the $(1 - \alpha)$ quantile of the Student $t$-distribution. All observations whose distances/discrepancies are smaller (in absolute value) than the quantile (times a constant) are selected into the subset of "good" data [see document `methods.pdf` in the folder `doc` of the package]. By choosing larger values for `alpha` (e.g., 0.2), more observations are selected (ceteris paribus) into the subset of "good" data (and vice versa).
 
-The parameter `collect` specifies the initial subset size, which is defined as $m = p \cdot collect$. It can be modified but should be chosen such that $m$ is considerably smaller than the number of observations $n$. Otherwise we are at risk of selecting too many "bad" observations into the initial subset, which will eventually bias the regression estimates.
+The parameter `collect` specifies the initial subset size, which is defined as $m = p \cdot collect$. It should be chosen such that $m$ is considerably smaller than the number of observations $n$. Otherwise we are at risk of selecting too many "bad" observations into the initial subset, which will eventually bias the regression estimates.
 
-The instance `reg` is an object of the class `wbaconlm`. The printed output of `wBACON_reg()` is identical with the one of the `lm()` function (see `stats` package). In addition, we are told the size of the subset on which the regression has been computed. The observations not in the subset are considered outliers (here 1 out of 50 observations). The `summary()` method can be used to obtain a summary of the estimated model.
+The instance `reg` is an object of the class `wbaconlm`. The printed output of `wBACON_reg()` is identical with the one of the `stats::lm()` function. In addition, we are told the size of the subset on which the regression has been computed. The observations not in the subset are considered potential outliers (here 1 out of 50 observations). The `summary()` method can be used to summarize the estimated model.
 
 ```{.r}
 summary(reg)
@@ -118,7 +118,7 @@ summary(reg)
 #> F-statistic:  14.8 on 3 and 45 DF,  p-value: 7.653e-07
 ```
 
-The methods `coef()`, `vcov()`, and `predict()` work exactly the same as their `lm` counterparts. This is also true for the first three `plot()` types, that is
+The methods `coef()`, `vcov()`, and `predict()` work exactly the same as their `lm()` counterparts. This is also true for the first three `plot()` types, that is
 
  * `which = 1`: Residuals vs Fitted,
  * `which = 2`: Normal Q-Q,
@@ -132,7 +132,7 @@ See vignette to learn more about the package.
 
 We benchmark our implementation against `robustX::BACON()`. Our implementation is intentionally *limited to single-threaded* computations (`n_threads = 1`; no OpenMP parallelization support). It is clear that when the number of variables is large, the parallelized computations are (usually) much faster.
 
-We consider estimating a robust linear regression for a Gaussian mixture distribution, where a proportion of $1- \epsilon$ of the observations is generated by the Gaussian model, while a proportion of $\epsilon$ (the outliers) is generated by a shifted Gaussian distribution. We chose $\epsilon = 0.05$; see Appendix for more details on the setup. The number of variables ($p$) and number of observations ($n$) are varied. Table 1 shows the ratio of average compute time of the two implementation for some configurations of $(n,p)$. A ratio $> 1.0$ ($< 1.0$) implies that `wBACON_reg()` is faster (slower) than `robustX:BACON()`. The average ratio refers to compute time averages over repeated benchmarks using the R package `microbenchmark` [@microbenchmark]. It is evident from the results in Table 1 that `wBACON_reg()` is considerably faster than its competitor. More importantly, the differences become larger as we increase $n$ or $p$. The differences in compute speed are mainly due to the fact that `wBACON_reg()` updates the regression estimates as the subset of non-outlying observations grows, while `robustX:BACON()` recomputes the estimates at each iteration.
+We consider estimating a robust linear regression for a Gaussian mixture distribution, where a proportion of $1- \epsilon$ of the observations on the $p$ independent variables is generated by the Gaussian model, while a proportion of $\epsilon$ (the outliers) is generated by a shifted Gaussian distribution. For the outlying observations (i.e., $\epsilon$ proportion of the data), the response variable is generated by a regression coefficient which is 10 times larger than the coefficient of the non-outlying observations. We chose $\epsilon = 0.05$; see Appendix for more details on the setup. The number of variables ($p$) and the number of observations ($n$) are varied. Table 1 shows the ratio of average compute time of the two implementation for some configurations of $(n,p)$. A ratio $> 1.0$ ($< 1.0$) implies that `wBACON_reg()` is faster (slower) than `robustX:BACON()`. The average ratio refers to compute time averages over repeated benchmarks using the R package `microbenchmark` [@microbenchmark]. It is evident from the results in Table 1 that `wBACON_reg()` is considerably faster than its competitor, e.g.,`wBACON_reg()` is on average 4.4 times faster for the setup $p=5$ and $n=100$. More importantly, the differences become larger as we increase $n$ or $p$. The differences in compute speed are mainly due to the fact that `wBACON_reg()` updates the regression estimates as the subset of non-outlying observations grows, while `robustX:BACON()` recomputes the estimates at each iteration.
 
 | No. of variables $p$ | No. of observations $n$ | Ratio |
 | :------------------- | :---------------------- | ----: |
@@ -148,15 +148,18 @@ Table 1: Benchmarks: Robust linear regression
 
 | No. of variables | No. of observations | Ratio |
 | :--------------- | :------------------ | ----: |
-|  5 |   1000 | 5.9 |
-| 10 |   1000 | 3.9 |
-| 20 |   1000 | 2.5 |
-|  5 |  10000 | 6.5 |
-| 10 |  10000 | 3.7 |
-| 20 |  10000 | 2.8 |
-|  5 | 100000 | 7.3 |
-| 10 | 100000 | 4.2 |
-| 20 | 100000 | 3.3 |
+|  5 |    1,000 | 5.9 |
+| 10 |    1,000 | 3.9 |
+| 20 |    1,000 | 2.5 |
+|  5 |   10,000 | 6.5 |
+| 10 |   10,000 | 3.7 |
+| 20 |   10,000 | 2.8 |
+|  5 |  100,000 | 7.3 |
+| 10 |  100,000 | 4.2 |
+| 20 |  100,000 | 3.3 |
+|  5 | 1,000,000 | 6.2 |
+| 10 | 1,000,000 | 4.1 |
+| 20 | 1,000,000 | 3.2 |
 
 Table 2: Benchmarks: Multivariate outlier nomination/ detection
 
@@ -172,7 +175,7 @@ question or requesting a feature that has already been discussed.
 ## How to contribute
 
 If you are interested in modifying the code, you may fork the project for your own use, as detailed in the GNU GPL License we have adopted for the
-project. In order to contribute, please contact the developer after making the desired changes.
+project. In order to contribute, please contact Tobias Schoch after making the desired changes.
 
 # Acknowledgements
 
@@ -180,7 +183,10 @@ I would like to acknowledge many fruitful discussions with Beat Hulliger. This r
 
 # Appendix
 
-Consider the Gaussian mixture distribution $G = (1 - \epsilon) \cdot N(0 \cdot 1_p, I_p) + \epsilon \cdot N(4 \cdot 1_p, I_p)$, where $\epsilon = 0.05$ (amount of contamination), $N$ is the cumulative distribution function of the $p$-variate standard Gaussian distribution, $I_p$ and $1_p$ are, respectively, the $(p \times p)$ identity matrix and the $p$-vector of ones. We generate the $(\lfloor \epsilon n\rfloor \times p)$ design matrix $X_{good}$ of "good" observations from the $N(0 \cdot 1_p, I_p)$ distribution; $n$ denotes the sample size. The design matrix $X_{bad}$ consisting of $\lceil (1 - \epsilon) n \rceil$ "bad" observations is generated from the $N(4 \cdot 1_p, I_p)$ distribution. Next, we generate the vectors of the response variable $y_{good} = X_{good} 1_p + e$ and $y_{bad} = X_{bad} (10 \cdot 1_p) + e$, where $e$ is a random error with standard Gaussian distribution. In the simulation, $y$ is regressed on $X$, where $y = (y_{good}^T, y_{bad}^T)^T$ and $X = (X_{good}^T, X_{bad}^T)^T$.
+Consider the Gaussian mixture distribution $G = (1 - \epsilon) \cdot N(0 \cdot 1_p, I_p) + \epsilon \cdot N(4 \cdot 1_p, I_p)$, where $\epsilon = 0.05$ (amount of contamination), $N$ is the cumulative distribution function of the $p$-variate standard Gaussian distribution, $I_p$ and $1_p$ are, respectively, the $(p \times p)$ identity matrix and the $p$-vector of ones. We generate the $(\lfloor \epsilon n\rfloor \times p)$ design matrix $X_{good}$ of "good" observations from the $N(0 \cdot 1_p, I_p)$ distribution; $n$ denotes the sample size. The design matrix $X_{bad}$ consisting of $\lceil (1 - \epsilon) n \rceil$ "bad" observations is generated from the $N(4 \cdot 1_p, I_p)$ distribution. 
+
+
+For the regression analysis, we generate the vectors of the response variable $y_{good} = X_{good} 1_p + e$ and $y_{bad} = X_{bad} (10 \cdot 1_p) + e$, where $e$ is a random error with standard Gaussian distribution. In the simulation, $y$ is regressed on $X$, where $y = (y_{good}^T, y_{bad}^T)^T$ and $X = (X_{good}^T, X_{bad}^T)^T$.
 
 Compute environment: R version 4.0.3 (2020-10-10), x86_64-w64-mingw32, Windows 10 x64 (build 19041), Intel Core i7-8550U CPU (8th generation mobile processor, released in 2017), 1.80 GHz base clock.
 

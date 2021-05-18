@@ -69,10 +69,13 @@ for (i in 1:NROW(scenario)) {
 
     # benchmarking
     m0 <- microbenchmark(BACON(x, y, alpha = ALPHA, init.sel = VERSION,
-        verbose = FALSE), times = 50)
+        verbose = FALSE), times = scenario$times[i])
     m1 <- microbenchmark(wBACON_reg(y ~ ., data = dat, alpha = ALPHA,
-        version = VERSION, n_threads = 1), times = 50)
+        version = VERSION, n_threads = 1), times = scenario$times[i])
     scenario$ratio[i] <- mean(m0$time) / mean(m1$time)
+
+    cat(i, "of", NROW(scenario), "\n")
+    flush.console()
 }
 
 # The variable 'ratio' measures by how many times wBACON_reg is faster than
@@ -96,7 +99,10 @@ scenario <- data.frame(matrix(c(
        20,    10000,  0.05,    30,
        5,    100000,  0.05,    10,
        10,   100000,  0.05,    10,
-       20,   100000,  0.05,    10),
+       20,   100000,  0.05,    10,
+       5,   1000000,  0.05,    2,
+       10,  1000000,  0.05,    2,
+       20,  1000000,  0.05,    2),
     byrow = TRUE, ncol = 4))
 colnames(scenario) <- c("p", "n", "eps", "times")
 # n: number observations; p: number of variables; eps: amount of contamination
@@ -121,10 +127,13 @@ for (i in 1:NROW(scenario)) {
 
     # benchmarking
     m0 <- microbenchmark(BACON(x, alpha = ALPHA, init.sel = VERSION,
-        verbose = FALSE), times = 50)
+        verbose = FALSE), times = scenario$times[i])
     m1 <- microbenchmark(wBACON(x, alpha = ALPHA, version = VERSION,
-        n_threads = 1), times = 50)
+        n_threads = 1), times = scenario$times[i])
     scenario$ratio[i] <- mean(m0$time) / mean(m1$time)
+
+    cat(i, "of", NROW(scenario), "\n")
+    flush.console()
 }
 
 # The variable 'ratio' measures by how many times wBACON is faster than
