@@ -170,14 +170,14 @@ The philips data can be loaded from the `R` package `cellWise` ([Raymaekers and 
 
 
 ```{r}
-data(philips, package = "cellWise")
-head(philips)
+data(data_philips, package = "cellWise")
+head(data_philips)
 ```
 
 We compute the BACON algorithm but this time with the initialization method `version = "V1"`.
 
 ```{r}
-fit <- wBACON(philips, alpha = 0.05, version = "V1")
+fit <- wBACON(data_philips, alpha = 0.05, version = "V1")
 fit
 ```
 
