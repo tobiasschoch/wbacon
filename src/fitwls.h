@@ -2,8 +2,11 @@
 #include <Rmath.h>
 #include <R_ext/Lapack.h>
 #include <R_ext/BLAS.h>
-#include <omp.h>
 #include "regdata.h"
+
+#ifdef _OPENMP
+    #include <omp.h>
+#endif
 
 #ifndef _FITWLS_H
 #define _FITWLS_H

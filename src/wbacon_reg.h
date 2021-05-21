@@ -8,7 +8,9 @@
 #include "wbacon_error.h"
 #include "median.h"
 
-#include <omp.h>
+#ifdef _OPENMP
+    #include <omp.h>
+#endif
 #define REG_OMP_MIN_SIZE 1000000
 
 #ifndef _WBACON_REG_H
