@@ -6,7 +6,7 @@
 #include "wbacon_error.h"
 
 #include <omp.h>
-#define OMP_MIN_SIZE 1000000        // OpenMP enabled when n > OMP_MIN_SIZE
+#define OMP_MIN_SIZE 100000         // OpenMP enabled when n > OMP_MIN_SIZE
 
 #ifndef _WBACON_H
 #define _WBACON_H

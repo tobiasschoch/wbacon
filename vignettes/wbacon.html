@@ -9,7 +9,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
-<meta name="author" content="Tobias Schoch (package vers. 0.3)" />
+<meta name="author" content="Tobias Schoch" />
 
 
 <title>Vignette: Weighted BACON algorithms</title>
@@ -484,7 +484,7 @@ summary {
 
 
 <h1 class="title toc-ignore">Vignette: Weighted BACON algorithms</h1>
-<h4 class="author">Tobias Schoch (package vers. 0.3)</h4>
+<h4 class="author">Tobias Schoch</h4>
 
 </div>
 
@@ -633,8 +633,8 @@ summary {
 <h3>Philips data</h3>
 <p>Old television sets had a cathode ray tube with an electron gun. The emitted beam runs through a diaphragm that lets pass only a partial beam to the screen. The diaphragm consists of 9 components. The Philips data set contains <span class="math inline">\(n = 667\)</span> measurements on the <span class="math inline">\(p = 9\)</span> components (variables); see <a href="#biblio">Rousseeuw and van Driessen</a> (1999).</p>
 <p>The philips data can be loaded from the <code>R</code> package <code>cellWise</code> (<a href="#biblio">Raymaekers and Rousseeuw</a>, 2020). These data do not have sampling weights.</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1"></a><span class="op">&gt;</span><span class="st"> </span><span class="kw">data</span>(philips, <span class="dt">package =</span> <span class="st">&quot;cellWise&quot;</span>)</span>
-<span id="cb11-2"><a href="#cb11-2"></a><span class="op">&gt;</span><span class="st"> </span><span class="kw">head</span>(philips)</span>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1"></a><span class="op">&gt;</span><span class="st"> </span><span class="kw">data</span>(data_philips, <span class="dt">package =</span> <span class="st">&quot;cellWise&quot;</span>)</span>
+<span id="cb11-2"><a href="#cb11-2"></a><span class="op">&gt;</span><span class="st"> </span><span class="kw">head</span>(data_philips)</span>
 <span id="cb11-3"><a href="#cb11-3"></a>        X1     X2    X3    X4    X5    X6     X7     X8     X9</span>
 <span id="cb11-4"><a href="#cb11-4"></a>[<span class="dv">1</span>,] <span class="fl">0.153</span> <span class="fl">-0.259</span> <span class="fl">0.140</span> <span class="fl">0.514</span> <span class="fl">2.242</span> <span class="fl">0.443</span> <span class="fl">-0.021</span> <span class="fl">-0.035</span> <span class="fl">-0.065</span></span>
 <span id="cb11-5"><a href="#cb11-5"></a>[<span class="dv">2</span>,] <span class="fl">0.119</span> <span class="fl">-0.309</span> <span class="fl">0.132</span> <span class="fl">0.518</span> <span class="fl">2.269</span> <span class="fl">0.458</span> <span class="fl">-0.018</span> <span class="fl">-0.035</span> <span class="fl">-0.053</span></span>
@@ -643,7 +643,7 @@ summary {
 <span id="cb11-8"><a href="#cb11-8"></a>[<span class="dv">5</span>,] <span class="fl">0.143</span> <span class="fl">-0.278</span> <span class="fl">0.139</span> <span class="fl">0.519</span> <span class="fl">2.284</span> <span class="fl">0.465</span> <span class="fl">-0.016</span> <span class="fl">-0.018</span> <span class="fl">-0.054</span></span>
 <span id="cb11-9"><a href="#cb11-9"></a>[<span class="dv">6</span>,] <span class="fl">0.140</span> <span class="fl">-0.284</span> <span class="fl">0.159</span> <span class="fl">0.531</span> <span class="fl">2.287</span> <span class="fl">0.465</span> <span class="fl">-0.004</span> <span class="fl">-0.024</span> <span class="fl">-0.052</span></span></code></pre></div>
 <p>We compute the BACON algorithm but this time with the initialization method <code>version = &quot;V1&quot;</code>.</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1"></a><span class="op">&gt;</span><span class="st"> </span>fit &lt;-<span class="st"> </span><span class="kw">wBACON</span>(philips, <span class="dt">alpha =</span> <span class="fl">0.05</span>, <span class="dt">version =</span> <span class="st">&quot;V1&quot;</span>)</span>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1"></a><span class="op">&gt;</span><span class="st"> </span>fit &lt;-<span class="st"> </span><span class="kw">wBACON</span>(data_philips, <span class="dt">alpha =</span> <span class="fl">0.05</span>, <span class="dt">version =</span> <span class="st">&quot;V1&quot;</span>)</span>
 <span id="cb12-2"><a href="#cb12-2"></a><span class="op">&gt;</span><span class="st"> </span>fit</span>
 <span id="cb12-3"><a href="#cb12-3"></a></span>
 <span id="cb12-4"><a href="#cb12-4"></a>Weighted BACON<span class="op">:</span><span class="st"> </span>Robust location, covariance, and distances</span>
@@ -766,118 +766,9 @@ summary {
 <li>Observation with robust Mahalanobis distances larger than 4.57 (see abscissae) are flagged as outliers in the model’s design space (leverage observations).</li>
 <li>Observations whose standardized residual falls outside the interval spanned by <span class="math inline">\(\pm \, t_{\alpha/(2m+2), m - p}\)</span>, where <span class="math inline">\(t_{\alpha, m - p}\)</span> is the <span class="math inline">\((1-\alpha)\)</span> quantile of the Student <span class="math inline">\(t\)</span>-distribution with <span class="math inline">\(m-p\)</span> degrees of freedom, <span class="math inline">\(m\)</span> denoting the size of the final subset of outlier-free data. Here, we have <span class="math inline">\(m=49\)</span>, <span class="math inline">\(\alpha = 0.05\)</span> (see argument <code>alpha</code> of <code>wBACON_reg</code>), thus the interval is <span class="math inline">\([-3.52, \; 3.52]\)</span>.</li>
 </ul>
-</div>
-</div>
-<div id="benchmarking" class="section level1">
-<h1>Benchmarking</h1>
-<p>We benchmark our implementation against <code>robustX::BACON()</code>. Our implementation is intentionally <em>limited to single-threaded</em> computations (<code>n_threads = 1</code>; no OpenMP parallelization support). It is clear that when the number of variables is large, the parallelized computations are (usually) much faster.</p>
-<p>We consider estimating a robust linear regression for a Gaussian mixture distribution, where a proportion of <span class="math inline">\(1- \epsilon\)</span> of the observations is generated by the Gaussian model, while a proportion of <span class="math inline">\(\epsilon\)</span> (the outliers) is generated by a shifted Gaussian distribution. We chose <span class="math inline">\(\epsilon = 0.05\)</span>; see Appendix for more details on the setup. The number of variables (<span class="math inline">\(p\)</span>) and number of observations (<span class="math inline">\(n\)</span>) are varied. Table 1 shows the ratio of average compute time of the two implementation for some configurations of <span class="math inline">\((n,p)\)</span>. A ratio <span class="math inline">\(&gt; 1.0\)</span> (<span class="math inline">\(&lt; 1.0\)</span>) implies that <code>wBACON_reg()</code> is faster (slower) than <code>robustX:BACON()</code>.</p>
-<table>
-<thead>
-<tr class="header">
-<th align="left">No. of variables <span class="math inline">\(p\)</span></th>
-<th align="left">No. of observations <span class="math inline">\(n\)</span></th>
-<th align="right">Ratio</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="left">5</td>
-<td align="left">100</td>
-<td align="right">4.4</td>
-</tr>
-<tr class="even">
-<td align="left">10</td>
-<td align="left">100</td>
-<td align="right">5.3</td>
-</tr>
-<tr class="odd">
-<td align="left">20</td>
-<td align="left">100</td>
-<td align="right">7.1</td>
-</tr>
-<tr class="even">
-<td align="left">5</td>
-<td align="left">1000</td>
-<td align="right">43.9</td>
-</tr>
-<tr class="odd">
-<td align="left">10</td>
-<td align="left">1000</td>
-<td align="right">52.5</td>
-</tr>
-<tr class="even">
-<td align="left">20</td>
-<td align="left">1000</td>
-<td align="right">55.0</td>
-</tr>
-</tbody>
-</table>
-<p>Table 1: Benchmarks: Robust linear regression</p>
-<p><code>microbenchmark</code></p>
-<table>
-<thead>
-<tr class="header">
-<th align="left">No. of variables</th>
-<th align="left">No. of observations</th>
-<th align="right">Ratio</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td align="left">5</td>
-<td align="left">1000</td>
-<td align="right">5.9</td>
-</tr>
-<tr class="even">
-<td align="left">10</td>
-<td align="left">1000</td>
-<td align="right">3.9</td>
-</tr>
-<tr class="odd">
-<td align="left">20</td>
-<td align="left">1000</td>
-<td align="right">2.5</td>
-</tr>
-<tr class="even">
-<td align="left">5</td>
-<td align="left">10000</td>
-<td align="right">6.5</td>
-</tr>
-<tr class="odd">
-<td align="left">10</td>
-<td align="left">10000</td>
-<td align="right">3.7</td>
-</tr>
-<tr class="even">
-<td align="left">20</td>
-<td align="left">10000</td>
-<td align="right">2.8</td>
-</tr>
-<tr class="odd">
-<td align="left">5</td>
-<td align="left">100000</td>
-<td align="right">7.3</td>
-</tr>
-<tr class="even">
-<td align="left">10</td>
-<td align="left">100000</td>
-<td align="right">4.2</td>
-</tr>
-<tr class="odd">
-<td align="left">20</td>
-<td align="left">100000</td>
-<td align="right">3.3</td>
-</tr>
-</tbody>
-</table>
-<p>Table 2: Benchmarks: Multivariate outlier nomination/ detection</p>
-</div>
-<div id="appendix" class="section level1">
-<h1>Appendix</h1>
-<p>Consider the Gaussian mixture distribution <span class="math inline">\(G = (1 - \epsilon) \cdot N(0 \cdot 1_p, I_p) + \epsilon \cdot N(4 \cdot 1_p, I_p)\)</span>, where <span class="math inline">\(\epsilon = 0.05\)</span> (amount of contamination), <span class="math inline">\(N\)</span> is the cumulative distribution function of the <span class="math inline">\(p\)</span>-variate standard Gaussian distribution, <span class="math inline">\(I_p\)</span> and <span class="math inline">\(1_p\)</span> are, respectively, the <span class="math inline">\((p \times p)\)</span> identity matrix and the <span class="math inline">\(p\)</span>-vector of ones. We generate the <span class="math inline">\((\lfloor \epsilon n\rfloor \times p)\)</span> design matrix <span class="math inline">\(X_{good}\)</span> of “good” observations from the <span class="math inline">\(N(0 \cdot 1_p, I_p)\)</span> distribution; <span class="math inline">\(n\)</span> denotes the sample size. The design matrix <span class="math inline">\(X_{bad}\)</span> consisting of <span class="math inline">\(\lceil (1 - \epsilon) n \rceil\)</span> “bad” observations is generated from the <span class="math inline">\(N(4 \cdot 1_p, I_p)\)</span> distribution. Next, we generate the vectors of the response variable <span class="math inline">\(y_{good} = X_{good} 1_p + e\)</span> and <span class="math inline">\(y_{bad} = X_{bad} (10 \cdot 1_p) + e\)</span>, where <span class="math inline">\(e\)</span> is a random error with standard Gaussian distribution. In the simulation, <span class="math inline">\(y\)</span> is regressed on <span class="math inline">\(X\)</span>, where <span class="math inline">\(y = (y_{good}^T, y_{bad}^T)^T\)</span> and <span class="math inline">\(X = (X_{good}^T, X_{bad}^T)^T\)</span>.</p>
-<p>Compute environment: R version 4.0.3 (2020-10-10), x86_64-w64-mingw32, Windows 10 x64 (build 19041), Intel Core i7-8550U CPU (8th generation processor, released in 2017), 1.80 GHz base clock</p>
 <hr />
+</div>
+</div>
 <div id="biblio" class="section level2">
 <h2>References</h2>
 <p>Béguin, C. and B. Hulliger (2002). <em>Robust Multivariate Outlier Detection and Imputation with Incomplete Survey Data</em>, Deliverable D4/5.2.1/2 Part C: EUREDIT project, <a href="https://www.cs.york.ac.uk/euredit/euredit-main.html" class="uri">https://www.cs.york.ac.uk/euredit/euredit-main.html</a>, research project funded by the European Commission, IST-1999-10226.</p>
@@ -901,7 +792,6 @@ summary {
 <p><sup>1</sup> The <code>devtools</code> package can be installed from CRAN by <code>install.packages(&quot;devtools&quot;)</code>.</p>
 <p><sup>2</sup> The data are also distributed with the <code>R</code> package <code>robustbase</code> (<a href="#biblio">Maechler et al.</a>, 2020).</p>
 <p><sup>3</sup> The degrees of freedom <span class="math inline">\(d\)</span> is a function of the number of variables <span class="math inline">\(p\)</span>, the number of observations <span class="math inline">\(n\)</span>, and the size of the current subset <span class="math inline">\(m\)</span>; see <code>methods.pdf</code> in the <code>inst/doc</code> folder of the package.</p>
-</div>
 </div>
 
 

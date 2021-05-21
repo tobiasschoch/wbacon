@@ -1,7 +1,9 @@
 DOCUMENT=wbacon
 RSCRIPT=Rscript.exe
 
-$(DOCUMENT).html:
+all: knitr
+
+knitr: $(DOCUMENT).Rmd
 	$(RSCRIPT) -e "library(rmarkdown); rmarkdown::render('$(DOCUMENT).Rmd', 'html_document')"
 
 .PHONY: clean
