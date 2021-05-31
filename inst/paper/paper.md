@@ -145,9 +145,6 @@ For the regression exercise, our setup is intentionally *limited to single-threa
 
 In the second benchmark, we study the ratio of average computation time of `wBACON()` vs. `robustX::BACON()` for multivariate outlier nomination; see Table 2. A ratio $> 1.0$ ($< 1.0$) implies that `wBACON()` is faster (slower) than `robustX::BACON()`. In this benchmark, `wBACON()` is set up with thread-level and instruction-level parallelization: [OpenBLAS](http://www.openblas.net) in place of the standard `BLAS` library and full OpenMP [@openmp2018] support. For ease of simplicity, we use a "plain vanilla" parallelization mode which spawns all available cores/ threads.
 
-For very small data sets (e.g., $n=10^3$ and $p=5$), `wBACON()` is slower because parallelization leads to computation overhead that dominates computation time. Clearly, it would be more efficient to specify only 1 or 2 threads for such small data sets. However, the differences in computation time are hardly noticeable to the user (0.08 vs. 0.14 seconds). For larger data sets (in terms of number of variables and observations), `wBACON()` outperforms `robustX::BACON()`; see Table 2. For instance, `wBACON()` is 13.7 times faster for the setup $p=200$ and $n=10^6$. The differences in computation time between the two implementations become larger as we increase $n$ or $p$.
-
-
 |            | $p=5$ | $p=10$ | $p=20$ | $p=30$ | $p=40$ | $p=50$ | $p=100$ | $p=200$ |
 | :--------- | ----: | -----: | -----: | -----: | -----: | -----: | ------: | ------: |
 | $n = 10^3$ | 0.5 | 1.0 | 1.2 | 1.4 | 2.3 | 2.7 | 4.7 |  9.0 |
@@ -156,6 +153,8 @@ For very small data sets (e.g., $n=10^3$ and $p=5$), `wBACON()` is slower becaus
 | $n = 10^6$ | 0.9 | 1.5 | 2.2 | 2.8 | 4.0 | 4.1 | 7.7 | 13.7 |
 
 *Table 2. Multivariate outlier nomination/ detection (multithreading): Ratio of average computation time. A ratio $> 1.0$ ($< 1.0$) implies that `wBACON()` is faster (slower) than `robustX::BACON()`*
+
+For very small data sets (e.g., $n=10^3$ and $p=5$), `wBACON()` is slower because parallelization leads to computation overhead that dominates computation time. Clearly, it would be more efficient to specify only 1 or 2 threads for such small data sets. However, the differences in computation time are hardly noticeable to the user (0.08 vs. 0.14 seconds). For larger data sets (in terms of number of variables and observations), `wBACON()` outperforms `robustX::BACON()`; see Table 2. For instance, `wBACON()` is 13.7 times faster for the setup $p=200$ and $n=10^6$. The differences in computation time between the two implementations become larger as we increase $n$ or $p$.
 
 # Community guidelines
 
