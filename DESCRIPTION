@@ -1,7 +1,7 @@
 Package: wbacon
 Type: Package
 Title: Weighted BACON algorithms
-Version: 0.3
+Version: 0.4
 Author: Tobias Schoch [aut, cre, cph]
 Maintainer: Tobias Schoch <tobias.schoch@gmail.com>
 Description: The weighted BACON algorithms are methods for multivariate

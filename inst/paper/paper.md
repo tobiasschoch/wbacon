@@ -26,7 +26,11 @@ Outlier nomination (detection) and robust regression are computationally hard pr
 # The BACON algorithms
 Technically, the BACON algorithms consist of the application of series of simple statistical estimation methods such as coordinate-wise means/medians, covariance matrix, Mahalanobis distances, or least squares regression on subsets of the data. The algorithms start from an initial small subset of non-outlying ("good") data and keep adding those observations to the subset whose distances (or discrepancies in the case of the regression algorithm) are smaller than a predefined threshold value. The algorithms terminate if the subset cannot be increased further. The observations not in the final subset are nominated as outliers. We follow @billoretal2000 and use the term "nomination" of outliers instead of "detection" to emphasize that the algorithms should not go beyond nominating observations as potential outliers. It is left to the analyst to finally label outlying observations as such.
 
-The BACON algorithm for multivariate outlier nomination can be initialized in two ways: version "V1" or "V2" [see @billoretal2000]. In version V2, the algorithm is started from the coordinate-wise median. As a consequence, the resulting estimators of location and scatter are robust [the breakdown point is approximately 40\%, @billoretal2000] but not affine equivariant estimators of the population location and scatter. However, @billoretal2000 show that the estimators are *nearly* affine equivariant. The initialization by version V1 yields estimators that are affine equivariant by design because the algorithm is started from the coordinate-wise mean, but the estimators have a very low breakdown point.
+The BACON algorithm for multivariate outlier nomination can be initialized in two ways: version "V1" or "V2" [see @billoretal2000]. In version V2, the algorithm is started from the coordinate-wise median. As a consequence, the resulting estimators of location and scatter are robust [the breakdown point[^1] is approximately 40\%, @billoretal2000] but not affine equivariant estimators of the population location and scatter. However, @billoretal2000 show that the estimators are *nearly* affine equivariant.
+
+[^1]: Intuitively, the breakdown point of an estimator is the proportion of outliers an estimator can handle before giving a arbitrary or meaningless result (e.g., arbitrarily large estimate). See @maronnaetal2018 for a rigorous definition.
+
+The initialization by version V1 yields estimators that are affine equivariant by design because the algorithm is started from the coordinate-wise mean, but the estimators have a very low breakdown point.
 
 A naive implementation of the BACON algorithms would call the (simple) estimation methods iteratively on a sequence of growing subsets of the data without bothering too much with reusing or updating existing blocks of data. This leads to an excessively large number of copy/ modify operations and (unnecessary) recomputations. Overall, we would end up with a computationally inefficient implementation. For small data sets, the inefficiencies would likely go unnoticed. With large amounts of data, however, the situation is quite different.
 
@@ -42,11 +46,11 @@ The BACON algorithms assume that the underlying model is an appropriate descript
 * the outlier nomination method assumes that the "good" data have (roughly) an elliptically contoured distribution (this includes the Gaussian distribution as a special case);
 * the regression method assumes that the non-outlying ("good") data are described by a linear (homoscedastic) regression model and that the independent variables (having removed the regression intercept/constant, if there is a constant) follow (roughly) an elliptically contoured distribution.
 
-It is strongly recommended that the structure of the data be examined and whether the assumptions made about the "good" observations are reasonable. The following quote from the authors of the BACON algorithms should be noted.
+We recommend that the users examine the data structure of the "good" observations to verify that the assumptions hold. The following quote from the authors of the BACON algorithms should be noted.
 
 > "Although the algorithms will often do something reasonable even when these assumptions are violated, it is hard to say what the results mean." [@billoretal2000, p. 289]
 
-The `wbacon` library provides the analyst with tools to identify potentially outlying observations. For multivariate outlier nomination, the package implements several diagnostic plots. Worth mentioning is the graph which plots the robust (Mahalanobis) distances against the univariate projection of the data that maximizes the separation criterion of @qiujoe2006. This kind of diagnostic graph attempts to separate outlying from non-outlying observations as much as possible; see @willemsetal2009. It is particularly helpful when the outliers are clustered or show patterns. For robust linear regression, the package offers the standard plotting methods that are available for objects of the class `lm`. In addition, it implements the plot of the robust distances of the (non-constant) design variables against the standardized residuals. This diagnostic plot been proposed by @rousseeuwvanzomeren1990. All plotting methods can be displayed as hexagonally binned scatter plots, using the functionality of the `hexbin` [@hexbin] package. This option is recommended for large data sets.
+The `wbacon` package provides the analyst with tools to identify potentially outlying observations. For multivariate outlier nomination, the package implements several diagnostic plots. Worth mentioning is the graph which plots the robust (Mahalanobis) distances against the univariate projection of the data that maximizes the separation criterion of @qiujoe2006. This kind of diagnostic graph attempts to separate outlying from non-outlying observations as much as possible; see @willemsetal2009. It is particularly helpful when the outliers are clustered or show patterns. For robust linear regression, the package offers the standard plotting methods that are available for objects of the class `lm`. In addition, it implements the plot of the robust distances of the (non-constant) design variables against the standardized residuals. This diagnostic plot been proposed by @rousseeuwvanzomeren1990. All plotting methods can be displayed as hexagonally binned scatter plots, using the functionality of the `hexbin` [@hexbin] package. This option is recommended for large data sets.
 
 # Illustration
 
@@ -155,16 +159,6 @@ In the second benchmark, we study the ratio of average computation time of `wBAC
 *Table 2. Multivariate outlier nomination/ detection (multithreading): Ratio of average computation time. A ratio $> 1.0$ ($< 1.0$) implies that `wBACON()` is faster (slower) than `robustX::BACON()`*
 
 For very small data sets (e.g., $n=10^3$ and $p=5$), `wBACON()` is slower because parallelization leads to computation overhead that dominates computation time. Clearly, it would be more efficient to specify only 1 or 2 threads for such small data sets. However, the differences in computation time are hardly noticeable to the user (0.08 vs. 0.14 seconds). For larger data sets (in terms of number of variables and observations), `wBACON()` outperforms `robustX::BACON()`; see Table 2. For instance, `wBACON()` is 13.7 times faster for the setup $p=200$ and $n=10^6$. The differences in computation time between the two implementations become larger as we increase $n$ or $p$.
-
-# Community guidelines
-
-### Submitting an issue
-
-If you have any suggestions for feature additions or any problems with the software that you would like addressed with the development community, please submit an issue on the [Issues](https://github.com/tobiasschoch/wbacon/issues) tab of the project GitHub repository.
-
-### How to contribute
-
-If you are interested in modifying the code, you may fork the project for your own use, as detailed in the GNU GPL License we have adopted for the project. In order to contribute, please contact Tobias Schoch after making the desired changes.
 
 # Acknowledgements
 
