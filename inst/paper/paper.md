@@ -28,7 +28,7 @@ Technically, the BACON algorithms consist of the application of series of simple
 
 The BACON algorithm for multivariate outlier nomination can be initialized in two ways: version "V1" or "V2" [see @billoretal2000]. In version V2, the algorithm is started from the coordinate-wise median. As a consequence, the resulting estimators of location and scatter are robust, i.e., the breakdown point[^1] is approximately 40\% [@billoretal2000], but the estimators are not affine equivariant estimators of the population location and scatter. However, @billoretal2000 show that the estimators are *nearly* affine equivariant.
 
-[^1]: Intuitively, the breakdown point of an estimator is the proportion of outliers an estimator can handle before giving a arbitrary or meaningless result (e.g., arbitrarily large estimate). See @maronnaetal2018 for a rigorous definition.
+[^1]: Intuitively, the breakdown point of an estimator is the proportion of outliers an estimator can handle before giving a arbitrary or meaningless result; see @maronnaetal2018 for a rigorous definition.
 
 The initialization by version V1 yields estimators that are affine equivariant by design because the algorithm is started from the coordinate-wise mean, but the estimators have a very low breakdown point.
 
