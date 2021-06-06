@@ -1,0 +1,9 @@
+bibentry(bibtype = "Article",
+    title = "wbacon: Weighted BACON algorithms for multivariate outlier nomination (detection) and robust linear regression",
+    author = "Tobias Schoch",
+    journal = "Journal of Open Source Software",
+    volume = "6",
+    number = "62",
+    pages = "3238",
+    year = "2021",
+    doi = "10.21105/joss.03238")

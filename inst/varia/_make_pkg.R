@@ -1,12 +1,25 @@
 #!/usr/bin/env Rscript
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) == 0) {
-    mode <- "fast"
+    mode <- "help"
 } else {
-mode <- switch(args,
-    fast    = "fast",
-    check   = "check",
-    full    = "full")
+    mode <- switch(args,
+        fast    = "fast",
+        check   = "check",
+        full    = "full",
+        tar     = "tar",
+        h       = "help",
+        help    = "help",
+        pdf     = "pdf")
+}
+
+if (mode == "help") {
+    cat("\nOptions:\n")
+    cat("  fast (install only x64, w/o html)\n")
+    cat("  check\n")
+    cat("  tar (generate tar ball)\n")
+    cat("  full (standard installation)\n\n")
+    q(save = "no")
 }
 
 #-------------------------------------------------------------------------------
@@ -20,7 +33,7 @@ if (.Platform$OS.type == "unix") {
 }
 setwd(PKG_ROOT)
 
-# delete package if it already exists
+# delete package folder if it already exists
 if (dir.exists(PKG))
     unlink(PKG, recursive = TRUE)
 
@@ -30,14 +43,12 @@ pkg_files <- list.files(paste0(PKG_SOURCE, "/", PKG), full.names = TRUE)
 file.copy(pkg_files, paste0(PKG_ROOT, "/", PKG), recursive = TRUE)
 
 # copy .Rbuildignore and .Rinstignore
-if (mode == "check") {
-    f_R_build_ignore <- paste0(PKG_SOURCE, "/", PKG, "/.Rbuildignore")
-    if (file.exists(f_R_build_ignore))
-        file.copy(f_R_build_ignore, paste0(PKG_ROOT, "/", PKG))
-    f_R_inst_ignore <- paste0(PKG_SOURCE, "/", PKG, "/.Rbuildignore")
-    if (file.exists(f_R_inst_ignore))
-        file.copy(f_R_inst_ignore, paste0(PKG_ROOT, "/", PKG))
-}
+f_R_build_ignore <- paste0(PKG_SOURCE, "/", PKG, "/.Rbuildignore")
+if (file.exists(f_R_build_ignore))
+    file.copy(f_R_build_ignore, paste0(PKG_ROOT, "/", PKG))
+f_R_inst_ignore <- paste0(PKG_SOURCE, "/", PKG, "/.Rbuildignore")
+if (file.exists(f_R_inst_ignore))
+    file.copy(f_R_inst_ignore, paste0(PKG_ROOT, "/", PKG))
 
 # clean src folder (remove binary files)
 binary_files <- list.files(paste0(PKG_ROOT, "/", PKG, "/src"),
@@ -52,9 +63,15 @@ setwd(PKG_ROOT)
 if (mode == "fast")
     system(paste0("R CMD INSTALL ", PKG, " --no-html --no-multiarch"))
 
+# build the tar ball
+if (mode == "tar") {
+    system(paste0("R CMD build ", PKG))
+}
+
 # build the tar ball and check
 if (mode == "check") {
-    vers <- trimws(strsplit(readLines("wbacon/DESCRIPTION")[4], ":")[[1]][2])
+    vers <- trimws(strsplit(readLines(paste0(PKG,
+        "/DESCRIPTION"))[4], ":")[[1]][2])
     pkg_tar <- paste0(PKG, "_", vers, ".tar.gz")
     if (file.exists(pkg_tar))
         file.remove(pkg_tar)
@@ -64,7 +81,8 @@ if (mode == "check") {
 
 # full build and install (incl. html, vignette, etc)
 if (mode == "full") {
-    vers <- trimws(strsplit(readLines("wbacon/DESCRIPTION")[4], ":")[[1]][2])
+    vers <- trimws(strsplit(readLines(paste0(PKG,
+        "/DESCRIPTION"))[4], ":")[[1]][2])
     pkg_tar <- paste0(PKG, "_", vers, ".tar.gz")
     if (file.exists(pkg_tar))
         file.remove(pkg_tar)
@@ -73,4 +91,4 @@ if (mode == "full") {
 }
 
 # render pdf manual
-#system("R CMD Rd2pdf wbacon")
+#system("R CMD Rd2pdf PKG")
