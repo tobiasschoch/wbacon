@@ -69,14 +69,14 @@ Both documents can be found in the package folder `doc`.
 
 ## Installation
 
-Make sure that the package `devtools` is installed.<sup>[1](#notes)</sup> Then, the `wbacon` package can be pulled and installed from [www.github.com/tobiasschoch/wbacon](https://www.github.com/tobiasschoch/cbacon) using
+Make sure that the package `devtools` is installed.<sup>[1](#notes)</sup> Then, the `wbacon` package can be pulled and installed from [www.github.com/tobiasschoch/wbacon](https://www.github.com/tobiasschoch/wbacon) using
 
 
 ```{r, eval = FALSE}
 devtools::install_github("tobiasschoch/wbacon")
 ```
 
-The package contains `C` code that needs to be compiled.  Users of Microsoft Windows need an installation of the R tool chain bundle [rtools40](\href{https://cran.r-project.org/bin/windows/Rtools/) to build the package.
+The package contains `C` code that needs to be compiled.  Users of Microsoft Windows need an installation of the R tool chain bundle [rtools40](https://cran.r-project.org/bin/windows/Rtools/) to build the package.
 
 Once the package has been installed, it can be loaded and attached to the current R session by
 
