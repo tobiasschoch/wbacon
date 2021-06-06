@@ -27,7 +27,7 @@ Imports:
 Suggests:
 	modi,
 	robustbase,
-	robustX,
+	robustX (>= 1.2-5),
 	cellWise,
     knitr,
     rmarkdown
