@@ -6,13 +6,7 @@
 # COMMENT  pkg 'robustbase' must be installed
 #===============================================================================
 library(wbacon)
-
 library(robustX)
-# check that version 1.25 (or newer) of robustX is installed
-robustX_version <- as.numeric(gsub("-", "", getNamespaceVersion("robustX")))
-if (robustX_version < 1.25)
-    stop(paste0("Version >= 1.25 of package 'robustX' is required, you have ",
-        robustX_version, "\n"))
 
 #===============================================================================
 # Comparison function
@@ -90,13 +84,20 @@ setup <- matrix(c(
     "milk",         "1:8",
     "pulpfiber",    "1:8"), byrow = TRUE, ncol = 2)
 
-for (i in 1:nrow(setup)) {
-    data_name <- setup[i, 1]
-    data(list = data_name, package = "robustbase")
-    dt <- data.matrix(get(data_name))
-    eval(parse(text = paste0("dt <- dt[,", setup[i, 2], "]")))
-    errors <- errors + compare(dt, data_name, "V1")
-    errors <- errors + compare(dt, data_name, "V2")
+# check that version 1.25 (or newer) of robustX is installed
+robustX_version <- as.numeric(gsub("-", "", getNamespaceVersion("robustX")))
+if (robustX_version >= 1.25) {
+    for (i in 1:nrow(setup)) {
+        data_name <- setup[i, 1]
+        data(list = data_name, package = "robustbase")
+        dt <- data.matrix(get(data_name))
+        eval(parse(text = paste0("dt <- dt[,", setup[i, 2], "]")))
+        errors <- errors + compare(dt, data_name, "V1")
+        errors <- errors + compare(dt, data_name, "V2")
+    }
+    if (errors == 0)
+        cat("\nno errors\n\n")
+} else {
+    cat("Version >= 1.25 of package 'robustX' is required, you have",
+        robustX_version, "\n")
 }
-if (errors == 0)
-    cat("\nno errors\n\n")

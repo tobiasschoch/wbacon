@@ -16,7 +16,6 @@ NeedsCompilation: yes
 URL: https://github.com/tobiasschoch/wbacon
 BugReports: https://github.com/tobiasschoch/wbacon/issues
 Encoding: UTF-8
-LazyData: true
 Depends:
     R (>= 3.5.0)
 Imports:

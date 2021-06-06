@@ -541,7 +541,7 @@ summary {
 </div>
 <div id="installation" class="section level2">
 <h2>Installation</h2>
-<p>Make sure that the package <code>devtools</code> is installed.<sup><a href="#notes">1</a></sup> Then, the <code>wbacon</code> package can be pulled and installed from <a href="https://www.github.com/tobiasschoch/wbacon">www.github.com/tobiasschoch/wbacon</a> using</p>
+<p>Make sure that the package <code>devtools</code> is installed.<sup><a href="#notes">1</a></sup> Then, the <code>wbacon</code> package can be pulled and installed from the <a href="https://github.com/tobiasschoch/wbacon">GitHub</a> repository using</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="op">&gt;</span><span class="st"> </span>devtools<span class="op">::</span><span class="kw">install_github</span>(<span class="st">&quot;tobiasschoch/wbacon&quot;</span>)</span></code></pre></div>
 <p>The package contains <code>C</code> code that needs to be compiled. Users of Microsoft Windows need an installation of the R tool chain bundle <a href="https://cran.r-project.org/bin/windows/Rtools/">rtools40</a> to build the package.</p>
 <p>Once the package has been installed, it can be loaded and attached to the current R session by</p>
@@ -660,7 +660,7 @@ summary {
 </div>
 <div id="robust-linear-regression" class="section level2">
 <h2>Robust linear regression</h2>
-<p>The education data is on education expenditures in 50 US states in 1975 (<a href>Chatterjee and Hadi</a>, 2012, Chap. 5.7). The data can be loaded from the <code>robustbase</code> package.</p>
+<p>The education data is on education expenditures in 50 US states in 1975 (<a href="#biblio">Chatterjee and Hadi</a>, 2012, Chap. 5.7). The data can be loaded from the <code>robustbase</code> package.</p>
 <div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1"></a><span class="op">&gt;</span><span class="st"> </span><span class="kw">data</span>(education, <span class="dt">package =</span> <span class="st">&quot;robustbase&quot;</span>)</span></code></pre></div>
 <p>It is convenient to rename the variables.</p>
 <div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1"></a><span class="op">&gt;</span><span class="st"> </span><span class="kw">names</span>(education)[<span class="dv">3</span><span class="op">:</span><span class="dv">6</span>] &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;RES&quot;</span>, <span class="st">&quot;INC&quot;</span>, <span class="st">&quot;YOUNG&quot;</span>, <span class="st">&quot;EXP&quot;</span>)</span>
