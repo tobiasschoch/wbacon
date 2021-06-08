@@ -25,5 +25,3 @@
 ^vignettes/wbacon\.html$
 # license (github requries it in the base directory but CRAN complains)
 ^LICENSE$
-# Comments to CRAN maintainers
-^cran-comments\.md$
