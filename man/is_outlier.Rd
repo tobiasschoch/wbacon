@@ -22,3 +22,10 @@ A logical vector.
 \seealso{
 \code{\link{wBACON_reg}} and \code{\link{wBACON}}
 }
+\examples{
+data(swiss)
+m <- wBACON(swiss)
+is_outlier(m)
+\dontshow{stopifnot(identical(which(is_outlier(m)),
+    as.integer(c(2, 3, 6:11, 31:38, 45:47))))}
+}

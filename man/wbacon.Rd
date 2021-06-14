@@ -138,4 +138,5 @@ dt <- swiss[, c("Fertility", "Agriculture", "Examination", "Education",
 m <- wBACON(dt)
 m
 which(is_outlier(m))
+\dontshow{stopifnot(identical(which(is_outlier(m)), 45L))}
 }

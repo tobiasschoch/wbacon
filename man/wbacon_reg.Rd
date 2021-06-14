@@ -2,6 +2,10 @@
 \alias{wBACON_reg}
 \alias{print.wbaconlm}
 \alias{summary.wbaconlm}
+\alias{fitted.wbaconlm}
+\alias{residuals.wbaconlm}
+\alias{coef.wbaconlm}
+\alias{vcov.wbaconlm}
 \title{Robust Fitting Linear Regression Models by the BACON Algorithm}
 \usage{
 wBACON_reg(formula, weights = NULL, data, collect = 4, na.rm = FALSE,
@@ -10,6 +14,10 @@ wBACON_reg(formula, weights = NULL, data, collect = 4, na.rm = FALSE,
 
 \method{print}{wbaconlm}(x, digits = max(3L, getOption("digits") - 3L), ...)
 \method{summary}{wbaconlm}(object, ...)
+\method{fitted}{wbaconlm}(object, ...)
+\method{residuals}{wbaconlm}(object, ...)
+\method{coef}{wbaconlm}(object, ...)
+\method{vcov}{wbaconlm}(object, ...)
 }
 \arguments{
 	\item{formula}{an object of class \code{formula}: a symbolic description
@@ -98,9 +106,11 @@ It is left to the analyst to finally label outlying observations as such.
 }
 
 \subsection{Utility functions and tools}{
-The generic function \code{summary} summarizes the estimated model.
+The generic functions \code{coef}, \code{fitted}, \code{residuals},
+and \code{vcov} extract the estimate coefficients, fitted values,
+residuals, and the covariance matrix of the estimated coefficients.
 
-Additional utility functions are listed in the \emph{See also} section below.
+The function \code{summary} summarizes the estimated model.
 }
 }
 \value{
@@ -131,13 +141,6 @@ Billor N., Hadi A.S., Vellemann P.F. (2000). BACON: Blocked Adaptive
 	Statistics and Data Analysis} 34, pp. 279-298.
 }
 \seealso{
-The generic functions \code{\link[=coef.wbaconlm]{coef}},
-\code{\link[=fitted.wbaconlm]{fitted}},
-\code{\link[=residuals.wbaconlm]{residuals}},
-and \code{\link[=vcov.wbaconlm]{vcov}} extract the estimate coefficients,
-fitted values, residuals, and the covariance matrix of the estimated
-coefficients.
-
 \code{\link[=plot.wbaconlm]{plot}} gives diagnostic plots for an
 \code{wbaconlm} object.
 
@@ -146,6 +149,8 @@ confidence and prediction intervals).
 }
 \examples{
 data(iris)
-wBACON_reg(Sepal.Length ~ Sepal.Width + Petal.Length + Petal.Width, data = iris)
+m <- wBACON_reg(Sepal.Length ~ Sepal.Width + Petal.Length + Petal.Width,
+    data = iris)
+m
+summary(m)
 }
-

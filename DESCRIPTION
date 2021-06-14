@@ -8,9 +8,11 @@ Authors@R: c(
         comment = c(ORCID = "0000-0002-1640-3395")),
     person("R-core", role = c("cph"), email = "R-core@R-project.org",
         comment = "plot.wbaconlm derives from plot.lm"))
-Description: The weighted BACON algorithms are methods for multivariate
-    outlier nomination (detection) and robust linear regression. The methods
-    take (sampling) weights into account.
+Description: The BACON algorithms are methods for multivariate outlier
+    nomination (detection) and robust linear regression by Billor, Hadi,
+    and Velleman (2000) <doi:10.1016/S0167-9473(99)00101-2>. The extension
+    to weighted problems is due to Beguin and Hulliger (2008)
+    <https://www150.statcan.gc.ca/n1/en/catalogue/12-001-X200800110616>.
 License: GPL (>= 2)
 NeedsCompilation: yes
 URL: https://github.com/tobiasschoch/wbacon
