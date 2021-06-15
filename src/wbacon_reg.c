@@ -147,6 +147,7 @@ void wbacon_reg(double *x, double *y, double *w, double *resid, double *beta,
     double *dgels_work = (double*) Calloc(work->lwork, double);
     work->dgels_work = dgels_work;
 
+    #ifdef _OPENMP
     // store current definition of max number of threads
     int default_no_threads = omp_get_max_threads();
     // set preferred number of threads
@@ -156,6 +157,7 @@ void wbacon_reg(double *x, double *y, double *w, double *resid, double *beta,
         PRINT_OUT("The requested no. of threads is larger than the default.\n");
         PRINT_OUT("Thus, the default is kept at %d\n", default_no_threads);
     }
+    #endif
 
     // STEP 0 (initialization)
     if (*original) {
@@ -214,9 +216,11 @@ clean_up:
     Free(iarray); Free(subset1);
     Free(wx); Free(wy); Free(w_sqrt); Free(L);  Free(xty);
 
+    #ifdef _OPENMP
     // set the number of threads to the default value
     if (*threads != default_no_threads)
         omp_set_num_threads(default_no_threads);
+    #endif
 }
 
 /******************************************************************************\

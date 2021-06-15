@@ -31,9 +31,8 @@ static inline int choose_pivot(double *array, int lo, int hi)
     __attribute__((always_inline));
 static inline void swap(double *array, int i, int j)
     __attribute__((always_inline));
-static inline int min(int a, int b) __attribute__((always_inline));
 static inline int is_equal(double a, double b) __attribute__((always_inline));
-static inline double med3(double *array, int i, int j, int k)
+static inline int med3(double *array, int i, int j, int k)
     __attribute__((always_inline));
 
 /******************************************************************************\
@@ -197,14 +196,6 @@ static inline void swap(double *array, int i, int j)
 }
 
 /******************************************************************************\
-|* minimum of two integer values                                              *|
-\******************************************************************************/
-static inline int min(int a, int b)
-{
-    return a < b ? a : b;
-}
-
-/******************************************************************************\
 |* check whether two doubles are equal using Knuth's notion of essential      *|
 |* equality                                                                   *|
 \******************************************************************************/
@@ -217,7 +208,7 @@ static inline int is_equal(double a, double b)
 /******************************************************************************\
 |* median-of-three (but without swaps)                                        *|
 \******************************************************************************/
-static inline double med3(double *array, int i, int j, int k)
+static inline int med3(double *array, int i, int j, int k)
 {
     return array[i] < array[j] ?
         (array[j] < array[k] ? j : array[i] < array[k] ? k : i)

@@ -20,10 +20,13 @@
 #define R_PACKAGE 1             // 1: *.dll/*.so for R; 0: standalone binary
 #define _RANK_TOLERANCE 1.0e-8  // criterion to detect rank deficiency
 
+// variadic arguments in macros are supported by gcc (>=3.0), clang (all
+// versions), visual studio (>=2005); the version with ##__VA_ARGS__ (which
+// will silently eliminate the trailing comma) is not portable (clang complains)
 #if R_PACKAGE
-    #define PRINT_OUT(_f, ...) Rprintf((_f), ##__VA_ARGS__)
+    #define PRINT_OUT(...) Rprintf(__VA_ARGS__)
 #else
-    #define PRINT_OUT(_f, ...) printf((_f), ##__VA_ARGS__)
+    #define PRINT_OUT(...) printf(__VA_ARGS__)
 #endif
 
 // declarations

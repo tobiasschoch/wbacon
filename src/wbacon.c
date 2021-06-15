@@ -151,6 +151,7 @@ void wbacon(double *x, double *w, double *center, double *scatter, double *dist,
     work->work_pp = work_pp;
     work->work_2n = work_2n;
 
+    #ifdef _OPENMP
     // store current definition of max number of threads
     default_no_threads = omp_get_max_threads();
     // set preferred number of threads
@@ -160,6 +161,7 @@ void wbacon(double *x, double *w, double *center, double *scatter, double *dist,
         PRINT_OUT("The requested no. of threads is larger than the default.\n");
         PRINT_OUT("Thus, the default is kept at %d\n", default_no_threads);
     }
+    #endif
 
     // STEP 0
     // initial location
@@ -241,9 +243,11 @@ clean_up:
     Free(work_2n); Free(work_n); Free(iarray); Free(w_sqrt);
     Free(select_weight);
 
+    #ifdef _OPENMP
     // set the number of threads to the default value
     if (*threads != default_no_threads)
         omp_set_num_threads(default_no_threads);
+    #endif
 }
 
 /******************************************************************************\
@@ -477,7 +481,6 @@ static inline void mean_scatter_w(wbdata *dat, double* restrict select_weight,
     #pragma omp parallel for if(n > OMP_MIN_SIZE)
     for (int j = 0; j < p; j++) {
         center[j] = 0.0;
-        #pragma omp simd
         for (int i = 0; i < n; i++)
             center[j] += x[n * j + i] * work_n[i];
 
