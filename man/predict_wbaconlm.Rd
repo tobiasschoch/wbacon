@@ -54,9 +54,4 @@ m <- wBACON_reg(Sepal.Length ~ Sepal.Width + Petal.Length + Petal.Width,
     data = iris)
 predict(m, newdata = data.frame(Sepal.Width = 1, Petal.Length = 1,
     Petal.Width = 1))
-\dontshow{
-yhat <- predict(m, newdata = data.frame(Sepal.Width = 1, Petal.Length = 1,
-    Petal.Width = 1))
-stopifnot(abs(yhat - 2.6594839512004644) < .Machine$double.eps)
-}
 }
