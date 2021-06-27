@@ -2,6 +2,7 @@
 
 [![DOI](https://joss.theoj.org/papers/10.21105/joss.03238/status.svg)](https://doi.org/10.21105/joss.03238) [![CRAN](https://www.r-pkg.org/badges/version/wbacon)](https://cran.r-project.org/package=wbacon)
 
+
 ## Summary
 
 [Billor et al.](#References) (2000) proposed the BACON (blocked adaptive computationally-efficient outlier nominators) algorithms for multivariate outlier nomination and robust linear regression. [Béguin and Hulliger](#References) (2008) extended the outlier detection method to weighted and incomplete data problems.  Both methods are implemented in the R statistical software ([R Core Team](#References), 2021) in the packages, respectively, `robustX` ([Mächler et al.](#References), 2021) and `modi` ([Hulliger and Sterchi](#References), 2020).
