@@ -1,6 +1,14 @@
-#include <Rmath.h>
-#include <R_ext/Lapack.h>
+#ifndef  USE_FC_LEN_T
+    #define USE_FC_LEN_T
+#endif
+#include <Rconfig.h>
 #include <R_ext/BLAS.h>
+#include <R_ext/Lapack.h>
+#ifndef FCONE
+    #define FCONE
+#endif
+
+#include <Rmath.h>
 #include "regdata.h"
 #include "wquantile.h"
 #include "partial_sort.h"

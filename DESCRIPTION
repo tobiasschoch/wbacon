@@ -1,7 +1,7 @@
 Package: wbacon
 Type: Package
 Title: Weighted BACON Algorithms
-Version: 0.5-1
+Version: 0.5-2
 Authors@R: c(
     person("Tobias", "Schoch", role = c("aut", "cre"),
         email = "tobias.schoch@gmail.com",
@@ -12,7 +12,8 @@ Description: The BACON algorithms are methods for multivariate outlier
     nomination (detection) and robust linear regression by Billor, Hadi,
     and Velleman (2000) <doi:10.1016/S0167-9473(99)00101-2>. The extension
     to weighted problems is due to Beguin and Hulliger (2008)
-    <https://www150.statcan.gc.ca/n1/en/catalogue/12-001-X200800110616>.
+    <https://www150.statcan.gc.ca/n1/en/catalogue/12-001-X200800110616>; see
+    also <doi:10.21105/joss.03238>.
 License: GPL (>= 2)
 NeedsCompilation: yes
 URL: https://github.com/tobiasschoch/wbacon

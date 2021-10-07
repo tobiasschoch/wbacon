@@ -357,7 +357,7 @@ static wbacon_error_type algorithm_4(regdata *dat, workarray *work,
         const double double_minus1 = -1.0, double_1 = 1.0;
         Memcpy(est->resid, dat->y, n);
         F77_CALL(dgemv)("N", &n, &p, &double_minus1, dat->x, &n, est->beta,
-            &int_1, &double_1, est->resid, &int_1);
+            &int_1, &double_1, est->resid, &int_1 FCONE);
 
         // compute t[i]'s
         err = compute_ti(dat, work, est, subset1, m, est->dist);
@@ -675,10 +675,12 @@ static inline void cholesky_reg(double *L, double *x, double *xty, double *beta,
 
     // solve for 'a' (return in beta) in the triangular system L^T * a = xty
     Memcpy(beta, xty, *p);
-    F77_CALL(dtrsm)("L", "L", "N", "N", p, &int_one, &d_one, L, p, beta, p);
+    F77_CALL(dtrsm)("L", "L", "N", "N", p, &int_one, &d_one, L, p, beta,
+        p FCONE FCONE FCONE FCONE);
 
     // solve for 'beta' in the triangular system L * beta  = a
-    F77_CALL(dtrsm)("L", "L", "T", "N", p, &int_one, &d_one, L, p, beta, p);
+    F77_CALL(dtrsm)("L", "L", "T", "N", p, &int_one, &d_one, L, p, beta,
+        p FCONE FCONE FCONE FCONE);
 }
 
 /******************************************************************************\
@@ -698,7 +700,7 @@ static inline wbacon_error_type hat_matrix(regdata *dat, workarray *work,
     // invert the cholesky factor L
     int info;
     Memcpy(work->work_pp, L, p * p);
-    F77_CALL(dtrtri)("L", "N", &p, work->work_pp, &p, &info);
+    F77_CALL(dtrtri)("L", "N", &p, work->work_pp, &p, &info FCONE FCONE);
     if (info != 0)
         return WBACON_ERROR_TRIANG_MAT_SINGULAR;
 
@@ -706,7 +708,7 @@ static inline wbacon_error_type hat_matrix(regdata *dat, workarray *work,
     const double d_one = 1.0;
     Memcpy(work_np, dat->x, n * p);
     F77_CALL(dtrmm)("R", "L", "T", "N", &n, &p, &d_one, work->work_pp, &p,
-        work_np, &n);
+        work_np, &n FCONE FCONE FCONE FCONE);
 
     // diagonal elements of hat matrix = row sums of (x * L^{-T})^2
     for (int i = 0; i < n; i++)

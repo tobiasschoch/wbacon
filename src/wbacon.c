@@ -378,7 +378,7 @@ static wbacon_error_type check_matrix_fullrank(double* restrict x, int p)
 
     // Cholesky decomposition
     int info;
-    F77_CALL(dpotrf)("L", &p, x, &p, &info);
+    F77_CALL(dpotrf)("L", &p, x, &p, &info FCONE);
     if (info != 0)
         return WBACON_ERROR_NOT_POSITIVE_DEFINITE;
 
@@ -445,7 +445,7 @@ static inline void scatter_w(wbdata *dat, double* restrict work_np,
     const double d_zero = 0.0;
     double denom = 1.0 / (sum_w - 1.0);
     F77_CALL(dsyrk)("L", "T", &p, &n, &denom, work_np, &n, &d_zero, scatter,
-        &p);
+        &p FCONE FCONE);
 }
 
 /******************************************************************************\
@@ -498,7 +498,7 @@ static inline void mean_scatter_w(wbdata *dat, double* restrict select_weight,
     const double d_zero = 0.0;
     denom = 1.0 / (sum_w - 1.0);
     F77_CALL(dsyrk)("L", "T", &p, &n, &denom, work_np, &n, &d_zero, scatter,
-        &p);
+        &p FCONE FCONE);
 }
 
 /******************************************************************************\
@@ -559,7 +559,7 @@ static inline wbacon_error_type mahalanobis(wbdata *dat, workarray *work,
     // Cholesky decomposition of scatter matrix
     Memcpy(work->work_pp, scatter, p * p);
     int info;
-    F77_CALL(dpotrf)("L", &p, work->work_pp, &p, &info);
+    F77_CALL(dpotrf)("L", &p, work->work_pp, &p, &info FCONE);
     if (info != 0)
         return WBACON_ERROR_RANK_DEFICIENT;
 
@@ -574,7 +574,7 @@ static inline wbacon_error_type mahalanobis(wbdata *dat, workarray *work,
     // Solve for y in A * y = B by forward substitution (A = Cholesky factor)
     const double d_one = 1.0;
     F77_CALL(dtrsm)("R", "L", "T", "N", &n, &p, &d_one, work->work_pp, &p,
-        work_np, &n);
+        work_np, &n FCONE FCONE FCONE FCONE);
 
     // squared Mahalanobis distances (row sums)
     for (int i = 0; i < n; i++)

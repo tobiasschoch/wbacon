@@ -52,7 +52,7 @@ int fitwls(regdata *dat, estimate *est, int* restrict subset,
     // STEP 0: determine the optimal size of array 'work' and return
     if (lwork < 0) {
         F77_CALL(dgels)("N", &n, &p, &int_1, x, &n, y, &n, work_dgels, &lwork,
-            &info_dgels);
+            &info_dgels FCONE);
         return (int) work_dgels[0];
     }
 
@@ -75,7 +75,7 @@ int fitwls(regdata *dat, estimate *est, int* restrict subset,
 
     // weighted least squares estimate (LAPACK::dgels),
     F77_CALL(dgels)("N", &n, &p, &int_1, wx, &n, wy, &n, work_dgels,
-        &lwork, &info_dgels);
+        &lwork, &info_dgels FCONE);
 
     // dgels is not well suited as a rank-revealing procedure; i.e., INFO<0
     // iff a diagonal element of the R matrix is exactly 0. This is not
@@ -99,7 +99,7 @@ int fitwls(regdata *dat, estimate *est, int* restrict subset,
     const double double_minus1 = -1.0, double_1 = 1.0;
     Memcpy(resid, y, n);
     F77_CALL(dgemv)("N", &n, &p, &double_minus1, x, &n, beta, &int_1,
-        &double_1, resid, &int_1);
+        &double_1, resid, &int_1 FCONE);
 
     return 0;
 }
