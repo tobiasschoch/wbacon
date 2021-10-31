@@ -64,7 +64,7 @@ static inline void chol_update(double* restrict, double* restrict, int);
 
 /******************************************************************************\
 |* BACON regression estimator                                                 *|
-|*  x        design matrix, array[n, p]                                       *|
+|*  x        design matrix, array[n, p]; on return: QR factorization of dgels *|
 |*  y        response variable, array[n]                                      *|
 |*  w        weights, array[n]                                                *|
 |*  resid    on return: residuals, array[n]                                   *|

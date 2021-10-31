@@ -112,16 +112,73 @@ print.wbaconlm <- function(x, digits = max(3L, getOption("digits") - 3L), ...)
 	invisible(x)
 }
 
-summary.wbaconlm <- function(object, ...)
+summary.wbaconlm <- function (object, ...)
 {
-	# on the subset, the weighted BACON regression works like a lm model
-	in_subset <- object$subset == 1
-	# cast 'object' to an object of class 'lm'
-	ans <- object
-	ans$residuals <- ans$residuals[in_subset]
-	ans$fitted.values <- ans$fitted.values[in_subset]
-	ans$weights <- ans$weights[in_subset]
-	ans$qr$qr = ans$qr$qr[in_subset, ]
-	class(ans) <- "lm"
-	stats::summary.lm(ans, ...)
+	in_subset <- object$subset
+    r <- object$residuals[in_subset]
+    w <- object$weights[in_subset]
+    f <- object$fitted.values[in_subset]
+    qr <- object$qr
+    p <- object$rank
+    rdf <- sum(w) - p
+    n <- sum(w)
+    mss <- if (attr(object$terms, "intercept")) {
+        m <- sum(w * f / sum(w))
+        sum(w * (f - m)^2)
+    } else {
+        sum(w * f^2)
+    }
+    rss <- sum(w * r^2)
+    resvar <- rss / rdf
+    if (is.finite(resvar) && resvar < (mean(f)^2 + stats::var(c(f))) * 1e-30)
+        warning("essentially perfect fit: summary may be unreliable")
+    p1 <- 1L:p
+    R <- chol2inv(qr$qr[p1, p1, drop = FALSE])
+    se <- sqrt(diag(R) * resvar)
+    est <- object$coefficients[qr$pivot[p1]]
+    tval <- est / se
+    ans <- object[c("call", "terms", if (!is.null(object$weights)) "weights")]
+    ans$residuals <- r
+    ans$coefficients <- cbind(Estimate = est, `Std. Error` = se,
+        `t value` = tval, `Pr(>|t|)` = 2 * stats::pt(abs(tval), rdf,
+        lower.tail = FALSE))
+    ans$aliased <- is.na(object$coefficients)
+    ans$sigma <- sqrt(resvar)
+    ans$df <- c(p, rdf, NCOL(qr$qr))
+    if (p != attr(object$terms, "intercept")) {
+        df.int <- if (attr(object$terms, "intercept")) 1L else 0L
+        ans$r.squared <- mss / (mss + rss)
+        ans$adj.r.squared <- 1 - (1 - ans$r.squared) * ((n - df.int) / rdf)
+        ans$fstatistic <- c(value = (mss / (p - df.int)) / resvar,
+            numdf = p - df.int, dendf = rdf)
+    } else {
+        ans$r.squared <- ans$adj.r.squared <- 0
+    }
+    ans$cov.unscaled <- R
+    dimnames(ans$cov.unscaled) <- dimnames(ans$coefficients)[c(1, 1)]
+    if (!is.null(object$na.action))
+        ans$na.action <- object$na.action
+    class(ans) <- c("summary.lm", "summary.wbaconlm")
+    ans
+}
+
+fitted.wbaconlm <- function(object, ...)
+{
+	object$fitted.values
+}
+
+residuals.wbaconlm <- function(object, ...)
+{
+	object$residuals
+}
+
+coef.wbaconlm <- function(object, ...)
+{
+	object$coefficients
+}
+
+vcov.wbaconlm <- function(object, ...)
+{
+	tmp <- summary.wbaconlm(object, ...)
+	tmp$sigma^2 * tmp$cov.unscaled
 }

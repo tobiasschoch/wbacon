@@ -1,6 +1,19 @@
 \name{NEWS}
 \title{News for \R Package \pkg{wbacon}}
 \encoding{UTF-8}
+\section{CHANGES in wbacon VERSION 0.5-3 (2021-11-01)}{
+    \subsection{Tweaks}{
+        \itemize{
+            \item In previous versions, the \code{summary} method for
+                objects of class \code{wbaconlm} was implemented as a wrapper
+                function of \code{stats::summary.lm}. But \code{summary.lm}
+                detected that it has been called for an object other than a
+                genuine \code{lm} object and issued a warning. This warning
+                confused some users. Now we implemented a separate summary
+                method.
+        }
+    }
+}
 \section{CHANGES in wbacon VERSION 0.5-2 (2021-10-07)}{
     \subsection{Misc}{
         \itemize{

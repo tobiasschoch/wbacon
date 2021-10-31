@@ -10,12 +10,12 @@
 ^inst/doc/doc_c_functions\.tex$
 ^inst/doc/methods\.tex$
 # varia
-^inst/varia$
+^inst/varia/$
 # benchmark folder
 ^tests/benchmark$
 ^tests/simulation$
 # joss paper
-^inst/paper$
+^inst/paper/$
 # src folder
 ^src/_myMakefile$
 ^src/_myMakefile_omp$
