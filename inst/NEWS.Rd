@@ -1,7 +1,7 @@
 \name{NEWS}
 \title{News for \R Package \pkg{wbacon}}
 \encoding{UTF-8}
-\section{CHANGES in wbacon VERSION 0.5-3 (2021-11-01)}{
+\section{CHANGES in wbacon VERSION 0.6 (2021-11-04)}{
     \subsection{Tweaks}{
         \itemize{
             \item In previous versions, the \code{summary} method for
@@ -11,6 +11,13 @@
                 genuine \code{lm} object and issued a warning. This warning
                 confused some users. Now we implemented a separate summary
                 method.
+        }
+    }
+    \subsection{BUG FIXES}{
+        \itemize{
+            \item Fixed computation of regression leverages (for weighted
+                regression) in \code{plot} method for objects of class
+                \code{wbaconlm}.
         }
     }
 }

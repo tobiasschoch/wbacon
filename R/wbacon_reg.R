@@ -25,6 +25,7 @@ wBACON_reg <- function(formula, weights = NULL, data, collect = 4,
 	cc <- stats::complete.cases(y, x, weights)
 	if (sum(cc) != n) {
 		if (na.rm) {
+	        mf <- mf[cc, ]
 			x <- x[cc, ]
 			y <- y[cc]
 			weights <- weights[cc]

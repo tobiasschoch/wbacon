@@ -37,8 +37,9 @@ plot.wbaconlm <- function(x, which = c(1, 2, 3, 4),
     if (any(show[c(2L:4L)])) {
         ylab5 <- ylab23 <- "Standardized residuals"
 		xmat <- stats::model.matrix(x$terms, x$model)[subset0, ]
-		Q <- qr.Q(qr(sqrt(w) * xmat))
-		hii <- rowSums(Q^2) * w
+        R <- qr.R(qr(sqrt(w) * xmat))
+        A <- xmat %*% backsolve(R, diag(NCOL(R)))
+        hii <- rowSums(A^2) * w
         rs <- dropInf(r / (s * sqrt(1 - hii)), hii)
 	}
     if (any(show[c(1L, 3L)]))
