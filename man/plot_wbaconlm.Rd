@@ -76,9 +76,10 @@ The standardized residuals vs. robust Mahalanobis distance plot
 [no return value]
 }
 \references{
-Rousseeuw, P.J. and B.C. van Zomeren (1990).  Unmasking Multivariate Outliers
-and Leverage Points,
-\emph{Journal of the American Statistical Association} 411, pp. 633-639.
+Rousseeuw, P.J. and B.C. van Zomeren (1990).
+    Unmasking Multivariate Outliers and Leverage Points,
+    \emph{Journal of the American Statistical Association} \bold{411}, 633--639.
+    \doi{10.2307/2289995}
 }
 \seealso{
 \code{\link{wBACON_reg}}
