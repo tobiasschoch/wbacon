@@ -113,7 +113,10 @@ void wbacon(double *x, double *w, double *center, double *scatter, double *dist,
     int *n, int *p, double *alpha, int *subset, double *cutoff, int *maxiter,
     int *verbose, int *version2, int *collect, int *success, int *threads)
 {
-    int subsetsize, default_no_threads;
+    int subsetsize;
+    #ifdef _OPENMP
+        int default_no_threads;
+    #endif
     wbacon_error_type err;
     int* restrict subset0 = (int*) Calloc(*n, int);
     double* select_weight = (double*) Calloc(*n, double);
