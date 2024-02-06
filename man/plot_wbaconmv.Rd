@@ -20,7 +20,7 @@ SeparationIndex(object, alpha = 0.05, tol = 1e-5, maxiter = 20)
 	\item{hex}{toogle the hexagonal bin plot on/off \code{[logical]} (default:
         \code{hex = FALSE})}
     \item{col}{color of outliers, \code{[integer]} (default: \code{col = 2})}
-    \item{pch}{plot character of outliers, code{[integer]} (default:
+    \item{pch}{plot character of outliers, \code{[integer]} (default:
         \code{pch = 19})}
 	\item{ask}{\code{[logical]}; if \code{TRUE}, the user is \emph{ask}ed before
 		each plot, see \code{\link{par}(ask=.)}.}
