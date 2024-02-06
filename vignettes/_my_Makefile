@@ -1,11 +1,15 @@
-DOCUMENT=wbacon
-RSCRIPT=Rscript.exe
+OBJECTS 		:= wbacon.html
+RSCRIPT 		:= Rscript
+RSCRIPT_OPTS 	:= --vanilla
+RMD_HTML_OPTS 	:= 'html_document'
+RM				:= rm -f
 
-all: knitr
+all: $(OBJECTS)
 
-knitr: $(DOCUMENT).Rmd
-	$(RSCRIPT) -e "library(rmarkdown); rmarkdown::render('$(DOCUMENT).Rmd', 'html_document')"
+%.html: %.Rmd
+	$(RSCRIPT) $(RSCRIPT_OPTS) -e \
+		"library('rmarkdown'); render('$<', $(RMD_HTML_OPTS))"
 
 .PHONY: clean
 clean:
-	rm *.html
+	$(RM) *.html
