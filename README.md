@@ -75,7 +75,7 @@ Billor, N., Hadi, A. S., and Velleman , P. F. (2000). BACON: Blocked adaptive co
 
 Hulliger, B. (2023). modi: Multivariate Outlier Detection and Imputation for Incomplete Survey Data, R package version 0.1-2. URL [https://CRAN.R-project.org/package=modi](https://CRAN.R-project.org/package=modi)
 
-Mächler, M. and W. A. Stahel (2023).  robustX: ’eXtra’ / ’eXperimental’ Functionality for Robust Statistics, R package version 1.2-7. URL [https://CRAN.R-project.org/package=robustX)](https://CRAN.R-project.org/package=robustX)
+Mächler, M. and W. A. Stahel (2023).  robustX: ’eXtra’ / ’eXperimental’ Functionality for Robust Statistics, R package version 1.2-7. URL [https://CRAN.R-project.org/package=robustX](https://CRAN.R-project.org/package=robustX)
 
 OpenMP Architecture Review Board (2018). OpenMP Application Program Interface Version 5.0. URL [https://https://www.openmp.org](https://https://www.openmp.org)
 
