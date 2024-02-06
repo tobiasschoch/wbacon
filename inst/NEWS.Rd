@@ -1,6 +1,17 @@
 \name{NEWS}
 \title{News for \R Package \pkg{wbacon}}
 \encoding{UTF-8}
+\section{CHANGES in wbacon VERSION 0.6-1 (2024-02-06)}{
+    \subsection{BUG FIXES}{
+        \itemize{
+            \item The weighted quantile (other than the median) as computed by
+                the C function \code{wquant0} was incorrect for samples of size
+                n = 2 (if the data were sorted in descending order).
+            \item Added an \code{_OPENMP} guard in the declaration of
+                \code{default_no_threads} in \code{wbacon}.
+        }
+    }
+}
 \section{CHANGES in wbacon VERSION 0.6 (2021-11-04)}{
     \subsection{Tweaks}{
         \itemize{
