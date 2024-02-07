@@ -229,21 +229,19 @@ Old television sets had a cathode ray tube with an electron gun. The emitted
 beam runs through a diaphragm that lets pass only a partial beam to the screen.
 The diaphragm consists of 9 components. The Philips data set contains $n = 667$
 measurements on the $p = 9$ components (variables); see [Rousseeuw and van
-Driessen](#biblio) (1999).
-
-The philips data can be loaded from the `R` package `cellWise` ([Raymaekers and
-Rousseeuw](#biblio), 2023). These data do not have sampling weights.
+Driessen](#biblio) (1999).<sup>[3](#notes)</sup> These data do not have
+sampling weights.
 
 ```{r}
-data(data_philips, package = "cellWise")
-head(data_philips)
+data(philips)
+head(philips)
 ```
 
 We compute the BACON algorithm but this time with the initialization method
 `version = "V1"`.
 
 ```{r}
-fit <- wBACON(data_philips, alpha = 0.05, version = "V1")
+fit <- wBACON(philips, alpha = 0.05, version = "V1")
 fit
 ```
 
@@ -475,3 +473,6 @@ Statistics* **18**, 73--91.
 <sup>2</sup> The degrees of freedom $d$ is a function of the number of
 variables $p$, the number of observations $n$, and the size of the current
 subset $m$; see `methods.pdf` in the `inst/doc` folder of the package.
+
+<sup>3</sup> The philips data has been published in the `R` package `cellWise`
+([Raymaekers and Rousseeuw](#biblio), 2023).

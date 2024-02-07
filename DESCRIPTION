@@ -16,6 +16,7 @@ Description: The BACON algorithms are methods for multivariate outlier
     also <doi:10.21105/joss.03238>.
 License: GPL (>= 2)
 NeedsCompilation: yes
+LazyData: true
 URL: https://github.com/tobiasschoch/wbacon
 BugReports: https://github.com/tobiasschoch/wbacon/issues
 Encoding: UTF-8
@@ -30,7 +31,6 @@ Suggests:
 	modi,
 	robustbase,
 	robustX (>= 1.2-5),
-	cellWise,
     knitr,
     rmarkdown
 VignetteBuilder: knitr, rmarkdown

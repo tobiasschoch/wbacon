@@ -24,13 +24,8 @@ if (mode == "help") {
 
 #-------------------------------------------------------------------------------
 PKG <- "wbacon"
-if (.Platform$OS.type == "unix") {
-	PKG_SOURCE <- "/mnt/c/my/code"
-	PKG_ROOT <- "/mnt/c/my/tmp"
-} else {
-	PKG_SOURCE <- "C:/My/code"
-	PKG_ROOT <- "C:/My/tmp"
-}
+PKG_SOURCE <- "/home/tobias/Code"
+PKG_ROOT <- "/home/tobias/tmp"
 setwd(PKG_ROOT)
 
 # delete package folder if it already exists
