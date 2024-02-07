@@ -1,17 +1,19 @@
+# load shared objects; registration is via src/init.c file; the names of the
+# registered symbols have prefix "C_" such that they are easily recognizable
+useDynLib(wbacon, .registration = TRUE, .fixes = "C_")
+
+#import
 importFrom("graphics",
-    "abline", "mtext", "panel.smooth", "par", "points", "strheight", "text",
-    "title")
-
+    abline, mtext, panel.smooth, par, points, strheight, text, title)
 importFrom("grDevices",
-    "as.graphicsAnnot", "dev.flush", "dev.hold", "dev.interactive",
-    "devAskNewPage", "extendrange")
-
+    as.graphicsAnnot, dev.flush, dev.hold, dev.interactive, devAskNewPage,
+    extendrange)
 importFrom("stats",
-    "cov", "na.pass", "qnorm", "qqnorm", "qt", "residuals")
-
+    cov, na.pass, qnorm, qqnorm, qt, residuals)
 importFrom("hexbin",
-    "hexbin", "hexVP.loess", "hexVP.abline")
+    hexbin, hexVP.loess, hexVP.abline)
 
+#export
 S3method(plot, wbaconlm)
 
 export(is_outlier)
@@ -40,7 +42,3 @@ S3method(predict, wbaconlm)
 
 export(quantile_w)
 export(median_w)
-
-useDynLib(wbacon, wbacon)
-useDynLib(wbacon, wbacon_reg)
-useDynLib(wbacon, wquantile)

@@ -4,7 +4,7 @@ wBACON <- function(x, weights = NULL, alpha = 0.05, collect = 4,
 {
 	n <- NROW(x); p <- NCOL(x)
 	stopifnot(n > p, p > 0, 0 < alpha, alpha < 1, maxiter > 0, collect > 1,
-        n_threads > 0)
+              n_threads > 0)
 
 	if (version[1] == "V2")
 		vers <- 1
@@ -29,7 +29,7 @@ wBACON <- function(x, weights = NULL, alpha = 0.05, collect = 4,
 			weights <- weights[cc]
 		} else
 			stop("Data must not contain missing values; see argument 'na.rm'\n",
-				call. = FALSE)
+				 call. = FALSE)
 	}
 	n <- nrow(x)
 
@@ -41,19 +41,21 @@ wBACON <- function(x, weights = NULL, alpha = 0.05, collect = 4,
 	# check if collect is corretly specified
 	if (collect >= n / p)
 		stop("Argument 'collect' must be an integer smaller than ",
-			floor(n / p), "\n")
+             floor(n / p), "\n")
 	if (collect * p / n > 0.6 && verbose)
 		cat("Note: initial subset > 60% (use a smaller value for 'collect')\n")
 
 	# compute weighted BACON algorithm
-	tmp <- .C("wbacon", x = as.double(x), w = as.double(weights),
-		center = as.double(numeric(p)), scatter = as.double(numeric(p * p)),
-		dist = as.double(numeric(n)), n = as.integer(n), p = as.integer(p),
-		alpha = as.double(alpha), subset = as.integer(rep(0, n)),
-		cutoff = as.double(numeric(1)), maxiter = as.integer(abs(maxiter)),
-		verbose = as.integer(verbose), version = as.integer(vers),
-		collect = as.integer(collect), success = as.integer(1),
-        n_threads = as.integer(n_threads), PACKAGE = "wbacon")
+	tmp <- .C(C_wbacon, x = as.double(x), w = as.double(weights),
+              center = as.double(numeric(p)),
+              scatter = as.double(numeric(p * p)),
+              dist = as.double(numeric(n)), n = as.integer(n),
+              p = as.integer(p), alpha = as.double(alpha),
+              subset = as.integer(rep(0, n)), cutoff = as.double(numeric(1)),
+              maxiter = as.integer(abs(maxiter)),
+              verbose = as.integer(verbose), version = as.integer(vers),
+              collect = as.integer(collect), success = as.integer(1),
+              n_threads = as.integer(n_threads))
 
     tmp$cutoff <- sqrt(tmp$cutoff)
  	tmp$verbose <- NULL
@@ -86,37 +88,36 @@ print.wbaconmv <- function(x, digits = max(3L, getOption("digits") - 3L), ...)
 	if (x$converged) {
         cat("\nWeighted BACON: Robust location, covariance, and distances\n")
 		cat(paste0("Converged in ", x$maxiter, " iterations (alpha = ",
-			x$alpha, ")\n"))
+                   x$alpha, ")\n"))
         n_outlier <- x$n - sum(x$subset)
         cat(paste0("Number of potential outliers: ", n_outlier, " (",
-            round(100 * n_outlier / x$n, 2), "%)\n\n"))
+                   round(100 * n_outlier / x$n, 2), "%)\n\n"))
 	} else
 		cat(paste0("Weighted BACON did not converge in ", x$maxiter,
-			" iterations!\n\n"))
+                   " iterations!\n\n"))
 }
 
 summary.wbaconmv <- function(object, ...)
 {
 	digits <- max(3L, getOption("digits") - 3L)
 	cat("\nWeighted BACON: Robust location, covariance, and distances\n")
-    cat("Initialized by method:", ifelse(object$version == 1, "V2", "V1"),
-        "\n")
+    cat("Initialized by method:", ifelse(object$version == 1, "V2", "V1"), "\n")
     if (object$converged)
         cat(paste0("Converged in ", object$maxiter, " iterations (alpha = ",
-            object$alpha, ")\n"))
+                   object$alpha, ")\n"))
     else
         cat(paste0("\nDID NOT CONVERGE in ", object$maxiter,
-            " iterations (alpha = ", object$alpha, ")\n"))
+                   " iterations (alpha = ", object$alpha, ")\n"))
     n <- length(object$subset)
     n_outlier <- object$n - sum(object$subset)
     cat(paste0("\nNumber of potential outliers: ", n_outlier, " (",
-        round(100 * n_outlier / n, 2), "%)\n"))
+               round(100 * n_outlier / n, 2), "%)\n"))
     cat("\nRobust estimate of location:\n")
     print(object$center, digits = digits)
     cat("\nRobust estimate of covariance:\n")
     print(object$cov, digits = digits)
-    cat(paste0("\nDistances (cutoff: ", format(object$cutoff,
-        digits = digits), "):\n"))
+    cat(paste0("\nDistances (cutoff: ",
+               format(object$cutoff, digits = digits), "):\n"))
     if (object$converged)
         print(summary(object$dist), digits = digits)
     else

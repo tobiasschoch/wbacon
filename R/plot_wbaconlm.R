@@ -12,8 +12,8 @@ plot.wbaconlm <- function(x, which = c(1, 2, 3, 4),
 	{
 		if (any(isInf <- h >= 1)) {
 			warning(gettextf("not plotting observations with leverage one:\n %s",
-                paste(which(isInf), collapse = ", ")), call. = FALSE,
-				domain = NA)
+                    paste(which(isInf), collapse = ", ")),
+                    call. = FALSE, domain = NA)
             x[isInf] <- NaN
         }
         x
@@ -64,8 +64,8 @@ plot.wbaconlm <- function(x, which = c(1, 2, 3, 4),
                 label.pos[1 + as.numeric(x > mean(range(x)))]
             else
 				3
-            text(x, y, labels.id[ind], cex = cex.id, xpd = TRUE,
-                pos = labpos, offset = 0.25)
+            text(x, y, labels.id[ind], cex = cex.id, xpd = TRUE, pos = labpos,
+                 offset = 0.25)
         }
     }
     getCaption <- function(k)
@@ -104,12 +104,12 @@ plot.wbaconlm <- function(x, which = c(1, 2, 3, 4),
             requireNamespace("hexbin")
             hb <- hexbin(yh, r, ybnds = ylim)
             hvp <- hexbin::plot(hb, xlab = l.fit, ylab = "Residuals",
-                main = main)
+                                main = main)
             hexVP.abline(hvp$plot, h = 0, lty = 3, col = "gray")
             hexVP.loess(hb, hvp = hvp$plot, span = 2 / 3, ...)
         } else {
             plot(yh, r, xlab = l.fit, ylab = "Residuals", main = main,
-                ylim = ylim, type = "n", ...)
+                 ylim = ylim, type = "n", ...)
             panel(yh, r, ...)
             if (one.fig)
                 title(sub = sub.caption, ...)
@@ -143,7 +143,7 @@ plot.wbaconlm <- function(x, which = c(1, 2, 3, 4),
         sqrtabsr <- sqrt(abs(rs))
         ylim <- c(0, max(sqrtabsr, na.rm = TRUE))
         yl <- as.expression(substitute(sqrt(abs(YL)),
-            list(YL = as.name(ylab23))))
+                                       list(YL = as.name(ylab23))))
         yhn0 <- yh
         dev.hold()
         if (hex) {
@@ -169,20 +169,20 @@ plot.wbaconlm <- function(x, which = c(1, 2, 3, 4),
         if (hex) {
             hb <- hexbin(x$mv$dist, x$residuals/s, xbnds = xlim)
             hvp <- plot(hb, xlab = "Robust distance",
-                ylab = "Standardized residuals", main = main)
+                        ylab = "Standardized residuals", main = main)
             hexVP.abline(hvp$plot, h = 0, lty = 3, col = "gray")
             hexVP.abline(hvp$plot, v = x$mv$cutoff, h = c(-x$reg$cutoff,
-                x$reg$cutoff), lty = 2, col = 2)
+                         x$reg$cutoff), lty = 2, col = 2)
         } else {
             plot(x$mv$dist, x$residuals / s, xlab = "Robust distance",
-                ylab = "Standardized residuals", main = main, xlim = xlim,
-                type = "n", ...)
+                 ylab = "Standardized residuals", main = main, xlim = xlim,
+                 type = "n", ...)
             points(x$mv$dist[subset0], x$residuals[subset0] / s, ...)
             points(x$mv$dist[!subset0], x$residuals[!subset0] / s, pch = 19,
-                col = 2, ...)
+                   col = 2, ...)
             abline(h = 0, lty = 3, col = "gray")
             abline(v = x$mv$cutoff, h = c(-x$reg$cutoff, x$reg$cutoff),
-                lty = 2, col = 2)
+                   lty = 2, col = 2)
            if (one.fig)
                 title(sub = sub.caption, ...)
             mtext(getCaption(4), 3, 0.25, cex = cex.caption)

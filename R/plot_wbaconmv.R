@@ -20,7 +20,7 @@ plot.wbaconmv <- function(x, which = 1:2,
 
     if (show[1]) {
         plot(x$dist, xlab = "Index", ylab = "Robust distance",
-            main = caption[1], type = "n", ...)
+             main = caption[1], type = "n", ...)
         at <- x$subset == 1
         points(which(at), x$dist[at])
         points(which(!at), x$dist[!at], pch = pch, col = col)
@@ -32,7 +32,7 @@ plot.wbaconmv <- function(x, which = 1:2,
         tmp <- SeparationIndex(x, alpha, tol, maxiter)
         if (tmp$failed) {
             plot(0, 0, type = "n", axes = FALSE, xlab = "", ylab = "",
-            main = caption[2], ...)
+                 main = caption[2], ...)
             text(0, 1, labels = "[too few observations]")
         } else {
             if (!tmp$converged)
@@ -41,7 +41,8 @@ plot.wbaconmv <- function(x, which = 1:2,
                 requireNamespace("hexbin")
                 hb <- hexbin(tmp$proj, x$dist)
                 hvp <- hexbin::plot(hb, xlab = "Univariate projection",
-                    ylab = "Robust distance", main = caption[2], ...)
+                                    ylab = "Robust distance", main = caption[2],
+                                    ...)
                 hexVP.abline(hvp$plot, h = x$cutoff, lty = 2, col = 2)
             } else {
                 if (length(tmp$proj) > 10000)
@@ -100,5 +101,5 @@ SeparationIndex <- function(object, alpha = 0.05, tol = 1e-5, maxiter = 20)
     J <- (d - p12) / (d + p12)
 
     list(J = J, a = a1, proj = as.vector(object$x %*% a1),
-        converged = iter < maxiter, failed = FALSE)
+         converged = iter < maxiter, failed = FALSE)
 }

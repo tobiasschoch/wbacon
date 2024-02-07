@@ -10,8 +10,8 @@ predict.wbaconlm <- function(object, newdata, se.fit = FALSE, scale = NULL,
 	ans$residuals <- ans$residuals[in_subset]
 	ans$fitted.values <- ans$fitted.values[in_subset]
 	ans$weights <- ans$weights[in_subset]
-	ans$qr$qr = ans$qr$qr[in_subset, ]
+	ans$qr$qr <- ans$qr$qr[in_subset, ]
 	class(ans) <- "lm"
 	stats::predict.lm(ans, newdata, se.fit, scale, df, interval, level, type,
-		terms, na.action, ...)
+                      terms, na.action, ...)
 }

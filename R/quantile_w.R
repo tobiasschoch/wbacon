@@ -6,9 +6,9 @@ quantile_w <- function(x, w, probs, na.rm = FALSE)
 
 	res <- NULL
 	for (i in 1:length(probs)) {
-		tmp <- .C("wquantile", x = as.double(dat$x), w = as.double(dat$w),
-		n = as.integer(dat$n), probs = as.double(probs[i]),
-		q = as.double(numeric(1)), PACKAGE = "wbacon")
+		tmp <- .C(C_wquantile, x = as.double(dat$x), w = as.double(dat$w),
+                  n = as.integer(dat$n), probs = as.double(probs[i]),
+                  q = as.double(numeric(1)))
 		res <- c(res, tmp$q)
 	}
 	names(res) <- paste0(probs * 100, "%")
@@ -24,7 +24,7 @@ quantile_w <- function(x, w, probs, na.rm = FALSE)
 	n <- length(x); nw <- length(w)
 	if (nw != n)
 		stop("Data vector and weights are not of the same dimension\n",
-			call. = FALSE)
+			 call. = FALSE)
 	if (n == 0)
 		return(NA)
 
@@ -43,7 +43,7 @@ quantile_w <- function(x, w, probs, na.rm = FALSE)
 	# check if data vector and weights are finite
 	if (sum(is.finite(c(x, w))) != 2 * n) {
 		warning("Some observations are not finite\n", call. = FALSE,
-			immediate. = TRUE)
+                immediate. = TRUE)
 		return(NULL)
 	}
 
