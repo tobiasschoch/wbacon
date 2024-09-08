@@ -1,6 +1,6 @@
 /* weighted quantile and selection of k-th largest element
 
-   Copyright (C) 2020-2022 Tobias Schoch (e-mail: tobias.schoch@gmail.com)
+   Copyright (C) 2020-2024 Tobias Schoch (e-mail: tobias.schoch@gmail.com)
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -61,9 +61,9 @@ void wquantile(double *array, double *weights, int *n, double *prob,
     double *result)
 {
     double *work;
-    work = (double*) Calloc(2 * *n, double);
+    work = (double*) R_Calloc(2 * *n, double);
     wquantile_noalloc(array, weights, work, n, prob, result);
-    Free(work);
+    R_Free(work);
 }
 
 /******************************************************************************\

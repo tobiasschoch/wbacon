@@ -1,7 +1,7 @@
 /* Implementation of a weighted variant of the BACON algorithm for robust
    linear regression of Billor et al. (2000)
 
-   Copyright (C) 2020-2021 Tobias Schoch (e-mail: tobias.schoch@gmail.com)
+   Copyright (C) 2020-2024 Tobias Schoch (e-mail: tobias.schoch@gmail.com)
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -97,7 +97,7 @@ void wbacon_reg(double *x, double *y, double *w, double *resid, double *beta,
     wbacon_error_type err;
     *success = 1;
 
-    int *subset1 = (int*) Calloc(*n, int);
+    int *subset1 = (int*) R_Calloc(*n, int);
 
     // initialize and populate 'data' which is a regdata struct
     regdata data;
@@ -106,12 +106,12 @@ void wbacon_reg(double *x, double *y, double *w, double *resid, double *beta,
     dat->x = x;
     dat->y = y;
     dat->w = w;
-    double *wy = (double*) Calloc(*n, double);
+    double *wy = (double*) R_Calloc(*n, double);
     dat->wy = wy;
-    double *wx = (double*) Calloc(*n * *p, double);
+    double *wx = (double*) R_Calloc(*n * *p, double);
     dat->wx = wx;
     // sqrt(w) is computed once and then shared
-    double *w_sqrt = (double*) Calloc(*n, double);
+    double *w_sqrt = (double*) R_Calloc(*n, double);
 
     for (int i = 0; i < *n; i++)
         w_sqrt[i] = sqrt(w[i]);
@@ -124,27 +124,27 @@ void wbacon_reg(double *x, double *y, double *w, double *resid, double *beta,
     est->resid = resid;
     est->beta = beta;
     est->dist = dist;
-    double *L = (double*) Calloc(*p * *p, double);
+    double *L = (double*) R_Calloc(*p * *p, double);
     est->L = L;
-    double *xty = (double*) Calloc(*p, double);
+    double *xty = (double*) R_Calloc(*p, double);
     est->xty = xty;
 
     // initialize and populate 'work' which is a workarray struct
     workarray warray;
     workarray *work = &warray;
-    double *work_p = (double*) Calloc(*p, double);
+    double *work_p = (double*) R_Calloc(*p, double);
     work->work_p = work_p;
-    double *work_pp = (double*) Calloc(*p * *p, double);
+    double *work_pp = (double*) R_Calloc(*p * *p, double);
     work->work_pp = work_pp;
-    double *work_np = (double*) Calloc(*n * *p, double);
+    double *work_np = (double*) R_Calloc(*n * *p, double);
     work->work_np = work_np;
-    double *work_n = (double*) Calloc(*n, double);
+    double *work_n = (double*) R_Calloc(*n, double);
     work->work_n = work_n;
-    int *iarray = (int*) Calloc(*n, int);
+    int *iarray = (int*) R_Calloc(*n, int);
     work->iarray = iarray;
     // determine size of work array for LAPACK:degels
     work->lwork = fitwls(dat, est, subset0, work_np, -1);
-    double *dgels_work = (double*) Calloc(work->lwork, double);
+    double *dgels_work = (double*) R_Calloc(work->lwork, double);
     work->dgels_work = dgels_work;
 
     #ifdef _OPENMP
@@ -212,9 +212,9 @@ PRINT_OUT("\n");
     Memcpy(x, wx, *n * *p);
 
 clean_up:
-    Free(work_pp); Free(work_p); Free(work_np); Free(work_n); Free(dgels_work);
-    Free(iarray); Free(subset1);
-    Free(wx); Free(wy); Free(w_sqrt); Free(L);  Free(xty);
+    R_Free(work_pp); R_Free(work_p); R_Free(work_np); R_Free(work_n);
+    R_Free(dgels_work); R_Free(iarray); R_Free(subset1); R_Free(wx);
+    R_Free(wy); R_Free(w_sqrt); R_Free(L);  R_Free(xty);
 
     #ifdef _OPENMP
     // set the number of threads to the default value

@@ -1,0 +1,25 @@
+CC         := gcc -fopenmp # with OPENMP support
+CFLAGS     := -std=gnu99 -O3 -fPIC
+R_DIR      := /usr/lib64/R
+R_C_HEADER := $(R_DIR)/include
+DLL_BLAS   := $(R_DIR)/lib/libRblas.so
+DLL_LAPACK := $(R_DIR)/lib/libRlapack.so
+DLL_R      := $(R_DIR)/lib/libR.so
+RM         := rm -f
+
+# Link
+OBJ = wbacon.o wbacon_error.o wbacon_reg.o wquantile.o fitwls.o \
+	partial_sort.o median.o
+
+wbacon.so : $(OBJ)
+	$(CC) -shared -o $@ -L $(DLL_BLAS) $(DLL_LAPACK) $(DLL_R) $(OBJ)
+
+# Compile
+%.o : %.c
+	$(CC) -Wall -pedantic -Wstrict-prototypes -I $(R_C_HEADER) -c -o \
+	$@ $< $(CFLAGS)
+
+# Housekeeping
+.PHONY: clean
+clean:
+	$(RM) $(OBJ) wbacon.so

@@ -1,7 +1,6 @@
 # wbacon: Weighted BACON algorithms for multivariate outlier nomination (detection) and robust linear regression <img src="inst/varia/logo.svg" align="right" width=120 height=139 alt="" />
 
-[![DOI](https://joss.theoj.org/papers/10.21105/joss.03238/status.svg)](https://doi.org/10.21105/joss.03238) [![CRAN](https://www.r-pkg.org/badges/version/wbacon)](https://cran.r-project.org/package=wbacon)
-
+[![DOI](https://joss.theoj.org/papers/10.21105/joss.03238/status.svg)](https://doi.org/10.21105/joss.03238) [![CRAN](https://www.r-pkg.org/badges/version/wbacon)](https://cran.r-project.org/package=wbacon) [![downloads](https://cranlogs.r-pkg.org/badges/wbacon)](https://cran.r-project.org/package=wbacon) [![downloads](https://cranlogs.r-pkg.org/badges/grand-total/wbacon)](https://cran.r-project.org/package=wbacon)
 
 ## Summary
 

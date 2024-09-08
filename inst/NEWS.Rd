@@ -1,6 +1,15 @@
 \name{NEWS}
 \title{News for \R Package \pkg{wbacon}}
 \encoding{UTF-8}
+\section{CHANGES in wbacon VERSION 0.6-2 (2024-09-07)}{
+    \subsection{Misc}{
+        \itemize{
+            \item Calls of the macros \code{Calloc} and \code{Free} have been
+            replaced with calls of \code{R_Calloc} and \code{R_Free},
+            respectively (see warnings of tests with \code{STRICT_R_HEADERS}).
+        }
+    }
+}
 \section{CHANGES in wbacon VERSION 0.6-1 (2024-02-06)}{
     \subsection{BUG FIXES}{
         \itemize{

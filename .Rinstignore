@@ -17,9 +17,7 @@
 # joss paper
 ^inst/paper/$
 # src folder
-^src/_myMakefile$
-^src/_myMakefile_omp$
-^src/checkout_wquantile\.bat$
+^src/_my_makefile$
 # vignettes folder
 ^vignettes/_my_Makefile$
 ^vignettes/wbacon\.html$

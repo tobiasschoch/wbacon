@@ -2,7 +2,7 @@
    detection of Billor et al. (2000), with the extension to allow for weighting
    of Béguin and Hulliger (2008)
 
-   Copyright (C) 2020-2021 Tobias Schoch (e-mail: tobias.schoch@gmail.com)
+   Copyright (C) 2020-2024 Tobias Schoch (e-mail: tobias.schoch@gmail.com)
 
    This library is free software; you can redistribute it and/or
    modify it under the terms of the GNU Library General Public
@@ -118,13 +118,13 @@ void wbacon(double *x, double *w, double *center, double *scatter, double *dist,
         int default_no_threads;
     #endif
     wbacon_error_type err;
-    int* restrict subset0 = (int*) Calloc(*n, int);
-    double* select_weight = (double*) Calloc(*n, double);
+    int* restrict subset0 = (int*) R_Calloc(*n, int);
+    double* select_weight = (double*) R_Calloc(*n, double);
 
     *success = 1;
 
     // square root of the weights
-    double* w_sqrt = (double*) Calloc(*n, double);
+    double* w_sqrt = (double*) R_Calloc(*n, double);
     for (int i = 0; i < *n; i++)
         w_sqrt[i] = sqrt(w[i]);
 
@@ -143,11 +143,11 @@ void wbacon(double *x, double *w, double *center, double *scatter, double *dist,
     workarray warray;
     workarray *work = &warray;
 
-    int *iarray = (int*) Calloc(*n, int);
-    double *work_n = (double*) Calloc(*n, double);
-    double *work_np = (double*) Calloc(*n * *p, double);
-    double *work_pp = (double*) Calloc(*p * *p, double);
-    double *work_2n = (double*) Calloc(2 * *n, double);
+    int *iarray = (int*) R_Calloc(*n, int);
+    double *work_n = (double*) R_Calloc(*n, double);
+    double *work_np = (double*) R_Calloc(*n * *p, double);
+    double *work_pp = (double*) R_Calloc(*p * *p, double);
+    double *work_2n = (double*) R_Calloc(2 * *n, double);
     work->iarray = iarray;
     work->work_n = work_n;
     work->work_np = work_np;
@@ -242,9 +242,9 @@ void wbacon(double *x, double *w, double *center, double *scatter, double *dist,
         dist[i] = sqrt(dist[i]);
 
 clean_up:
-    Free(subset0); Free(work_np); Free(work_pp);
-    Free(work_2n); Free(work_n); Free(iarray); Free(w_sqrt);
-    Free(select_weight);
+    R_Free(subset0); R_Free(work_np); R_Free(work_pp);
+    R_Free(work_2n); R_Free(work_n); R_Free(iarray); R_Free(w_sqrt);
+    R_Free(select_weight);
 
     #ifdef _OPENMP
     // set the number of threads to the default value
