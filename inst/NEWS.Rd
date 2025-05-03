@@ -1,6 +1,18 @@
 \name{NEWS}
 \title{News for \R Package \pkg{wbacon}}
 \encoding{UTF-8}
+\section{CHANGES in wbacon VERSION 0.6-3 (2025-05-03)}{
+    \subsection{NEW FEATURE}{
+        \itemize{
+            \item The function \code{is_outlier} gets the additional argument
+            \code{names} (logical). If \code{names = TRUE}, the row names
+            of the potential outliers are returned. If \code{names = FALSE}
+            (default), an indicator vector is returned that identifies the
+            potential outliers. The names of the elements in the indicator
+            vector correspond to the row names of the data set.
+        }
+    }
+}
 \section{CHANGES in wbacon VERSION 0.6-2 (2024-09-07)}{
     \subsection{Misc}{
         \itemize{

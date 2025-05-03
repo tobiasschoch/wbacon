@@ -34,12 +34,12 @@ Weighted estimate of the population quantiles.
 \references{
 Bentley, J.L. and D.M. McIlroy (1993).
     Engineering a Sort Function,
-    \emph{Software - Practice and Experience} \bold{23}, 1249--1265.
+    \emph{Software - Practice and Experience}, \bold{23}, 1249--1265.
     \doi{10.1002/spe.4380231105}
 
 Hyndman, R.J. and Y. Fan (1996).
     Sample Quantiles in Statistical Packages,
-    \emph{The American Statistician} \bold{50}, 361--365.\doi{10.2307/2684934}
+    \emph{The American Statistician}, \bold{50}, 361--365.\doi{10.2307/2684934}
 }
 \seealso{
 \code{\link{median_w}}

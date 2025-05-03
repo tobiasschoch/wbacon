@@ -138,12 +138,12 @@ An object of class \code{wbaconlm} with slots
 \references{
 Billor N., Hadi A.S. and Vellemann P.F. (2000). BACON: Blocked Adaptive
 	Computationally efficient Outlier Nominators.
-    \emph{Computational Statistics and Data Analysis} \bold{34}, pp. 279--298.
+    \emph{Computational Statistics and Data Analysis}, \bold{34}, pp. 279--298.
     \doi{10.1016/S0167-9473(99)00101-2}
 
 Schoch, T. (2021). wbacon: Weighted BACON algorithms for multivariate
     outlier nomination (detection) and robust linear regression,
-    \emph{Journal of Open Source Software} \bold{6} (62), 3238
+    \emph{Journal of Open Source Software}, \bold{6} (62), 3238
     \doi{10.21105/joss.03238}
 }
 \seealso{
@@ -158,5 +158,10 @@ data(iris)
 m <- wBACON_reg(Sepal.Length ~ Sepal.Width + Petal.Length + Petal.Width,
     data = iris)
 m
+
+# model summary
 summary(m)
+
+# names of potential outliers
+is_outlier(m, names = TRUE)
 }

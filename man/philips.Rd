@@ -29,7 +29,7 @@
 \source{
 Billor, N., A. S. Hadi, and P. F. Vellemann (2000).
     BACON: Blocked Adaptive Computationally-efficient Outlier Nominators.
-    \emph{Computational Statistics and Data Analysis} \bold{34}, 279--298.
+    \emph{Computational Statistics and Data Analysis}, \bold{34}, 279--298.
     \doi{10.1016/S0167-9473(99)00101-2}
 
 Raymaekers, J. and P. Rousseeuw (2023).
@@ -39,7 +39,7 @@ Raymaekers, J. and P. Rousseeuw (2023).
 
 Rousseeuw, P. J. and K. van Driessen (1999).
     A fast algorithm for the Minimum Covariance Determinant estimator.
-    \emph{Technometrics} \bold{41}, 212--223.
+    \emph{Technometrics}, \bold{41}, 212--223.
     \doi{10.2307/1270566}
 }
 \examples{

@@ -27,9 +27,10 @@ wBACON <- function(x, weights = NULL, alpha = 0.05, collect = 4,
 		if (na.rm) {
 			x <- x[cc, ]
 			weights <- weights[cc]
-		} else
+		} else {
 			stop("Data must not contain missing values; see argument 'na.rm'\n",
 				 call. = FALSE)
+        }
 	}
 	n <- nrow(x)
 
@@ -61,7 +62,8 @@ wBACON <- function(x, weights = NULL, alpha = 0.05, collect = 4,
  	tmp$verbose <- NULL
 	tmp$converged <- tmp$success == 1
 	tmp$success <- NULL
-    tmp$x <- matrix(tmp$x, ncol = p)
+    tmp$x <- x
+    names(tmp$subset) <- row.names(x)
 
     if (!tmp$converged) {
         tmp$center <- rep(NA, p)
@@ -92,9 +94,10 @@ print.wbaconmv <- function(x, digits = max(3L, getOption("digits") - 3L), ...)
         n_outlier <- x$n - sum(x$subset)
         cat(paste0("Number of potential outliers: ", n_outlier, " (",
                    round(100 * n_outlier / x$n, 2), "%)\n\n"))
-	} else
+	} else {
 		cat(paste0("Weighted BACON did not converge in ", x$maxiter,
                    " iterations!\n\n"))
+    }
 }
 
 summary.wbaconmv <- function(object, ...)

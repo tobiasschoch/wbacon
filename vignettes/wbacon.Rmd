@@ -402,12 +402,12 @@ project, https://www.cs.york.ac.uk/euredit/euredit-main.html, research project
 funded by the European Commission, IST-1999-10226.
 
 Béguin, C. and B. Hulliger (2008). The BACON-EEM Algorithm for Multivariate
-Outlier Detection in Incomplete Survey Data, *Survey Methodology* **34**,
+Outlier Detection in Incomplete Survey Data, *Survey Methodology*, **34**,
 91--103.
 
 Billor, N., A. S. Hadi, and P. F. Vellemann (2000). BACON: Blocked Adaptive
 Computationally-efficient Outlier Nominators, *Computational Statistics and
-Data Analysis*  **34**, 279--298.
+Data Analysis*, **34**, 279--298.
 [DOI 10.1016/S0167-9473(99)00101-2](https://doi.org/10.1016/S0167-9473(99)00101-2)
 
 Campbell, N. A. (1989). Bushfire Mapping using NOAA AVHRR Data. Technical
@@ -436,11 +436,11 @@ Palma (2024). robustbase: Basic Robust Statistics, R package version 0.99-2.
 URL https://CRAN.R-project.org/package=robustbase
 
 Maronna, R. A. and V. J. Yohai (1995). The Behavior of the Stahel-Donoho Robust
-Multivariate Estimator, *Journal of the American Statistical Association*
+Multivariate Estimator, *Journal of the American Statistical Association*,
 **90** 330--341. [DOI 10.2307/2291158](https://doi.org/10.2307/2291158)
 
 Qiu, W. and H. Joe (2006). Separation index and partial membership for
-clustering, *Computational Statistics and Data Analysis* **50**, 585--603.
+clustering, *Computational Statistics and Data Analysis*, **50**, 585--603.
 [DOI 10.1016/j.csda.2004.09.009](https://doi.org/10.1016/j.csda.2004.09.009)
 
 Raymaekers, J. and P. Rousseeuw (2023). cellWise: Analyzing Data with Cellwise
@@ -448,21 +448,21 @@ Outliers, R package version 2.5.3. URL
 https://CRAN.R-project.org/package=cellWise
 
 Rousseeuw, P. J. and K. van Driessen (1999). A fast algorithm for the Minimum
-Covariance Determinant estimator, *Technometrics* **41**, 212--223.
+Covariance Determinant estimator, *Technometrics*, **41**, 212--223.
 [DOI 10.2307/1270566](https://doi.org/10.2307/1270566)
 
 Rousseeuw, P. J. and K. van Zomeren (1990). Unmasking Multivariate Outliers and
-Leverage Points, *Journal of the American Statistical Association* **411**,
+Leverage Points, *Journal of the American Statistical Association*, **411**,
 633--639. [DOI 10.2307/2289995](https://doi.org/10.2307/2289995)
 
 Schoch, T. (2021) wbacon: Weighted BACON algorithms for multivariate outlier
 nomination (detection) and robust linear regression, *Journal of Open Source
-Software* **6**, 323.
+Software*, **6**, 3238.
 [DOI 10.21105/joss.03238](https://doi.org/10.21105/joss.03238)
 
 Willems, G., H. Joe, and R. Zamar (2009). Diagnosing Multivariate Outliers
 Detected by Robust Estimators, *Journal of Computational and Graphical
-Statistics* **18**, 73--91.
+Statistics*, **18**, 73--91.
 [DOI 10.1198/jcgs.2009.0005](https://doi.org/10.1198/jcgs.2009.0005)
 
 ## Notes {#notes}
